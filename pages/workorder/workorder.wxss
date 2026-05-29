@@ -1,0 +1,60 @@
+.order-list {
+  padding-top: 16rpx;
+}
+
+.order-item {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.order-type {
+  font-size: 24rpx;
+  color: #4A90E2;
+  background: #E6F4FF;
+  padding: 4rpx 16rpx;
+  border-radius: 6rpx;
+}
+
+.order-status {
+  font-size: 24rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 6rpx;
+}
+
+.order-status.waiting {
+  color: #FA8C16;
+  background: #FFF7E6;
+}
+
+.order-status.processing {
+  color: #4A90E2;
+  background: #E6F4FF;
+}
+
+.order-status.done {
+  color: #52C41A;
+  background: #F6FFED;
+}
+
+.order-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #1A1A1A;
+  margin-bottom: 12rpx;
+}
+
+.order-time {
+  font-size: 24rpx;
+  color: #999;
+}

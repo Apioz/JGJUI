@@ -1,0 +1,173 @@
+<!-- 顶部项目切换 + 消息通知 -->
+<view class="header" style="padding-top: {{statusBarHeight}}px;">
+  <view class="project-switcher" bindtap="toggleProjectPicker">
+    <view class="location-icon">📍</view>
+    <text class="project-name">{{currentProject.name}}</text>
+    <text class="arrow">{{showProjectPicker ? '▲' : '▼'}}</text>
+  </view>
+  <view class="notification-btn" bindtap="goNotifications">
+    <text class="bell-icon">💬</text>
+    <view class="badge" wx:if="{{unreadCount > 0}}">{{unreadCount}}</view>
+  </view>
+</view>
+
+<!-- 项目选择弹层 -->
+<view class="picker-mask" wx:if="{{showProjectPicker}}" bindtap="toggleProjectPicker">
+  <view class="picker-panel" catchtap="">
+    <view class="picker-title">切换项目</view>
+    <view
+      class="picker-item {{currentProject.id === item.id ? 'active' : ''}}"
+      wx:for="{{projects}}"
+      wx:key="id"
+      data-project="{{item}}"
+      bindtap="selectProject"
+    >
+      <text>{{item.name}}</text>
+      <text class="check" wx:if="{{currentProject.id === item.id}}">✓</text>
+    </view>
+  </view>
+</view>
+
+<!-- 轮播图 -->
+<view class="carousel-section">
+  <swiper
+    class="carousel"
+    indicator-dots="{{true}}"
+    autoplay="{{true}}"
+    interval="{{4000}}"
+    circular="{{true}}"
+    indicator-color="rgba(255,255,255,0.5)"
+    indicator-active-color="#FFFFFF"
+    bindchange="onSwiperChange"
+  >
+    <swiper-item wx:for="{{carouselList}}" wx:key="id">
+      <view class="carousel-item">
+        <image class="carousel-img" src="{{item.image}}" mode="aspectFill" />
+        <view class="carousel-overlay">
+          <text class="carousel-title">{{item.title}}</text>
+        </view>
+      </view>
+    </swiper-item>
+  </swiper>
+</view>
+
+<view class="container">
+  <!-- 数据总览 -->
+  <view class="card">
+    <view class="card-title">数据总览</view>
+    <view class="overview-grid">
+      <view class="overview-item">
+        <text class="overview-value">{{dataOverview.assetTotal}}</text>
+        <text class="overview-label">资产总数</text>
+      </view>
+      <view class="overview-item">
+        <text class="overview-value highlight">{{dataOverview.workOrderPending}}</text>
+        <text class="overview-label">待处理工单</text>
+      </view>
+      <view class="overview-item">
+        <text class="overview-value small">{{dataOverview.energyToday}}</text>
+        <text class="overview-label">今日能耗</text>
+      </view>
+      <view class="overview-item">
+        <text class="overview-value pass">{{dataOverview.canteenPassRate}}</text>
+        <text class="overview-label">食堂合格率</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 资产管理 -->
+  <view class="card">
+    <view class="card-title">资产管理</view>
+    <view class="asset-summary">
+      <view class="asset-stat">
+        <text class="stat-num">{{assetManagement.total}}</text>
+        <text class="stat-label">资产总量</text>
+      </view>
+      <view class="asset-stat">
+        <text class="stat-num green">{{assetManagement.inUse}}</text>
+        <text class="stat-label">在用</text>
+      </view>
+      <view class="asset-stat">
+        <text class="stat-num orange">{{assetManagement.maintenance}}</text>
+        <text class="stat-label">维保中</text>
+      </view>
+      <view class="asset-stat">
+        <text class="stat-num gray">{{assetManagement.idle}}</text>
+        <text class="stat-label">闲置</text>
+      </view>
+    </view>
+    <view class="asset-grid">
+      <view
+        class="asset-item"
+        wx:for="{{assetManagement.items}}"
+        wx:key="name"
+        data-name="{{item.name}}"
+        bindtap="onAssetTap"
+      >
+        <view class="asset-icon">{{index === 0 ? '🏢' : index === 1 ? '⚙️' : index === 2 ? '📋' : '🔄'}}</view>
+        <text class="asset-name">{{item.name}}</text>
+        <text class="asset-count">{{item.count}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 物业管理 -->
+  <view class="card">
+    <view class="card-title">物业管理</view>
+    <view class="property-grid">
+      <view
+        class="property-item"
+        wx:for="{{propertyManagement}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="onPropertyTap"
+      >
+        <view class="property-icon" style="background: {{item.color}}20; color: {{item.color}}">
+          {{index === 0 ? '🔧' : index === 1 ? '🛠️' : index === 2 ? '🔍' : '📝'}}
+        </view>
+        <text class="property-name">{{item.name}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 能源管理 -->
+  <view class="card">
+    <view class="card-title">
+      <text>能源管理</text>
+      <text class="more" bindtap="goEnergyDetail">查看更多 ></text>
+    </view>
+    <view class="energy-row">
+      <view class="energy-item">
+        <text class="energy-label">累计用水</text>
+        <text class="energy-value">{{energyManagement.waterTotal}}</text>
+      </view>
+      <view class="energy-divider"></view>
+      <view class="energy-item">
+        <text class="energy-label">累计用电</text>
+        <text class="energy-value">{{energyManagement.electricTotal}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 食堂管理 -->
+  <view class="card">
+    <view class="card-title">
+      <text>食堂管理</text>
+      <text class="more" bindtap="goCanteenDetail">查看更多 ></text>
+    </view>
+    <view class="canteen-row">
+      <view class="canteen-item">
+        <text class="canteen-label">{{canteenManagement.threeClean.label}}</text>
+        <text class="status-pass">{{canteenManagement.threeClean.status}}</text>
+      </view>
+      <view class="canteen-item">
+        <text class="canteen-label">{{canteenManagement.sampleDish.label}}</text>
+        <text class="status-pass">{{canteenManagement.sampleDish.status}}</text>
+      </view>
+      <view class="canteen-item">
+        <text class="canteen-label">{{canteenManagement.morningCheck.label}}</text>
+        <text class="status-pass">{{canteenManagement.morningCheck.status}}</text>
+      </view>
+    </view>
+  </view>
+</view>

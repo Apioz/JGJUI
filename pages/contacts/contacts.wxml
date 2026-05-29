@@ -1,0 +1,24 @@
+<view class="search-bar">
+  <input
+    class="search-input"
+    placeholder="搜索姓名或部门"
+    value="{{searchKey}}"
+    bindinput="onSearchInput"
+  />
+</view>
+
+<view class="container">
+  <view class="contact-list">
+    <view class="contact-item" wx:for="{{contacts}}" wx:key="id">
+      <view class="contact-avatar">{{item.name[0]}}</view>
+      <view class="contact-info">
+        <text class="contact-name">{{item.name}}</text>
+        <text class="contact-dept">{{item.department}}</text>
+      </view>
+      <view class="contact-phone" data-phone="{{item.phone}}" bindtap="callContact">
+        📞
+      </view>
+    </view>
+    <view class="empty-tip" wx:if="{{contacts.length === 0}}">未找到联系人</view>
+  </view>
+</view>

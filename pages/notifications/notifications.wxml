@@ -1,0 +1,21 @@
+<view class="container">
+  <view class="notify-list">
+    <view
+      class="notify-item {{!item.read ? 'unread' : ''}}"
+      wx:for="{{notifications}}"
+      wx:key="id"
+      data-index="{{index}}"
+      bindtap="onNotificationTap"
+    >
+      <view class="notify-icon">🔔</view>
+      <view class="notify-content">
+        <view class="notify-header">
+          <text class="notify-title">{{item.title}}</text>
+          <text class="notify-time">{{item.time}}</text>
+        </view>
+        <text class="notify-text">{{item.content}}</text>
+      </view>
+    </view>
+    <view class="empty-tip" wx:if="{{notifications.length === 0}}">暂无通知</view>
+  </view>
+</view>

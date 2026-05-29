@@ -1,0 +1,28 @@
+<view class="container">
+  <view class="card profile-card">
+    <view class="profile-row">
+      <text class="label">姓名</text>
+      <text class="value">{{userProfile.name}}</text>
+    </view>
+    <view class="profile-row">
+      <text class="label">工号</text>
+      <text class="value">{{userProfile.employeeId}}</text>
+    </view>
+    <view class="profile-row">
+      <text class="label">手机号</text>
+      <text class="value">{{userProfile.phone}}</text>
+    </view>
+    <view class="profile-row">
+      <text class="label">所属项目园区</text>
+      <text class="value">{{userProfile.project}}</text>
+    </view>
+    <view class="profile-row">
+      <text class="label">所属部门</text>
+      <text class="value">{{userProfile.department}}</text>
+    </view>
+    <view class="profile-row">
+      <text class="label">岗位角色</text>
+      <text class="value">{{userProfile.role}}</text>
+    </view>
+  </view>
+</view>

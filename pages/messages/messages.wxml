@@ -1,0 +1,22 @@
+<view class="container">
+  <view class="message-list">
+    <view
+      class="message-item {{!item.read ? 'unread' : ''}}"
+      wx:for="{{messages}}"
+      wx:key="id"
+      data-index="{{index}}"
+      bindtap="onMessageTap"
+    >
+      <view class="message-avatar">{{item.sender[0]}}</view>
+      <view class="message-content">
+        <view class="message-header">
+          <text class="message-sender">{{item.sender}}</text>
+          <text class="message-time">{{item.time}}</text>
+        </view>
+        <text class="message-text">{{item.content}}</text>
+      </view>
+      <view class="unread-dot" wx:if="{{!item.read}}"></view>
+    </view>
+    <view class="empty-tip" wx:if="{{messages.length === 0}}">暂无消息</view>
+  </view>
+</view>

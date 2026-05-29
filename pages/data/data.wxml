@@ -1,0 +1,46 @@
+<view class="container">
+  <view class="page-header">
+    <text class="page-title">数据统计</text>
+    <text class="page-desc">各模块汇总统计信息</text>
+  </view>
+
+  <view class="card stats-card">
+    <view class="stats-grid">
+      <view class="stat-box">
+        <text class="stat-value">{{totalStats.assetTotal}}</text>
+        <text class="stat-label">资产总量</text>
+      </view>
+      <view class="stat-box">
+        <text class="stat-value">{{totalStats.workOrders}}</text>
+        <text class="stat-label">工单总数</text>
+      </view>
+      <view class="stat-box">
+        <text class="stat-value small">{{totalStats.waterTotal}}</text>
+        <text class="stat-label">累计用水</text>
+      </view>
+      <view class="stat-box">
+        <text class="stat-value small">{{totalStats.electricTotal}}</text>
+        <text class="stat-label">累计用电</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card module-card" wx:for="{{summaryList}}" wx:key="key">
+    <view class="module-header">
+      <text class="module-title">{{item.label}}</text>
+      <view class="trend {{item.trend.indexOf('-') === 0 ? 'down' : 'up'}}">
+        {{item.trend}}
+      </view>
+    </view>
+    <view class="module-total">
+      <text class="total-label">汇总</text>
+      <text class="total-value">{{item.total}}</text>
+    </view>
+    <view class="module-items">
+      <view class="module-item" wx:for="{{item.items}}" wx:for-item="sub" wx:key="name">
+        <text class="item-name">{{sub.name}}</text>
+        <text class="item-value">{{sub.value}}</text>
+      </view>
+    </view>
+  </view>
+</view>

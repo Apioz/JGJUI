@@ -1,0 +1,52 @@
+.notify-list {
+  padding-top: 16rpx;
+}
+
+.notify-item {
+  display: flex;
+  align-items: flex-start;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.notify-item.unread {
+  background: #FFFAF0;
+  border-left: 6rpx solid #FA8C16;
+}
+
+.notify-icon {
+  font-size: 40rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.notify-content {
+  flex: 1;
+}
+
+.notify-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.notify-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+}
+
+.notify-time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.notify-text {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.5;
+}

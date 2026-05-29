@@ -1,0 +1,13 @@
+<view class="container">
+  <view class="order-list">
+    <view class="order-item" wx:for="{{workOrders}}" wx:key="id">
+      <view class="order-header">
+        <text class="order-type">{{item.type}}</text>
+        <text class="order-status {{item.statusClass}}">{{item.status}}</text>
+      </view>
+      <text class="order-title">{{item.title}}</text>
+      <text class="order-time">{{item.createTime}}</text>
+    </view>
+    <view class="empty-tip" wx:if="{{workOrders.length === 0}}">暂无工单</view>
+  </view>
+</view>

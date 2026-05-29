@@ -1,0 +1,21 @@
+<view class="container">
+  <view class="todo-list">
+    <view
+      class="todo-item"
+      wx:for="{{todos}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="onTodoTap"
+    >
+      <view class="todo-status {{item.status === 'pending' ? 'pending' : 'done'}}"></view>
+      <view class="todo-content">
+        <text class="todo-title">{{item.title}}</text>
+        <view class="todo-meta">
+          <text class="todo-type">{{item.type}}</text>
+          <text class="todo-deadline">{{item.deadline}}</text>
+        </view>
+      </view>
+    </view>
+    <view class="empty-tip" wx:if="{{todos.length === 0}}">暂无待办事项</view>
+  </view>
+</view>

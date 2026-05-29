@@ -1,0 +1,310 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx;
+  background: linear-gradient(180deg, #E8F4FD 0%, #D6EBFA 100%);
+}
+
+.project-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.location-icon {
+  font-size: 32rpx;
+}
+
+.project-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+  max-width: 400rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arrow {
+  font-size: 20rpx;
+  color: #666;
+  margin-left: 4rpx;
+}
+
+.notification-btn {
+  position: relative;
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bell-icon {
+  font-size: 40rpx;
+}
+
+.notification-btn .badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.picker-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 100rpx;
+}
+
+.picker-panel {
+  width: 100%;
+  background: #fff;
+  border-radius: 0 0 24rpx 24rpx;
+  padding: 24rpx 0;
+}
+
+.picker-title {
+  font-size: 28rpx;
+  color: #999;
+  padding: 0 32rpx 16rpx;
+}
+
+.picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 32rpx;
+  font-size: 30rpx;
+}
+
+.picker-item.active {
+  color: #4A90E2;
+  background: #F0F7FF;
+}
+
+.picker-item .check {
+  color: #4A90E2;
+  font-weight: bold;
+}
+
+.carousel-section {
+  background: linear-gradient(180deg, #D6EBFA 0%, #F5F6FA 100%);
+  padding: 0 24rpx 20rpx;
+}
+
+.carousel {
+  height: 320rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.carousel-item {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.carousel-img {
+  width: 100%;
+  height: 100%;
+}
+
+.carousel-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24rpx;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.5));
+}
+
+.carousel-title {
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24rpx;
+}
+
+.overview-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20rpx;
+  background: #F8FAFC;
+  border-radius: 12rpx;
+}
+
+.overview-value {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin-bottom: 8rpx;
+}
+
+.overview-value.highlight {
+  color: #FF6B35;
+}
+
+.overview-value.pass {
+  color: #52C41A;
+  font-size: 36rpx;
+}
+
+.overview-value.small {
+  font-size: 28rpx;
+}
+
+.overview-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.asset-summary {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 24rpx;
+  padding-bottom: 24rpx;
+  border-bottom: 1rpx solid #F0F0F0;
+}
+
+.asset-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-num {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+
+.stat-num.green { color: #52C41A; }
+.stat-num.orange { color: #FA8C16; }
+.stat-num.gray { color: #999; }
+
+.stat-label {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+.asset-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16rpx;
+}
+
+.asset-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16rpx 8rpx;
+}
+
+.asset-icon {
+  font-size: 44rpx;
+  margin-bottom: 8rpx;
+}
+
+.asset-name {
+  font-size: 22rpx;
+  color: #666;
+  margin-bottom: 4rpx;
+}
+
+.asset-count {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #4A90E2;
+}
+
+.property-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16rpx;
+}
+
+.property-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.property-icon {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  margin-bottom: 12rpx;
+}
+
+.property-name {
+  font-size: 24rpx;
+  color: #333;
+}
+
+.energy-row {
+  display: flex;
+  align-items: center;
+}
+
+.energy-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.energy-label {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 12rpx;
+}
+
+.energy-value {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #4A90E2;
+}
+
+.energy-divider {
+  width: 1rpx;
+  height: 60rpx;
+  background: #E8E8E8;
+}
+
+.canteen-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.canteen-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.canteen-label {
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 12rpx;
+}
