@@ -12,8 +12,11 @@
   gap: 8rpx;
 }
 
-.location-icon {
-  font-size: 32rpx;
+.location-icon,
+.header-icon {
+  width: 32rpx;
+  height: 32rpx;
+  flex-shrink: 0;
 }
 
 .project-name {
@@ -42,7 +45,7 @@
 }
 
 .bell-icon {
-  font-size: 40rpx;
+  display: none;
 }
 
 .notification-btn .badge {
@@ -215,8 +218,8 @@
   padding: 16rpx 8rpx;
 }
 
-.asset-icon {
-  font-size: 44rpx;
+.asset-icon,
+.asset-icon-img {
   margin-bottom: 8rpx;
 }
 
@@ -245,13 +248,10 @@
 }
 
 .property-icon {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 20rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40rpx;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
   margin-bottom: 12rpx;
 }
 

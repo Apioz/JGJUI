@@ -1,12 +1,12 @@
 <!-- 顶部项目切换 + 消息通知 -->
 <view class="header" style="padding-top: {{statusBarHeight}}px;">
   <view class="project-switcher" bindtap="toggleProjectPicker">
-    <view class="location-icon">📍</view>
+    <image class="header-icon" src="/assets/icons/svg/location.svg" mode="aspectFit" />
     <text class="project-name">{{currentProject.name}}</text>
     <text class="arrow">{{showProjectPicker ? '▲' : '▼'}}</text>
   </view>
   <view class="notification-btn" bindtap="goNotifications">
-    <text class="bell-icon">💬</text>
+    <image class="header-icon" src="/assets/icons/svg/notify.svg" mode="aspectFit" />
     <view class="badge" wx:if="{{unreadCount > 0}}">{{unreadCount}}</view>
   </view>
 </view>
@@ -104,7 +104,7 @@
         data-name="{{item.name}}"
         bindtap="onAssetTap"
       >
-        <view class="asset-icon">{{index === 0 ? '🏢' : index === 1 ? '⚙️' : index === 2 ? '📋' : '🔄'}}</view>
+        <image class="asset-icon-img" src="/assets/icons/svg/{{item.icon}}.svg" mode="aspectFit" />
         <text class="asset-name">{{item.name}}</text>
         <text class="asset-count">{{item.count}}</text>
       </view>
@@ -122,8 +122,9 @@
         data-id="{{item.id}}"
         bindtap="onPropertyTap"
       >
-        <view class="property-icon" style="background: {{item.color}}20; color: {{item.color}}">
-          {{index === 0 ? '🔧' : index === 1 ? '🛠️' : index === 2 ? '🔍' : '📝'}}
+        <view class="icon-wrap">
+          <image class="property-icon-img" src="/assets/icons/svg/{{item.icon}}.svg" mode="aspectFit" />
+          <view class="icon-badge" wx:if="{{item.badge}}">{{item.badge}}</view>
         </view>
         <text class="property-name">{{item.name}}</text>
       </view>

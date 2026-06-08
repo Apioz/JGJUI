@@ -70,3 +70,40 @@ page {
   border-radius: 16rpx;
   text-align: center;
 }
+
+/* Flat icon system */
+.ui-icon-img { display: block; }
+
+.icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-badge {
+  position: absolute;
+  top: -6rpx;
+  right: -12rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 8rpx;
+  background: #FF4D4F;
+  color: #fff;
+  font-size: 18rpx;
+  font-weight: 600;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  z-index: 1;
+}
+
+.header-icon { width: 40rpx; height: 40rpx; }
+.property-icon-img { width: 88rpx; height: 102rpx; }
+.module-icon-img { width: 48rpx; height: 48rpx; }
+.collab-icon-img { width: 72rpx; height: 72rpx; }
+.menu-icon-img { width: 44rpx; height: 44rpx; }
+.notify-icon-img { width: 44rpx; height: 44rpx; }
+.asset-icon-img { width: 56rpx; height: 56rpx; }

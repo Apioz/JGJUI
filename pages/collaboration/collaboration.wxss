@@ -15,61 +15,34 @@
   color: #999;
 }
 
-.menu-list {
+.collab-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 48rpx;
+  max-width: 480rpx;
+  margin: 40rpx auto 0;
+  padding: 20rpx 0;
+}
+
+.collab-item {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
-}
-
-.menu-item {
-  display: flex;
   align-items: center;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 32rpx 28rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  position: relative;
 }
 
-.menu-icon {
-  width: 88rpx;
-  height: 88rpx;
-  border-radius: 20rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40rpx;
-  margin-right: 24rpx;
+.collab-item .icon-wrap {
+  margin-bottom: 16rpx;
 }
 
-.menu-icon.todo { background: #FFF7E6; }
-.menu-icon.workorder { background: #E6F7FF; }
-.menu-icon.message { background: #F9F0FF; }
-
-.menu-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.collab-item .badge {
+  position: absolute;
+  top: -4rpx;
+  right: calc(50% - 56rpx);
 }
 
-.menu-name {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #1A1A1A;
-  margin-bottom: 6rpx;
-}
-
-.menu-desc {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.menu-right {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.arrow {
-  color: #CCC;
+.collab-name {
   font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
 }

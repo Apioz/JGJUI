@@ -43,10 +43,10 @@ const assetManagement = {
 }
 
 const propertyManagement = [
-  { id: 'repair', name: '报修工单', icon: 'repair', color: '#4A90E2' },
-  { id: 'maintain', name: '维保工单', icon: 'maintain', color: '#52C41A' },
-  { id: 'inspect', name: '巡检任务', icon: 'inspect', color: '#9254DE' },
-  { id: 'myorder', name: '我的工单', icon: 'myorder', color: '#1890FF' }
+  { id: 'repair', name: '报修工单', icon: 'repair', color: '#4A90E2', badge: '99+' },
+  { id: 'maintain', name: '维保工单', icon: 'maintain', color: '#52C41A', badge: '53' },
+  { id: 'inspect', name: '巡检任务', icon: 'inspect', color: '#FDD835', badge: '28' },
+  { id: 'myorder', name: '我的工单', icon: 'myorder', color: '#7E57C2', badge: '99+' }
 ]
 
 const energyManagement = {

@@ -43,10 +43,10 @@ const MOCK = {
     { id: 3, image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80', title: '一站式园区服务' }
   ],
   propertyManagement: [
-    { id: 'repair', name: '报修工单', emoji: '🔧', color: '#4A90E2' },
-    { id: 'maintain', name: '维保工单', emoji: '🛠️', color: '#52C41A' },
-    { id: 'inspect', name: '巡检任务', emoji: '🔍', color: '#9254DE' },
-    { id: 'myorder', name: '我的工单', emoji: '📝', color: '#1890FF' }
+    { id: 'repair', name: '报修工单', icon: 'repair', color: '#4A90E2', badge: '99+' },
+    { id: 'maintain', name: '维保工单', icon: 'maintain', color: '#52C41A', badge: '53' },
+    { id: 'inspect', name: '巡检任务', icon: 'inspect', color: '#FDD835', badge: '28' },
+    { id: 'myorder', name: '我的工单', icon: 'myorder', color: '#7E57C2', badge: '99+' }
   ],
   notifications: [
     { id: 1, title: '报修工单待处理', content: 'A栋3层空调故障报修，请及时处理', time: '10:30', read: false },
@@ -732,7 +732,7 @@ function renderLogin() {
   return `
     <div class="auth-page">
       <div class="auth-logo">
-        <div class="auth-logo-icon">🏢</div>
+        <div class="auth-logo-icon">${Icons.icon('building', { size: 48, color: '#4A90E2' })}</div>
         <div class="auth-logo-text">BLM Digital</div>
         <div class="auth-logo-sub">小程序</div>
       </div>
@@ -810,7 +810,7 @@ function renderSelectProject() {
       <div class="select-hint">检测到有多个项目，请选择一个项目进入</div>
       ${PROJECTS.map(p => `
         <div class="project-card ${state.selectedProjectId === p.id ? 'selected' : ''}" onclick="App.selectProjectCard('${p.id}')">
-          <div class="project-card-icon">🏢</div>
+          <div class="project-card-icon">${Icons.icon('building', { size: 32, color: '#4A90E2' })}</div>
           <div class="project-card-info">
             <div class="project-card-name">${p.name}</div>
             <div class="project-card-meta">${p.code}　项目成员(${p.members})</div>
@@ -829,10 +829,10 @@ function renderHome() {
   return `
     <div class="home-header">
       <div class="project-switcher" onclick="App.toggleProjectPicker(true)">
-        <span>📍</span><span class="project-name">${state.currentProject.name}</span><span class="arrow">▼</span>
+        ${Icons.icon('location', { size: 18, color: '#4A90E2' })}<span class="project-name">${state.currentProject.name}</span><span class="arrow">▼</span>
       </div>
-      <div class="notify-btn" onclick="App.openSubPage('notifications')">
-        <span>💬</span>${unreadNotifications() ? `<span class="badge">${unreadNotifications()}</span>` : ''}
+      <div class="header-icon-btn notify-btn" onclick="App.openSubPage('notifications')">
+        ${Icons.icon('notify', { size: 22, color: '#333' })}${unreadNotifications() ? `<span class="badge">${unreadNotifications()}</span>` : ''}
       </div>
     </div>
     <div class="carousel-wrap">
@@ -847,29 +847,29 @@ function renderHome() {
         <div class="card-title"><span>资产管理</span><span class="more" onclick="App.openAssetData('space')">查看更多 ›</span></div>
         <div class="energy-icon-grid">
           <div class="energy-icon-item" onclick="App.openAssetData('space')">
-            <div class="energy-icon-circle" style="background:#E6F4FF">🏢</div>
+            <div class="energy-icon-graph">${Icons.icon('space', { size: 32, color: '#4A90E2' })}</div>
             <div class="energy-icon-name">空间</div>
           </div>
           <div class="energy-icon-item" onclick="App.openAssetData('equipment')">
-            <div class="energy-icon-circle" style="background:#F6FFED">⚙️</div>
+            <div class="energy-icon-graph">${Icons.icon('equipment', { size: 32, color: '#52C41A' })}</div>
             <div class="energy-icon-name">设备</div>
           </div>
         </div>
       </div>
       <div class="card"><div class="card-title">物业管理</div>
         <div class="icon-grid cols-4">${MOCK.propertyManagement.map(p=>`
-          <div class="icon-item" onclick="${p.id==='myorder'?"App.openSubPage('workorder')":p.id==='repair'||p.id==='maintain'||p.id==='inspect'?"App.openWorkOrderList('"+p.id+"')":"App.showToast('"+p.name+"')"}"><div class="icon-circle" style="background:${p.color}20">${p.emoji}</div><div class="icon-name">${p.name}</div></div>`).join('')}
+          <div class="icon-item" onclick="${p.id==='myorder'?"App.openSubPage('workorder')":p.id==='repair'||p.id==='maintain'||p.id==='inspect'?"App.openWorkOrderList('"+p.id+"')":"App.showToast('"+p.name+"')"}">${Icons.propertyIcon(p)}<div class="icon-name">${p.name}</div></div>`).join('')}
         </div>
       </div>
       <div class="card">
         <div class="card-title"><span>能源管理</span><span class="more" onclick="App.openEnergyData('electric')">查看更多 ›</span></div>
         <div class="energy-icon-grid">
           <div class="energy-icon-item" onclick="App.openEnergyData('water')">
-            <div class="energy-icon-circle water">💧</div>
+            <div class="energy-icon-graph">${Icons.icon('water', { size: 32, color: '#13C2C2' })}</div>
             <div class="energy-icon-name">用水</div>
           </div>
           <div class="energy-icon-item" onclick="App.openEnergyData('electric')">
-            <div class="energy-icon-circle electric">⚡</div>
+            <div class="energy-icon-graph">${Icons.icon('electric', { size: 32, color: '#FA8C16' })}</div>
             <div class="energy-icon-name">用电</div>
           </div>
         </div>
@@ -878,16 +878,13 @@ function renderHome() {
         <div class="card-title">食堂管理</div>
         <div class="icon-grid cols-3">
           <div class="icon-item" onclick="App.openSubPage('smartCardData')">
-            <div class="icon-circle" style="background:#E6F4FF">💳</div>
-            <div class="icon-name">智慧卡</div>
+            <div class="icon-graph">${Icons.icon('smartcard', { size: 32, color: '#4A90E2' })}</div><div class="icon-name">智慧卡</div>
           </div>
           <div class="icon-item" onclick="App.openSubPage('canteenOpsData')">
-            <div class="icon-circle" style="background:#FFF7E6">🍽️</div>
-            <div class="icon-name">食堂运营</div>
+            <div class="icon-graph">${Icons.icon('canteen-ops', { size: 32, color: '#FA8C16' })}</div><div class="icon-name">食堂运营</div>
           </div>
           <div class="icon-item" onclick="App.openSubPage('canteenSupervisionData')">
-            <div class="icon-circle" style="background:#F6FFED">🛡️</div>
-            <div class="icon-name">食堂监管</div>
+            <div class="icon-graph">${Icons.icon('canteen-supervision', { size: 32, color: '#52C41A' })}</div><div class="icon-name">食堂监管</div>
           </div>
         </div>
       </div>
@@ -900,11 +897,11 @@ function renderCollab() {
     <div class="page-body"><div class="collab-grid cols-2">
       <div class="collab-icon-item" onclick="App.openSubPage('workorder')">
         ${activeWorkOrders()?`<span class="badge">${activeWorkOrders()}</span>`:''}
-        <div class="collab-icon-box workorder">🔧</div><div class="collab-icon-name">我的工单</div>
+        <div class="collab-icon-box">${Icons.icon('workorder', { size: 40, color: '#4A90E2' })}</div><div class="collab-icon-name">我的工单</div>
       </div>
       <div class="collab-icon-item" onclick="App.openSubPage('messages')">
         ${unreadMessages()?`<span class="badge">${unreadMessages()}</span>`:''}
-        <div class="collab-icon-box message">💬</div><div class="collab-icon-name">我的消息</div>
+        <div class="collab-icon-box">${Icons.icon('message', { size: 40, color: '#13C2C2' })}</div><div class="collab-icon-name">我的消息</div>
       </div>
     </div></div>`
 }
@@ -981,9 +978,9 @@ function renderMine() {
     </div>
     <div class="page-body">
       <div class="mine-menu-group">
-        <div class="mine-menu-item" onclick="App.openSubPage('profile')"><span class="mine-menu-icon">✏️</span><span class="mine-menu-name">编辑资料</span><span class="chevron">›</span></div>
-        <div class="mine-menu-item" onclick="App.openSubPage('changePassword')"><span class="mine-menu-icon">🔒</span><span class="mine-menu-name">修改密码</span><span class="chevron">›</span></div>
-        <div class="mine-menu-item" onclick="App.openSubPage('contacts')"><span class="mine-menu-icon">📒</span><span class="mine-menu-name">通讯录</span><span class="chevron">›</span></div>
+        <div class="mine-menu-item" onclick="App.openSubPage('profile')"><span class="mine-menu-icon">${Icons.icon('edit', { size: 20, color: '#666' })}</span><span class="mine-menu-name">编辑资料</span><span class="chevron">›</span></div>
+        <div class="mine-menu-item" onclick="App.openSubPage('changePassword')"><span class="mine-menu-icon">${Icons.icon('lock', { size: 20, color: '#666' })}</span><span class="mine-menu-name">修改密码</span><span class="chevron">›</span></div>
+        <div class="mine-menu-item" onclick="App.openSubPage('contacts')"><span class="mine-menu-icon">${Icons.icon('contacts', { size: 20, color: '#666' })}</span><span class="mine-menu-name">通讯录</span><span class="chevron">›</span></div>
       </div>
       <button class="btn-logout" onclick="App.logout()">退出登录</button>
     </div>`
@@ -1110,17 +1107,17 @@ function renderSmartCardData() {
     <div class="data-overview-page" style="padding:12px">
       <div class="kpi-cards-row">
         <div class="kpi-card">
-          <div class="kpi-card-top"><span>${labels.swipe}</span><span class="kpi-icon">👥</span></div>
+          <div class="kpi-card-top"><span>${labels.swipe}</span><span class="kpi-icon">${Icons.icon('user', { size: 16, color: '#999' })}</span></div>
           <div class="kpi-card-val">${pd.swipe.toLocaleString()}</div>
           <div class="kpi-card-trend up">↑ ${pd.trend} ${labels.compare}</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-card-top"><span>${labels.amount}</span><span class="kpi-icon">💰</span></div>
+          <div class="kpi-card-top"><span>${labels.amount}</span><span class="kpi-icon">${Icons.icon('smartcard', { size: 16, color: '#999' })}</span></div>
           <div class="kpi-card-val">${amountVal}</div>
           <div class="kpi-card-trend up">↑ ${pd.trend} ${labels.compare}</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-card-top"><span>${labels.perCapita}</span><span class="kpi-icon">📊</span></div>
+          <div class="kpi-card-top"><span>${labels.perCapita}</span><span class="kpi-icon">${Icons.icon('tab-data', { size: 16, color: '#999' })}</span></div>
           <div class="kpi-card-val">${pd.perCapita}元</div>
           <div class="kpi-card-trend up">↑ ${pd.trend} ${labels.compare}</div>
         </div>
@@ -1209,15 +1206,15 @@ function renderCanteenSupervisionData() {
   return `
     <div class="data-overview-page" style="padding:12px">
       <div class="supervision-cards">
-        <div class="supervision-card pass"><div class="sup-icon green">✓</div><div class="sup-label">三清三关状态</div><div class="sup-status">通过</div></div>
-        <div class="supervision-card pass"><div class="sup-icon yellow">✓</div><div class="sup-label">留样菜监测</div><div class="sup-status">通过</div></div>
-        <div class="supervision-card pass"><div class="sup-icon green">✓</div><div class="sup-label">晨检结果</div><div class="sup-status">通过</div></div>
+        <div class="supervision-card pass"><div class="sup-icon green">${Icons.icon('canteen-supervision', { size: 18, color: '#fff' })}</div><div class="sup-label">三清三关状态</div><div class="sup-status">通过</div></div>
+        <div class="supervision-card pass"><div class="sup-icon yellow">${Icons.icon('canteen-supervision', { size: 18, color: '#fff' })}</div><div class="sup-label">留样菜监测</div><div class="sup-status">通过</div></div>
+        <div class="supervision-card pass"><div class="sup-icon green">${Icons.icon('canteen-supervision', { size: 18, color: '#fff' })}</div><div class="sup-label">晨检结果</div><div class="sup-status">通过</div></div>
       </div>
       <div class="chart-card">
         <div class="supervision-search">
           <label>日期区间</label>
           <input class="date-range-input" placeholder="开始日期 - 结束日期" readonly />
-          <button class="btn-search" onclick="App.showToast('搜索完成')">🔍 搜索</button>
+          <button class="btn-search" onclick="App.showToast('搜索完成')">${Icons.icon('search', { size: 14, color: '#fff' })} 搜索</button>
           <button class="btn-clear" onclick="App.showToast('已清空')">清空</button>
         </div>
         <div class="table-scroll">
@@ -1317,7 +1314,7 @@ function renderChangePassword() {
 function renderNotifications() {
   return `<div class="page-body" style="padding-top:12px">${state.notifications.map(n=>`
     <div class="list-card ${!n.read?'unread-notify':''}" onclick="App.markNotificationRead(${n.id})">
-      <div class="list-card-header"><span class="list-card-title">🔔 ${n.title}</span><span class="list-card-time">${n.time}</span></div>
+      <div class="list-card-header"><span class="list-card-title">${Icons.icon('notify', { size: 16, color: '#4A90E2' })} ${n.title}</span><span class="list-card-time">${n.time}</span></div>
       <div class="list-card-desc">${n.content}</div>
     </div>`).join('')}</div>`
 }
@@ -1389,7 +1386,7 @@ function renderMessages() {
     <div class="message-page">
       <div class="msg-search-bar">
         <div class="msg-search-input">
-          <span class="search-icon">🔍</span>
+          <span class="search-icon search-icon-wrap">${Icons.icon('search', { size: 16, color: '#999' })}</span>
           <input placeholder="输入消息标题、内容检索" value="${state.messageSearch}" oninput="App.setMessageSearch(this.value)" />
         </div>
         <button class="msg-search-btn" onclick="App.showToast('搜索完成')">搜索</button>
@@ -1469,7 +1466,13 @@ function render() {
   }
 
   document.querySelectorAll('.tab-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.tab === state.currentTab && !state.currentSubPage)
+    const active = el.dataset.tab === state.currentTab && !state.currentSubPage
+    el.classList.toggle('active', active)
+    const iconEl = el.querySelector('.tab-icon-slot')
+    if (iconEl) {
+      const tabName = 'tab-' + el.dataset.tab
+      iconEl.innerHTML = Icons.icon(tabName, { size: 24, color: active ? '#4A90E2' : '#999' })
+    }
   })
   renderProjectList()
 }

@@ -17,10 +17,12 @@
   border-left: 6rpx solid #FA8C16;
 }
 
-.notify-icon {
-  font-size: 40rpx;
+.notify-icon-wrap {
   margin-right: 20rpx;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .notify-content {

@@ -6,6 +6,7 @@
   <title>延安东路300号 - 交互原型</title>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/auth.css" />
+  <link rel="stylesheet" href="css/icons.css" />
 </head>
 <body>
   <div class="prototype-shell">
@@ -38,16 +39,16 @@
 
       <div id="tab-bar" class="tab-bar hidden">
         <div class="tab-item" data-tab="home" onclick="App.switchTab('home')">
-          <span class="tab-icon">🏠</span><span>首页</span>
+          <span class="tab-icon-slot"></span><span>首页</span>
         </div>
         <div class="tab-item" data-tab="collab" onclick="App.switchTab('collab')">
-          <span class="tab-icon">🤝</span><span>协作</span>
+          <span class="tab-icon-slot"></span><span>协作</span>
         </div>
         <div class="tab-item" data-tab="data" onclick="App.switchTab('data')">
-          <span class="tab-icon">📊</span><span>数据</span>
+          <span class="tab-icon-slot"></span><span>数据</span>
         </div>
         <div class="tab-item" data-tab="mine" onclick="App.switchTab('mine')">
-          <span class="tab-icon">👤</span><span>我的</span>
+          <span class="tab-icon-slot"></span><span>我的</span>
         </div>
       </div>
     </div>
@@ -74,6 +75,7 @@
   </div>
 
   <div id="toast" class="toast"></div>
+  <script src="js/icons.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

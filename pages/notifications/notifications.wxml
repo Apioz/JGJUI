@@ -7,7 +7,9 @@
       data-index="{{index}}"
       bindtap="onNotificationTap"
     >
-      <view class="notify-icon">🔔</view>
+      <view class="notify-icon-wrap">
+        <image class="notify-icon-img" src="/assets/icons/svg/notify.svg" mode="aspectFit" />
+      </view>
       <view class="notify-content">
         <view class="notify-header">
           <text class="notify-title">{{item.title}}</text>

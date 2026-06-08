@@ -1,0 +1,178 @@
+/* Professional flat icon system */
+.ui-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.ui-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ui-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-icon-badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: #FF4D4F;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  line-height: 1;
+  z-index: 1;
+}
+
+.property-icon-wrap {
+  margin-bottom: 6px;
+}
+
+.energy-icon-graph,
+.icon-graph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.energy-icon-graph .ui-icon,
+.icon-graph .ui-icon {
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.module-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.collab-icon-box .ui-icon {
+  width: 36px !important;
+  height: 36px !important;
+}
+
+.energy-icon-circle .ui-icon {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.tab-item .ui-icon {
+  width: 24px !important;
+  height: 24px !important;
+  margin-bottom: 2px;
+}
+
+.tab-item { color: #999; }
+.tab-item.active { color: #4A90E2; }
+
+.header-icon-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px;
+  color: #333;
+}
+
+.header-icon-btn .ui-icon {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+.mine-menu-icon .ui-icon {
+  width: 20px !important;
+  height: 20px !important;
+  color: #666;
+}
+
+.search-icon-wrap .ui-icon {
+  width: 16px !important;
+  height: 16px !important;
+  color: #999;
+}
+
+.auth-logo-icon .ui-icon,
+.project-card-icon .ui-icon {
+  width: 32px !important;
+  height: 32px !important;
+  color: #4A90E2;
+}
+
+.kpi-icon .ui-icon {
+  width: 16px !important;
+  height: 16px !important;
+  opacity: 0.5;
+  color: #999;
+}
+
+.sup-icon .ui-icon {
+  width: 18px !important;
+  height: 18px !important;
+  color: #fff;
+}
+
+.icon-grid .icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.icon-grid .icon-name {
+  font-size: 11px;
+  color: #666;
+  text-align: center;
+}
+
+.collab-icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.collab-icon-box {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent !important;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.collab-icon-name {
+  font-size: 13px;
+  color: #333;
+}
+
+.collab-icon-item .ui-icon-badge,
+.collab-icon-item .badge {
+  position: absolute;
+  top: 0;
+  right: calc(50% - 28px);
+}
+
+.tab-item .ui-icon {

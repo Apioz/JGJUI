@@ -85,9 +85,9 @@
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
-.menu-icon {
-  font-size: 40rpx;
+.menu-icon-img {
   margin-right: 20rpx;
+  flex-shrink: 0;
 }
 
 .menu-name {
