@@ -1,0 +1,490 @@
+/* 小禹智能体 */
+.xiaoyu-fab {
+  position: absolute;
+  right: 16px;
+  bottom: 132px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.xiaoyu-fab.hidden { display: none; }
+
+.xiaoyu-fab:active { transform: scale(0.92); }
+
+.xiaoyu-fab-avatar,
+.xiaoyu-avatar-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  filter: drop-shadow(0 3px 10px rgba(74, 144, 226, 0.3));
+}
+
+.xiaoyu-fab-avatar {
+  width: 50px;
+  height: 50px;
+}
+
+.xiaoyu-mascot {
+  display: block;
+}
+
+.xiaoyu-fab-avatar .xiaoyu-mascot {
+  animation: xiaoyuBob 2.8s ease-in-out infinite;
+}
+
+@keyframes xiaoyuBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.xiaoyu-fab-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4A90E2;
+  background: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.xiaoyu-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #fff;
+  position: relative;
+}
+
+.xiaoyu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+  background: #fff;
+}
+
+.xiaoyu-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.xiaoyu-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.xiaoyu-header-btn {
+  border: none;
+  background: none;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s, transform 0.12s;
+}
+
+.xiaoyu-header-btn:active { background: #F5F6FA; }
+
+.xiaoyu-tool-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 10px;
+  background: #F0F7FF;
+  border: 1px solid #D6EBFA;
+  box-shadow: 0 1px 3px rgba(74, 144, 226, 0.08);
+}
+
+.xiaoyu-tool-btn:active {
+  background: #E8F4FD;
+  border-color: #4A90E2;
+  transform: scale(0.94);
+}
+
+.xiaoyu-tool-btn .ui-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.xiaoyu-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 16px 8px;
+  min-height: 0;
+}
+
+.xiaoyu-body::-webkit-scrollbar { width: 0; }
+
+.xiaoyu-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: auto;
+  padding: 36px 16px 12px;
+  text-align: center;
+}
+
+.xiaoyu-greeting {
+  margin-top: 18px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.5;
+}
+
+.xiaoyu-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.xiaoyu-quick-chip {
+  border: 1px solid #e8e8e8;
+  background: #F5F6FA;
+  border-radius: 20px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.xiaoyu-quick-chip:active {
+  background: #E8F4FD;
+  border-color: #4A90E2;
+  color: #4A90E2;
+}
+
+.xiaoyu-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 8px;
+}
+
+.xiaoyu-msg {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.xiaoyu-msg.user {
+  flex-direction: row-reverse;
+}
+
+.xiaoyu-msg-avatar { flex-shrink: 0; }
+
+.xiaoyu-msg-bubble {
+  max-width: 78%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.xiaoyu-msg.assistant .xiaoyu-msg-bubble {
+  background: #F5F6FA;
+  color: #333;
+  border-top-left-radius: 4px;
+}
+
+.xiaoyu-msg.user .xiaoyu-msg-bubble {
+  background: #4A90E2;
+  color: #fff;
+  border-top-right-radius: 4px;
+}
+
+.xiaoyu-footer {
+  flex-shrink: 0;
+  border-top: 1px solid #eee;
+  background: #fff;
+  padding: 8px 12px 28px;
+  position: relative;
+}
+
+.xiaoyu-footer.attach-open {
+  border-top-color: transparent;
+}
+
+.xiaoyu-functions {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.xiaoyu-functions::-webkit-scrollbar { height: 0; }
+
+.xiaoyu-func-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #eee;
+  background: #fff;
+  border-radius: 18px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.xiaoyu-func-btn:active {
+  background: #E8F4FD;
+  border-color: #4A90E2;
+  color: #4A90E2;
+}
+
+.xiaoyu-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.xiaoyu-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #F5F6FA;
+  border-radius: 22px;
+  padding: 0 12px;
+  border: 1px solid #eee;
+}
+
+.xiaoyu-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  padding: 10px 0;
+  color: #333;
+}
+
+.xiaoyu-input::placeholder { color: #ccc; }
+
+.xiaoyu-attach-btn {
+  border: none;
+  background: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border-radius: 50%;
+  transition: background 0.15s, transform 0.2s;
+}
+
+.xiaoyu-attach-btn.active {
+  background: #E8F4FD;
+  transform: rotate(45deg);
+}
+
+.xiaoyu-send-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: #4A90E2;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.xiaoyu-send-btn:active { background: #3a7bc8; }
+
+/* 加号附加功能面板 */
+.xiaoyu-attach-panel {
+  background: #F5F6FA;
+  border-radius: 16px 16px 0 0;
+  padding: 8px 12px 12px;
+  margin: 0 -12px 10px;
+  animation: xiaoyuAttachSlide 0.22s ease-out;
+}
+
+@keyframes xiaoyuAttachSlide {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.xiaoyu-attach-handle {
+  width: 36px;
+  height: 4px;
+  background: #ddd;
+  border-radius: 2px;
+  margin: 0 auto 12px;
+}
+
+.xiaoyu-attach-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.xiaoyu-attach-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px 8px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.xiaoyu-attach-item:active { background: #E8F4FD; }
+
+.xiaoyu-attach-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+}
+
+.xiaoyu-attach-name {
+  font-size: 12px;
+  color: #333;
+}
+
+.xiaoyu-attach-list {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.xiaoyu-attach-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: none;
+  background: #fff;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.xiaoyu-attach-row + .xiaoyu-attach-row {
+  border-top: 1px solid #f0f0f0;
+}
+
+.xiaoyu-attach-row:active { background: #F5F6FA; }
+
+.xiaoyu-attach-row-icon {
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
+}
+
+.xiaoyu-attach-row-name {
+  flex: 1;
+  text-align: left;
+  font-size: 14px;
+  color: #333;
+}
+
+.xiaoyu-attach-row-extra,
+.xiaoyu-attach-row-arrow {
+  font-size: 13px;
+  color: #999;
+}
+
+.xiaoyu-history-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 30;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.xiaoyu-history-panel {
+  width: 280px;
+  height: 100%;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.xiaoyu-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  border-bottom: 1px solid #eee;
+}
+
+.xiaoyu-history-close {
+  border: none;
+  background: none;
+  font-size: 22px;
+  color: #999;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.xiaoyu-history-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.xiaoyu-history-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f5f5f5;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.xiaoyu-history-item:active { background: #F5F6FA; }
+
+.xiaoyu-history-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.xiaoyu-history-preview {
+  font-size: 12px;
+  color: #999;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 4px;
+}
+
+.xiaoyu-history-time {
+  font-size: 11px;
+  color: #ccc;
+}

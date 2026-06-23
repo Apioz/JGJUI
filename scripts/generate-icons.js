@@ -27,6 +27,7 @@ fs.mkdirSync(pngDir, { recursive: true })
 
 Object.entries(SVG).forEach(([name, svg]) => {
   const colorMap = {
+    repair: '#4A90E2', maintain: '#52C41A', inspect: '#FDD835', myorder: '#7E57C2',
     location: '#4A90E2', notify: '#333333', workorder: '#4A90E2', message: '#13C2C2',
     space: '#4A90E2', equipment: '#52C41A', water: '#13C2C2', electric: '#FA8C16',
     smartcard: '#4A90E2', 'canteen-ops': '#FA8C16', 'canteen-supervision': '#52C41A',

@@ -40,8 +40,13 @@
   z-index: 1;
 }
 
-.property-icon-wrap {
-  margin-bottom: 6px;
+.property-icon-wrap .ui-icon {
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.property-icon-wrap.icon-graph {
+  margin-bottom: 8px;
 }
 
 .energy-icon-graph,

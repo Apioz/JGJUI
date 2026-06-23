@@ -104,9 +104,14 @@ body {
   padding: 4px 8px;
 }
 
-.nav-title { font-size: 16px; font-weight: 600; }
+.nav-title { font-size: 16px; font-weight: 600; flex: 1; text-align: center; }
 
-.nav-placeholder { width: 48px; }
+.nav-bar-tab .nav-back {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.nav-placeholder { width: 48px; flex-shrink: 0; }
 
 .screen {
   flex: 1;

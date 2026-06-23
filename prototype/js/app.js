@@ -203,6 +203,26 @@ const MOCK = {
     { name: '绿化用水', value: 2.5, percent: '20.0%' },
     { name: '消防用水', value: 1.8, percent: '14.4%' }
   ],
+  officeSpace: [
+    { label: '楼栋总数', value: '4', unit: '个', color: '#4A90E2', icon: 'building' },
+    { label: '房间总数', value: '1373', unit: '间', color: '#52C41A', icon: 'space' },
+    { label: '楼层数量', value: '51', unit: '个', color: '#FDD835', icon: 'floor' },
+    { label: '建筑面积', value: '74620.44', unit: '㎡', color: '#13C2C2', icon: 'area' },
+    { label: '总使用面积', value: '52739.42', unit: '㎡', color: '#9254DE', icon: 'office-building' }
+  ],
+  publicWarehouse: {
+    summary: { total: 822, inbound: 249, outbound: 573, temp: 0 },
+    warehouses: [
+      { name: '中仓（莲岸家园）', count: 184, color: '#52C41A' },
+      { name: '外仓（尚海湾）', count: 226, color: '#4A90E2' },
+      { name: '近仓（1号楼B2）', count: 163, color: '#FAAD14' }
+    ],
+    categories: [
+      { name: '会务用品', value: 230, percent: '28%', color: '#FF6B35' },
+      { name: '办公家具', value: 534, percent: '65%', color: '#FAAD14' },
+      { name: '装饰品', value: 58, percent: '8%', color: '#4A90E2' }
+    ]
+  },
   smartCard: {
     periods: {
       today: {
@@ -311,8 +331,36 @@ const SUB_TITLES = {
   contacts: '通讯录', profile: '编辑资料', changePassword: '修改密码',
   canteenData: '数据总览', energyData: '数据总览', assetData: '数据总览',
   smartCardData: '智慧卡数据总览', canteenOpsData: '食堂运营数据总览', canteenSupervisionData: '食堂监管数据总览',
-  forgotPassword: '忘记密码', register: '注册'
+  forgotPassword: '忘记密码', register: '注册',
+  xiaoyu: '小禹'
 }
+
+const XIAOYU_FUNCTIONS = [
+  { id: 'park', name: '园区问答', icon: 'building', color: '#4A90E2' },
+  { id: 'repair', name: '报修助手', icon: 'repair', color: '#FA8C16' },
+  { id: 'workorder', name: '工单查询', icon: 'workorder', color: '#9254DE' }
+]
+
+const XIAOYU_QUICK_ACTIONS = [
+  { text: '今日能耗情况', prompt: '帮我看看今天的能耗情况' },
+  { text: '帮我查工单', prompt: '查询我最近的工单进度' },
+  { text: '食堂今日菜单', prompt: '今天食堂有什么菜？' },
+  { text: '园区最新公告', prompt: '最近有什么园区公告？' }
+]
+
+const XIAOYU_ATTACH_GRID = [
+  { id: 'camera', name: '拍照', icon: 'camera' },
+  { id: 'photo', name: '照片', icon: 'photo' },
+  { id: 'file', name: '本地文件', icon: 'file' },
+  { id: 'doc', name: '园区文档', icon: 'doc' },
+  { id: 'voice', name: '语音输入', icon: 'voice' },
+  { id: 'phrase', name: '常用语', icon: 'phrase' }
+]
+
+const XIAOYU_ATTACH_EXTRA = [
+  { id: 'search', name: '联网搜索', icon: 'globe', extra: '自动' },
+  { id: 'plugin', name: '插件', icon: 'plugin' }
+]
 
 const state = {
   authPhase: 'login',
@@ -355,7 +403,17 @@ const state = {
   workOrderMainTab: 'initiated',
   workOrderFilter: '全部',
   workOrderListCategory: 'repair',
-  workOrderListFilter: '全部'
+  workOrderListFilter: '全部',
+  xiaoyuMessages: [],
+  xiaoyuInput: '',
+  xiaoyuHistoryOpen: false,
+  xiaoyuAttachOpen: false,
+  xiaoyuSessions: [
+    { id: 's1', title: '能耗查询', time: '今天 10:30', preview: '今日用电 1,280 kWh...' },
+    { id: 's2', title: '报修进度', time: '昨天 16:20', preview: '您的报修工单 WO-2024...' },
+    { id: 's3', title: '食堂推荐', time: '6月20日', preview: '推荐今日特色：红烧排骨...' }
+  ],
+  xiaoyuActiveSessionId: null
 }
 
 let carouselTimer = null
@@ -512,7 +570,7 @@ function renderHourlyChart() {
   return renderLineChart(sample(today), sample(yesterday), labels)
 }
 
-function renderTypeDonutChart(types, colors) {
+function renderTypeDonutChart(types, colors, center) {
   const total = types.reduce((s, t) => s + t.value, 0)
   let offset = 0
   const r = 60, ir = 35, cx = 80, cy = 80
@@ -527,15 +585,22 @@ function renderTypeDonutChart(types, colors) {
     const x2i = cx + ir * Math.cos((start - 90) * Math.PI / 180), y2i = cy + ir * Math.sin((start - 90) * Math.PI / 180)
     return `<path d="M${x1o},${y1o} A${r},${r} 0 ${large},1 ${x2o},${y2o} L${x1i},${y1i} A${ir},${ir} 0 ${large},0 ${x2i},${y2i} Z" fill="${colors[i]}"/>`
   }).join('')
-  return `<svg width="160" height="160" viewBox="0 0 160 160">${slices}</svg>`
+  const chart = `<svg width="160" height="160" viewBox="0 0 160 160">${slices}</svg>`
+  if (!center) return chart
+  const displayVal = total % 1 === 0 ? total.toLocaleString() : total.toFixed(1)
+  return `
+    <div class="pie-wrap donut-wrap">
+      ${chart}
+      <div class="pie-center">${center.label}<strong>${displayVal}<small>${center.unit || ''}</small></strong></div>
+    </div>`
 }
 
 function renderDonutChart() {
-  return renderTypeDonutChart(MOCK.energyTypes, ['#4A90E2', '#13C2C2', '#52C41A', '#FAAD14', '#FA8C16', '#9254DE'])
+  return renderTypeDonutChart(MOCK.energyTypes, ['#4A90E2', '#13C2C2', '#52C41A', '#FAAD14', '#FA8C16', '#9254DE'], { label: '用电总量', unit: 'kwh' })
 }
 
 function renderWaterDonutChart() {
-  return renderTypeDonutChart(MOCK.waterTypes, ['#4A90E2', '#13C2C2', '#52C41A'])
+  return renderTypeDonutChart(MOCK.waterTypes, ['#4A90E2', '#13C2C2', '#52C41A'], { label: '用水总量', unit: 't' })
 }
 
 function renderDataEnergyTypeSection() {
@@ -547,9 +612,10 @@ function renderDataEnergyTypeSection() {
   const unit = isElectric ? 'kwh' : 't'
   const typeLabel = isElectric ? '用电类型' : '用水类型'
   const amountLabel = isElectric ? '用电量' : '用水量'
+  const centerLabel = isElectric ? '用电总量' : '用水总量'
   return `
     <div style="display:flex;align-items:center;gap:16px">
-      ${renderTypeDonutChart(types, colors)}
+      ${renderTypeDonutChart(types, colors, { label: centerLabel, unit })}
       <div style="flex:1;font-size:12px">${types.map(t => `<div style="margin-bottom:4px">${t.name} ${t.value}${unit}</div>`).join('')}</div>
     </div>
     <table class="data-table"><tr><th>${typeLabel}</th><th>${amountLabel}</th><th>占比</th></tr>
@@ -600,6 +666,66 @@ function renderWaterTypeSection() {
     <table class="data-table"><tr><th>用水类型</th><th>用水量</th><th>占比</th></tr>
       ${MOCK.waterTypes.map(t => `<tr><td>${t.name}</td><td>${t.value}t</td><td>${t.percent}</td></tr>`).join('')}
     </table>`
+}
+
+function renderOfficeSpaceSection() {
+  return `
+    <div class="office-stat-scroll">
+      ${MOCK.officeSpace.map(item => `
+        <div class="office-stat-card">
+          <div class="office-stat-text">
+            <div class="office-stat-label">${item.label}</div>
+            <div class="office-stat-value">${item.value}<span class="office-stat-unit">${item.unit}</span></div>
+          </div>
+          <div class="office-stat-icon" style="background:${item.color}">
+            ${Icons.icon(item.icon, { size: 22, color: '#fff' })}
+          </div>
+        </div>`).join('')}
+    </div>`
+}
+
+function renderWarehouseStackedBar(warehouses) {
+  const total = warehouses.reduce((s, w) => s + w.count, 0)
+  return `
+    <div class="warehouse-stacked-bar">
+      ${warehouses.map(w => `
+        <div class="warehouse-bar-seg" style="width:${(w.count / total * 100).toFixed(1)}%;background:${w.color}"></div>`).join('')}
+    </div>
+    <div class="warehouse-bar-legend">
+      ${warehouses.map(w => `
+        <div class="warehouse-bar-item">
+          <span class="warehouse-bar-dot" style="background:${w.color}"></span>
+          <span class="warehouse-bar-name">${w.name}</span>
+          <span class="warehouse-bar-count">${w.count} 件</span>
+        </div>`).join('')}
+    </div>`
+}
+
+function renderPublicWarehouseSection() {
+  const w = MOCK.publicWarehouse
+  const cats = w.categories
+  const colors = cats.map(c => c.color)
+  return `
+    <div class="warehouse-summary-row">
+      <div class="warehouse-summary-item"><div class="warehouse-summary-val cyan">${w.summary.total}</div><div class="warehouse-summary-label">物品总数</div></div>
+      <div class="warehouse-summary-item"><div class="warehouse-summary-val cyan">${w.summary.inbound}</div><div class="warehouse-summary-label">入仓数</div></div>
+      <div class="warehouse-summary-item"><div class="warehouse-summary-val cyan">${w.summary.outbound}</div><div class="warehouse-summary-label">出仓数</div></div>
+      <div class="warehouse-summary-item"><div class="warehouse-summary-val">${w.summary.temp}</div><div class="warehouse-summary-label">暂存数</div></div>
+    </div>
+    <div class="asset-sub-title"><span class="asset-sub-dot"></span>各仓库物品情况</div>
+    ${renderWarehouseStackedBar(w.warehouses)}
+    <div class="asset-sub-title" style="margin-top:16px"><span class="asset-sub-dot"></span>物品分类情况</div>
+    <div class="warehouse-category-row">
+      ${renderTypeDonutChart(cats, colors)}
+      <div class="warehouse-category-legend">
+        ${cats.map(c => `
+          <div class="warehouse-category-item">
+            <span class="warehouse-bar-dot" style="background:${c.color}"></span>
+            <span class="warehouse-category-name">${c.name}</span>
+            <span class="warehouse-category-pct">${c.percent}</span>
+          </div>`).join('')}
+      </div>
+    </div>`
 }
 
 function renderMultiLineChart(lines, labels, colors) {
@@ -845,14 +971,18 @@ function renderHome() {
       ${renderHomeOverview(d.homeOverview)}
       <div class="card">
         <div class="card-title"><span>资产管理</span><span class="more" onclick="App.openAssetData('space')">查看更多 ›</span></div>
-        <div class="energy-icon-grid">
-          <div class="energy-icon-item" onclick="App.openAssetData('space')">
+        <div class="energy-icon-grid cols-3">
+          <div class="energy-icon-item" onclick="App.goToAssetSection('asset-type', 'space')">
             <div class="energy-icon-graph">${Icons.icon('space', { size: 32, color: '#4A90E2' })}</div>
             <div class="energy-icon-name">空间</div>
           </div>
-          <div class="energy-icon-item" onclick="App.openAssetData('equipment')">
+          <div class="energy-icon-item" onclick="App.goToAssetSection('asset-type', 'equipment')">
             <div class="energy-icon-graph">${Icons.icon('equipment', { size: 32, color: '#52C41A' })}</div>
             <div class="energy-icon-name">设备</div>
+          </div>
+          <div class="energy-icon-item" onclick="App.goToAssetSection('asset-warehouse')">
+            <div class="energy-icon-graph">${Icons.icon('warehouse', { size: 32, color: '#9254DE' })}</div>
+            <div class="energy-icon-name">公务仓</div>
           </div>
         </div>
       </div>
@@ -891,6 +1021,179 @@ function renderHome() {
     </div>`
 }
 
+function xiaoyuAvatarSvg(size) {
+  const gid = 'xyg' + Math.random().toString(36).slice(2, 8)
+  const gs = gid + 's'
+  return `<svg class="xiaoyu-mascot" viewBox="0 0 64 64" width="${size}" height="${size}" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="${gid}" x1="32" y1="10" x2="32" y2="54" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#7EC8FF"/>
+        <stop offset="0.55" stop-color="#4A90E2"/>
+        <stop offset="1" stop-color="#3A7BC8"/>
+      </linearGradient>
+      <linearGradient id="${gs}" x1="32" y1="18" x2="32" y2="44" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#FFFFFF"/>
+        <stop offset="1" stop-color="#EEF6FF"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="32" cy="57" rx="11" ry="2.8" fill="#4A90E2" opacity="0.14"/>
+    <path d="M10 30C6 26 7 20 11 18C13 22 12 27 10 30Z" fill="#9AD4FF" opacity="0.35"/>
+    <path d="M54 30C58 26 57 20 53 18C51 22 52 27 54 30Z" fill="#9AD4FF" opacity="0.35"/>
+    <rect x="15" y="16" width="34" height="34" rx="13" fill="url(#${gid})"/>
+    <rect x="17" y="18" width="30" height="30" rx="11" stroke="#fff" stroke-opacity="0.22" stroke-width="1"/>
+    <rect x="20" y="22" width="24" height="22" rx="9" fill="url(#${gs})"/>
+    <ellipse cx="27" cy="32" rx="3.2" ry="3.8" fill="#4A90E2"/>
+    <ellipse cx="37" cy="32" rx="3.2" ry="3.8" fill="#4A90E2"/>
+    <circle cx="28" cy="30.8" r="1.1" fill="#fff"/>
+    <circle cx="38" cy="30.8" r="1.1" fill="#fff"/>
+    <ellipse cx="23" cy="37" rx="2.4" ry="1.4" fill="#FFB4C8" opacity="0.45"/>
+    <ellipse cx="41" cy="37" rx="2.4" ry="1.4" fill="#FFB4C8" opacity="0.45"/>
+    <path d="M27.5 39.5Q32 42.5 36.5 39.5" stroke="#5A9FD4" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="32" y1="16" x2="32" y2="8" stroke="#3A7BC8" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="32" cy="6.5" r="3" fill="#7EC8FF"/>
+    <circle cx="32" cy="6.5" r="4.8" fill="#4A90E2" opacity="0.2"/>
+    <circle cx="33" cy="5.5" r="0.9" fill="#fff" opacity="0.9"/>
+    <rect x="24" y="48" width="5" height="6" rx="2.5" fill="#3A7BC8"/>
+    <rect x="35" y="48" width="5" height="6" rx="2.5" fill="#3A7BC8"/>
+    <circle cx="32" cy="46.5" r="1.8" fill="#7EC8FF" opacity="0.85"/>
+    <path d="M49 12L49.4 13.1L50.5 13.5L49.4 13.9L49 15L48.6 13.9L47.5 13.5L48.6 13.1L49 12Z" fill="#7EC8FF" opacity="0.7"/>
+  </svg>`
+}
+
+function xiaoyuAvatarHtml(size) {
+  return `<div class="xiaoyu-avatar-slot" style="width:${size}px;height:${size}px">${xiaoyuAvatarSvg(size)}</div>`
+}
+
+function getXiaoyuReply(text) {
+  const d = pd()
+  if (/能耗|用电|用水|能源/.test(text)) {
+    return `当前项目「${state.currentProject.name}」今日用电 ${d.homeOverview.todayElectric}，用水 ${d.homeOverview.todayWater}，${d.energy.compareYesterday}。需要查看详细趋势吗？`
+  }
+  if (/工单|报修|维保|巡检/.test(text)) {
+    return `您有 ${activeWorkOrders()} 条进行中的工单。最近一条：${MOCK.workOrders[0]?.title || '暂无工单'}，状态为「${MOCK.workOrders[0]?.status || '—'}」。`
+  }
+  if (/食堂|菜单|菜谱|吃饭/.test(text)) {
+    const bf = MOCK.dailyMenus.breakfast.slice(0, 2).map(x => x.name).join('、')
+    const ln = (MOCK.dailyMenus.lunch || MOCK.dailyMenus.breakfast).slice(0, 2).map(x => x.name).join('、')
+    return `今日食堂推荐：${bf}（早餐），${ln}（午餐）。线上预定 ${d.canteen.onlineReserve} 份，客饭预定 ${d.canteen.guestReserve} 份。`
+  }
+  if (/公告|通知/.test(text)) {
+    const n = state.notifications.filter(x => !x.read)[0] || state.notifications[0]
+    return n ? `最新公告：${n.title} — ${n.content}` : '暂无新公告，一切正常。'
+  }
+  if (/数据|统计|总览/.test(text)) {
+    return `「${state.currentProject.name}」建筑面积 ${d.homeOverview.buildingArea}，设备 ${d.homeOverview.equipmentTotal} 台；待处理工单 ${d.homeOverview.pendingOrders} 条，已处理 ${d.homeOverview.processedOrders} 条。`
+  }
+  return `我是小禹，您的智慧园区助手。可以帮您查询能耗、工单、食堂、公告和园区数据，请随时提问。`
+}
+
+function renderXiaoyu() {
+  const u = MOCK.userProfile
+  const msgs = state.xiaoyuMessages
+  const hasMessages = msgs.length > 0
+
+  return `
+    <div class="xiaoyu-page">
+      <div class="xiaoyu-header">
+        <button class="xiaoyu-header-btn" onclick="App.closeSubPage()" title="返回首页">
+          ${Icons.icon('back-home', { size: 22, color: '#333' })}
+        </button>
+        <div class="xiaoyu-header-title">
+          ${xiaoyuAvatarHtml(28)}
+          <span>小禹</span>
+        </div>
+        <div class="xiaoyu-header-actions">
+          <button class="xiaoyu-header-btn xiaoyu-tool-btn" onclick="App.xiaoyuNewChat()" title="新对话">
+            ${Icons.icon('new-chat', { size: 20, color: '#4A90E2' })}
+          </button>
+          <button class="xiaoyu-header-btn xiaoyu-tool-btn" onclick="App.toggleXiaoyuHistory()" title="历史对话">
+            ${Icons.icon('history', { size: 20, color: '#4A90E2' })}
+          </button>
+        </div>
+      </div>
+
+      <div class="xiaoyu-body" id="xiaoyu-body">
+        ${hasMessages ? `
+          <div class="xiaoyu-messages">
+            ${msgs.map(m => `
+              <div class="xiaoyu-msg ${m.role}">
+                ${m.role === 'assistant' ? `<div class="xiaoyu-msg-avatar">${xiaoyuAvatarHtml(32)}</div>` : ''}
+                <div class="xiaoyu-msg-bubble">${m.content}</div>
+              </div>`).join('')}
+          </div>` : `
+          <div class="xiaoyu-welcome">
+            ${xiaoyuAvatarHtml(64)}
+            <div class="xiaoyu-greeting">嗨 ${u.name}，今天需要小禹帮您做什么？</div>
+            <div class="xiaoyu-quick-actions">
+              ${XIAOYU_QUICK_ACTIONS.map(a => `
+                <button class="xiaoyu-quick-chip" onclick="App.xiaoyuSend('${a.prompt.replace(/'/g, "\\'")}')">${a.text}</button>`).join('')}
+            </div>
+          </div>`}
+      </div>
+
+      <div class="xiaoyu-footer${state.xiaoyuAttachOpen ? ' attach-open' : ''}">
+        ${state.xiaoyuAttachOpen ? `
+          <div class="xiaoyu-attach-panel">
+            <div class="xiaoyu-attach-handle"></div>
+            <div class="xiaoyu-attach-grid">
+              ${XIAOYU_ATTACH_GRID.map(item => `
+                <button class="xiaoyu-attach-item" onclick="App.xiaoyuAttachAction('${item.id}')">
+                  <span class="xiaoyu-attach-icon">${Icons.icon(item.icon, { size: 24, color: '#333' })}</span>
+                  <span class="xiaoyu-attach-name">${item.name}</span>
+                </button>`).join('')}
+            </div>
+            <div class="xiaoyu-attach-list">
+              ${XIAOYU_ATTACH_EXTRA.map(item => `
+                <button class="xiaoyu-attach-row" onclick="App.xiaoyuAttachAction('${item.id}')">
+                  <span class="xiaoyu-attach-row-icon">${Icons.icon(item.icon, { size: 22, color: '#333' })}</span>
+                  <span class="xiaoyu-attach-row-name">${item.name}</span>
+                  ${item.extra ? `<span class="xiaoyu-attach-row-extra">${item.extra} ›</span>` : '<span class="xiaoyu-attach-row-arrow">›</span>'}
+                </button>`).join('')}
+            </div>
+          </div>` : ''}
+        <div class="xiaoyu-functions">
+          ${XIAOYU_FUNCTIONS.map(f => `
+            <button class="xiaoyu-func-btn" onclick="App.xiaoyuUseFunction('${f.id}')">
+              ${Icons.icon(f.icon, { size: 18, color: f.color })}
+              <span>${f.name}</span>
+            </button>`).join('')}
+        </div>
+        <div class="xiaoyu-input-bar">
+          <div class="xiaoyu-input-wrap">
+            <input type="text" class="xiaoyu-input" placeholder="尽管问，园区的事交给我"
+              value="${state.xiaoyuInput.replace(/"/g, '&quot;')}"
+              oninput="App.updateXiaoyuInput(this.value)"
+              onkeydown="if(event.key==='Enter')App.xiaoyuSend()" />
+            <button class="xiaoyu-attach-btn${state.xiaoyuAttachOpen ? ' active' : ''}" onclick="App.toggleXiaoyuAttach()">
+              ${Icons.icon('plus', { size: 20, color: state.xiaoyuAttachOpen ? '#4A90E2' : '#999' })}
+            </button>
+          </div>
+          <button class="xiaoyu-send-btn" onclick="App.xiaoyuSend()">
+            ${Icons.icon('send', { size: 20, color: '#fff' })}
+          </button>
+        </div>
+      </div>
+
+      ${state.xiaoyuHistoryOpen ? `
+        <div class="xiaoyu-history-mask" onclick="App.toggleXiaoyuHistory(false)">
+          <div class="xiaoyu-history-panel" onclick="event.stopPropagation()">
+            <div class="xiaoyu-history-header">
+              <span>历史对话</span>
+              <button class="xiaoyu-history-close" onclick="App.toggleXiaoyuHistory(false)">×</button>
+            </div>
+            <div class="xiaoyu-history-list">
+              ${state.xiaoyuSessions.map(s => `
+                <div class="xiaoyu-history-item" onclick="App.xiaoyuLoadSession('${s.id}')">
+                  <div class="xiaoyu-history-title">${s.title}</div>
+                  <div class="xiaoyu-history-preview">${s.preview}</div>
+                  <div class="xiaoyu-history-time">${s.time}</div>
+                </div>`).join('')}
+            </div>
+          </div>
+        </div>` : ''}
+    </div>`
+}
+
 function renderCollab() {
   return `
     <div class="sub-header"><div class="sub-header-title">协作中心</div><div class="sub-header-desc">工单与消息</div></div>
@@ -911,11 +1214,10 @@ function renderData() {
   const assetTypes = state.assetTypeTab === 'space' ? MOCK.assetSpaceTypes : MOCK.assetEquipmentTypes
   const assetTotal = assetTypes.reduce((s, t) => s + t.count, 0)
   return `
-    <div class="sub-header"><div class="sub-header-title">数据统计</div><div class="sub-header-desc">${state.currentProject.name}</div></div>
-    <div class="page-body">
+    <div class="page-body data-dashboard-body">
       <div class="module-section">
         <div class="module-section-title"><span class="module-section-icon asset">●</span>资产管理</div>
-        <div class="card">
+        <div class="card" id="asset-type-section">
           <div class="chart-card-header">
             <span class="chart-card-title">资产类型分布</span>
             <div class="toggle-group">
@@ -925,6 +1227,18 @@ function renderData() {
           </div>
           <div class="pie-wrap">${renderPieChart(assetTypes, assetTotal)}<div class="pie-center">${state.assetTypeTab==='space'?'总面积':'设备总数'}<strong>${state.assetTypeTab==='space'?d.assetManagement.spaceTotal:d.assetManagement.equipmentTotal}</strong></div></div>
           <div class="chart-legend-wrap">${assetTypes.map(t=>`<span class="legend-tag"><span style="color:${t.color}">●</span>${t.name} ${t.count}</span>`).join('')}</div>
+        </div>
+        <div class="card" id="asset-facility-section" style="margin-top:10px">
+          <div class="chart-card-title" style="margin-bottom:8px">设施故障统计</div>
+          ${renderMonthLineChart(MOCK.facilityFailures, '#4A90E2')}
+        </div>
+        <div class="card" id="asset-office-section" style="margin-top:10px">
+          <div class="chart-card-title" style="margin-bottom:12px">办公用房</div>
+          ${renderOfficeSpaceSection()}
+        </div>
+        <div class="card" id="asset-warehouse-section" style="margin-top:10px">
+          <div class="chart-card-title" style="margin-bottom:12px">公务仓</div>
+          ${renderPublicWarehouseSection()}
         </div>
       </div>
       <div class="module-section">
@@ -1053,7 +1367,7 @@ function renderAssetData() {
   const total = types.reduce((s, t) => s + t.count, 0)
   return `
     <div class="data-overview-page">
-      <div class="chart-card" style="margin-top:12px">
+      <div class="chart-card" id="asset-data-type-section" style="margin-top:12px">
         <div class="chart-card-header">
           <span class="chart-card-title">按资产类型统计</span>
           <div class="toggle-group">
@@ -1069,9 +1383,17 @@ function renderAssetData() {
         <div class="chart-card-title" style="margin-bottom:12px">按项目统计空间建筑面积排行榜</div>
         ${renderBarChart(MOCK.spaceRanking, true)}
       </div>
-      <div class="chart-card">
+      <div class="chart-card" id="asset-data-facility-section">
         <div class="chart-card-title" style="margin-bottom:8px">设施故障统计</div>
         ${renderMonthLineChart(MOCK.facilityFailures, '#4A90E2')}
+      </div>
+      <div class="chart-card" id="asset-data-office-section">
+        <div class="chart-card-title" style="margin-bottom:12px">办公用房</div>
+        ${renderOfficeSpaceSection()}
+      </div>
+      <div class="chart-card" id="asset-data-warehouse-section">
+        <div class="chart-card-title" style="margin-bottom:12px">公务仓</div>
+        ${renderPublicWarehouseSection()}
       </div>
     </div>`
 }
@@ -1418,7 +1740,8 @@ const SUB_RENDERERS = {
   contacts: renderContacts, profile: renderProfile, changePassword: renderChangePassword,
   canteenData: renderCanteenData, energyData: renderEnergyData, assetData: renderAssetData,
   smartCardData: renderSmartCardData, canteenOpsData: renderCanteenOpsData, canteenSupervisionData: renderCanteenSupervisionData,
-  forgotPassword: renderForgotPassword, register: renderRegister
+  forgotPassword: renderForgotPassword, register: renderRegister,
+  xiaoyu: renderXiaoyu
 }
 
 const TAB_RENDERERS = { home: renderHome, collab: renderCollab, data: renderData, mine: renderMine }
@@ -1455,14 +1778,24 @@ function render() {
   statusBar.classList.remove('hidden')
 
   if (state.currentSubPage) {
-    navBar.classList.remove('hidden')
+    const isXiaoyu = state.currentSubPage === 'xiaoyu'
+    navBar.classList.toggle('hidden', isXiaoyu)
+    navBar.classList.remove('nav-bar-tab')
     tabBar.classList.add('hidden')
-    navTitle.textContent = SUB_TITLES[state.currentSubPage] || ''
+    if (!isXiaoyu) navTitle.textContent = SUB_TITLES[state.currentSubPage] || ''
     screen.innerHTML = SUB_RENDERERS[state.currentSubPage]()
+    if (isXiaoyu) scrollXiaoyuToBottom()
   } else {
-    navBar.classList.add('hidden')
     tabBar.classList.remove('hidden')
     screen.innerHTML = TAB_RENDERERS[state.currentTab]()
+    if (state.currentTab === 'data') {
+      navBar.classList.remove('hidden')
+      navBar.classList.add('nav-bar-tab')
+      navTitle.textContent = '数据统计'
+    } else {
+      navBar.classList.add('hidden')
+      navBar.classList.remove('nav-bar-tab')
+    }
   }
 
   document.querySelectorAll('.tab-item').forEach(el => {
@@ -1475,6 +1808,36 @@ function render() {
     }
   })
   renderProjectList()
+
+  const fab = document.getElementById('xiaoyu-fab')
+  if (fab) {
+    fab.classList.toggle('hidden', !(state.authPhase === 'app' && state.currentTab === 'home' && !state.currentSubPage))
+    const fabAvatar = document.getElementById('xiaoyu-fab-avatar')
+    if (fabAvatar) fabAvatar.innerHTML = xiaoyuAvatarSvg(50)
+  }
+}
+
+function scrollToAssetSection(target) {
+  const idMap = {
+    'asset-type': 'asset-data-type-section',
+    'asset-office': 'asset-data-office-section',
+    'asset-warehouse': 'asset-data-warehouse-section',
+    'asset-facility': 'asset-data-facility-section'
+  }
+  const id = idMap[target] || target
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      const el = document.getElementById(id)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 80)
+  })
+}
+
+function scrollXiaoyuToBottom() {
+  requestAnimationFrame(() => {
+    const body = document.getElementById('xiaoyu-body')
+    if (body) body.scrollTop = body.scrollHeight
+  })
 }
 
 function startCarousel() {
@@ -1536,6 +1899,15 @@ const App = {
   },
 
   switchTab(tab) { state.currentTab = tab; state.currentSubPage = null; render(); startCarousel() },
+
+  goToAssetSection(target, assetTab) {
+    if (assetTab === 'equipment') state.assetTypeTab = 'equipment'
+    else if (assetTab === 'space') state.assetTypeTab = 'space'
+    state.currentSubPage = 'assetData'
+    render()
+    stopCarousel()
+    scrollToAssetSection(target)
+  },
 
   openSubPage(page) {
     if (state.authPhase !== 'app' && page !== 'forgotPassword' && page !== 'register') {
@@ -1603,6 +1975,86 @@ const App = {
   },
 
   handleBack() { App.closeSubPage() },
+
+  updateXiaoyuInput(v) { state.xiaoyuInput = v },
+
+  xiaoyuSend(text) {
+    const msg = (text || state.xiaoyuInput || '').trim()
+    if (!msg) return
+    state.xiaoyuAttachOpen = false
+    state.xiaoyuMessages.push({ role: 'user', content: msg })
+    state.xiaoyuInput = ''
+    render()
+    setTimeout(() => {
+      state.xiaoyuMessages.push({ role: 'assistant', content: getXiaoyuReply(msg) })
+      render()
+    }, 600)
+  },
+
+  xiaoyuUseFunction(id) {
+    const prompts = {
+      park: '介绍一下当前园区的基本情况',
+      repair: '我想了解报修流程',
+      energy: '帮我看看今天的能耗情况',
+      canteen: '今天食堂有什么推荐？',
+      workorder: '查询我最近的工单进度',
+      data: '帮我解读一下首页的数据总览'
+    }
+    App.xiaoyuSend(prompts[id] || '你好')
+  },
+
+  xiaoyuNewChat() {
+    if (state.xiaoyuMessages.length) {
+      const first = state.xiaoyuMessages.find(m => m.role === 'user')
+      state.xiaoyuSessions.unshift({
+        id: 's' + Date.now(),
+        title: first ? first.content.slice(0, 12) : '新对话',
+        time: '刚刚',
+        preview: state.xiaoyuMessages[state.xiaoyuMessages.length - 1]?.content.slice(0, 30) + '...'
+      })
+    }
+    state.xiaoyuMessages = []
+    state.xiaoyuInput = ''
+    state.xiaoyuHistoryOpen = false
+    state.xiaoyuAttachOpen = false
+    render()
+    showToast('已开始新对话')
+  },
+
+  toggleXiaoyuHistory(show) {
+    state.xiaoyuHistoryOpen = show !== undefined ? show : !state.xiaoyuHistoryOpen
+    if (state.xiaoyuHistoryOpen) state.xiaoyuAttachOpen = false
+    render()
+  },
+
+  toggleXiaoyuAttach(show) {
+    state.xiaoyuAttachOpen = show !== undefined ? show : !state.xiaoyuAttachOpen
+    if (state.xiaoyuAttachOpen) state.xiaoyuHistoryOpen = false
+    render()
+  },
+
+  xiaoyuAttachAction(id) {
+    const labels = {
+      camera: '拍照', photo: '照片', file: '本地文件', doc: '园区文档',
+      voice: '语音输入', phrase: '常用语', search: '联网搜索', plugin: '插件'
+    }
+    state.xiaoyuAttachOpen = false
+    render()
+    showToast((labels[id] || id) + ' 功能开发中')
+  },
+
+  xiaoyuLoadSession(id) {
+    const session = state.xiaoyuSessions.find(s => s.id === id)
+    if (!session) return
+    state.xiaoyuActiveSessionId = id
+    state.xiaoyuMessages = [
+      { role: 'user', content: session.title },
+      { role: 'assistant', content: session.preview }
+    ]
+    state.xiaoyuHistoryOpen = false
+    render()
+    showToast('已加载历史对话')
+  },
 
   toggleProjectPicker(show) { document.getElementById('project-mask').classList.toggle('show', show) },
 
