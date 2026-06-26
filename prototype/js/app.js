@@ -1383,10 +1383,6 @@ function renderAssetData() {
         <div class="chart-card-title" style="margin-bottom:12px">按项目统计空间建筑面积排行榜</div>
         ${renderBarChart(MOCK.spaceRanking, true)}
       </div>
-      <div class="chart-card" id="asset-data-facility-section">
-        <div class="chart-card-title" style="margin-bottom:8px">设施故障统计</div>
-        ${renderMonthLineChart(MOCK.facilityFailures, '#4A90E2')}
-      </div>
       <div class="chart-card" id="asset-data-office-section">
         <div class="chart-card-title" style="margin-bottom:12px">办公用房</div>
         ${renderOfficeSpaceSection()}
@@ -1821,8 +1817,7 @@ function scrollToAssetSection(target) {
   const idMap = {
     'asset-type': 'asset-data-type-section',
     'asset-office': 'asset-data-office-section',
-    'asset-warehouse': 'asset-data-warehouse-section',
-    'asset-facility': 'asset-data-facility-section'
+    'asset-warehouse': 'asset-data-warehouse-section'
   }
   const id = idMap[target] || target
   requestAnimationFrame(() => {
