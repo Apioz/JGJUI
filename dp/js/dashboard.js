@@ -1,0 +1,919 @@
+const { createApp, ref, computed, watch, nextTick, onMounted, onUnmounted } = Vue;
+
+const CHART_THEME = {
+  textColor: '#ffffff',
+  axisLine: 'rgba(0, 191, 255, 0.15)',
+  splitLine: 'rgba(0, 191, 255, 0.06)',
+  cyan: '#00e5ff',
+  brand: '#075682',
+  orange: '#ff9500',
+  cyanGradient: [
+    { offset: 0, color: 'rgba(0, 229, 255, 0.35)' },
+    { offset: 1, color: 'rgba(0, 229, 255, 0.02)' },
+  ],
+  orangeGradient: [
+    { offset: 0, color: 'rgba(255, 149, 0, 0.35)' },
+    { offset: 1, color: 'rgba(255, 149, 0, 0.02)' },
+  ],
+};
+
+function formatNumber(n) {
+  return Number(n).toLocaleString('en-US');
+}
+
+function buildRankList(data, unit) {
+  const max = Math.max(...data.map((d) => d.value), 1);
+  return data.map((item) => ({
+    name: item.name,
+    value: item.value,
+    unit,
+    percent: (item.value / max) * 100,
+  }));
+}
+
+function buildAreaRankList(data) {
+  const max = Math.max(...data.map((d) => d.value), 1);
+  return data.map((item) => ({
+    name: item.name,
+    value: item.value,
+    displayValue: formatNumber(item.value),
+    percent: (item.value / max) * 100,
+  }));
+}
+
+function buildTrendOption() {
+  const { months, space, equipment } = DASHBOARD_DATA.trendChart;
+  return {
+    grid: { top: 30, right: 20, bottom: 24, left: 50 },
+    legend: {
+      top: 4, right: 20,
+      textStyle: { color: CHART_THEME.textColor, fontSize: 11 },
+      itemWidth: 12, itemHeight: 8,
+      data: ['空间数', '设备数'],
+    },
+    xAxis: {
+      type: 'category', data: months,
+      axisLine: { lineStyle: { color: CHART_THEME.axisLine } },
+      axisTick: { show: false },
+      axisLabel: { color: CHART_THEME.textColor, fontSize: 10 },
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { color: CHART_THEME.textColor, fontSize: 10 },
+      splitLine: { lineStyle: { color: CHART_THEME.splitLine } },
+    },
+    series: [
+      {
+        name: '空间数', type: 'line', smooth: true, symbol: 'circle', symbolSize: 5,
+        data: space, lineStyle: { color: CHART_THEME.cyan, width: 2 },
+        itemStyle: { color: CHART_THEME.cyan },
+        areaStyle: {
+          color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: CHART_THEME.cyanGradient },
+        },
+      },
+      {
+        name: '设备数', type: 'line', smooth: true, symbol: 'circle', symbolSize: 5,
+        data: equipment, lineStyle: { color: CHART_THEME.orange, width: 2 },
+        itemStyle: { color: CHART_THEME.orange },
+        areaStyle: {
+          color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: CHART_THEME.orangeGradient },
+        },
+      },
+    ],
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(10, 30, 60, 0.88)',
+      borderColor: 'rgba(0, 191, 255, 0.3)',
+      textStyle: { color: '#fff', fontSize: 12 },
+    },
+  };
+}
+
+function buildWorkOrderOption() {
+  const { days, completed, pending } = DASHBOARD_DATA.workOrder;
+  return {
+    grid: { top: 30, right: 16, bottom: 24, left: 36 },
+    legend: {
+      top: 4, right: 10,
+      textStyle: { color: CHART_THEME.textColor, fontSize: 10 },
+      itemWidth: 10, itemHeight: 6,
+      data: ['已完成工单', '待处理工单'],
+    },
+    xAxis: {
+      type: 'category', data: days,
+      axisLine: { lineStyle: { color: CHART_THEME.axisLine } },
+      axisTick: { show: false },
+      axisLabel: { color: CHART_THEME.textColor, fontSize: 9, interval: 4 },
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { color: CHART_THEME.textColor, fontSize: 10 },
+      splitLine: { lineStyle: { color: CHART_THEME.splitLine } },
+    },
+    series: [
+      {
+        name: '已完成工单', type: 'line', smooth: true, symbol: 'circle', symbolSize: 4,
+        data: completed, lineStyle: { color: CHART_THEME.cyan, width: 2 },
+        itemStyle: { color: CHART_THEME.cyan },
+      },
+      {
+        name: '待处理工单', type: 'line', smooth: true, symbol: 'circle', symbolSize: 4,
+        data: pending, lineStyle: { color: '#7b68ee', width: 2 },
+        itemStyle: { color: '#7b68ee' },
+      },
+    ],
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(10, 30, 60, 0.88)',
+      borderColor: 'rgba(0, 191, 255, 0.3)',
+      textStyle: { color: '#fff', fontSize: 12 },
+    },
+  };
+}
+
+function buildAssetTypeOption(typeData) {
+  return {
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: 'rgba(10, 30, 60, 0.88)',
+      borderColor: 'rgba(0, 191, 255, 0.3)',
+      textStyle: { color: '#fff', fontSize: 12 },
+    },
+    legend: {
+      orient: 'vertical',
+      right: 8,
+      top: 'center',
+      itemWidth: 8,
+      itemHeight: 8,
+      itemGap: 8,
+      textStyle: { color: CHART_THEME.textColor, fontSize: 10 },
+    },
+    series: [{
+      type: 'pie',
+      radius: ['42%', '68%'],
+      center: ['36%', '50%'],
+      avoidLabelOverlap: true,
+      label: { show: false },
+      labelLine: { show: false },
+      data: typeData.items.map((item) => ({
+        name: item.name,
+        value: item.value,
+        itemStyle: { color: item.color },
+      })),
+    }],
+  };
+}
+
+function buildSimpleDonutOption(items) {
+  return {
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: 'rgba(10, 30, 60, 0.88)',
+      borderColor: 'rgba(0, 191, 255, 0.3)',
+      textStyle: { color: '#fff', fontSize: 12 },
+    },
+    legend: {
+      orient: 'vertical',
+      right: 4,
+      top: 'center',
+      itemWidth: 8,
+      itemHeight: 8,
+      itemGap: 6,
+      textStyle: { color: CHART_THEME.textColor, fontSize: 9 },
+    },
+    series: [{
+      type: 'pie',
+      radius: ['40%', '62%'],
+      center: ['34%', '50%'],
+      label: { show: false },
+      labelLine: { show: false },
+      data: items.map((item) => ({
+        name: item.name,
+        value: item.value,
+        itemStyle: { color: item.color },
+      })),
+    }],
+  };
+}
+
+function buildFacilityFaultOption() {
+  const { months, values } = DASHBOARD_DATA.facilityFault;
+  return {
+    grid: { top: 24, right: 12, bottom: 22, left: 36 },
+    xAxis: {
+      type: 'category', data: months,
+      axisLine: { lineStyle: { color: CHART_THEME.axisLine } },
+      axisTick: { show: false },
+      axisLabel: { color: CHART_THEME.textColor, fontSize: 9 },
+    },
+    yAxis: {
+      type: 'value', min: 90, max: 240,
+      axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { color: CHART_THEME.textColor, fontSize: 9 },
+      splitLine: { lineStyle: { color: CHART_THEME.splitLine } },
+    },
+    series: [{
+      type: 'line', smooth: true, symbol: 'circle', symbolSize: 5,
+      data: values,
+      lineStyle: { color: CHART_THEME.cyan, width: 2 },
+      itemStyle: { color: CHART_THEME.cyan },
+      areaStyle: {
+        color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: CHART_THEME.cyanGradient },
+      },
+    }],
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(10, 30, 60, 0.88)',
+      borderColor: 'rgba(0, 191, 255, 0.3)',
+      textStyle: { color: '#fff', fontSize: 12 },
+    },
+  };
+}
+
+function buildAssetTrendOption() {
+  const { months, space, equipment } = DASHBOARD_DATA.assetTrendChart;
+  return {
+    grid: { top: 30, right: 20, bottom: 24, left: 40 },
+    legend: {
+      top: 4, right: 20,
+      textStyle: { color: CHART_THEME.textColor, fontSize: 11 },
+      itemWidth: 12, itemHeight: 8,
+      data: ['空间数量', '设备数量'],
+    },
+    xAxis: {
+      type: 'category', data: months,
+      axisLine: { lineStyle: { color: CHART_THEME.axisLine } },
+      axisTick: { show: false },
+      axisLabel: { color: CHART_THEME.textColor, fontSize: 9 },
+    },
+    yAxis: {
+      type: 'value', min: 0, max: 100,
+      axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { color: CHART_THEME.textColor, fontSize: 10 },
+      splitLine: { lineStyle: { color: CHART_THEME.splitLine } },
+    },
+    series: [
+      {
+        name: '空间数量', type: 'line', smooth: true, symbol: 'circle', symbolSize: 5,
+        data: space, lineStyle: { color: CHART_THEME.cyan, width: 2 },
+        itemStyle: { color: CHART_THEME.cyan },
+      },
+      {
+        name: '设备数量', type: 'line', smooth: true, symbol: 'circle', symbolSize: 5,
+        data: equipment, lineStyle: { color: CHART_THEME.orange, width: 2 },
+        itemStyle: { color: CHART_THEME.orange },
+      },
+    ],
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(10, 30, 60, 0.88)',
+      borderColor: 'rgba(0, 191, 255, 0.3)',
+      textStyle: { color: '#fff', fontSize: 12 },
+    },
+  };
+}
+
+createApp({
+  setup() {
+    const navTabs = DASHBOARD_DATA.navTabs;
+    const activeTab = ref('综合态势');
+    const overviewProjects = ref(JSON.parse(JSON.stringify(DASHBOARD_DATA.projects)));
+    const overviewMapProjects = ref(JSON.parse(JSON.stringify(DASHBOARD_DATA.overviewMapProjects)));
+    const overviewSpaceCategories = ref(JSON.parse(JSON.stringify(DASHBOARD_DATA.overviewSpaceCategories)));
+    const overviewEquipmentCategories = ref(JSON.parse(JSON.stringify(DASHBOARD_DATA.overviewEquipmentCategories)));
+    const assetSpaceCategories = ref(JSON.parse(JSON.stringify(DASHBOARD_DATA.assetSpaceCategories)));
+    const assetEquipmentCategories = ref(JSON.parse(JSON.stringify(DASHBOARD_DATA.assetEquipmentCategories)));
+    const parkProjects = ref(JSON.parse(JSON.stringify(DASHBOARD_DATA.parkProjects)));
+    const assetProjects = ref(JSON.parse(JSON.stringify(DASHBOARD_DATA.assetProjects)));
+    const propertyProjects = ref(JSON.parse(JSON.stringify(DASHBOARD_DATA.propertyProjects)));
+    const moduleProjects = ref(JSON.parse(JSON.stringify(DASHBOARD_DATA.moduleProjects)));
+    const securityProjects = ref(JSON.parse(JSON.stringify(DASHBOARD_DATA.securityProjects)));
+    const fireProjects = ref(JSON.parse(JSON.stringify(DASHBOARD_DATA.fireProjects)));
+    const searchQuery = ref('');
+    const selectedProject = ref('p1');
+    const rankTab1 = ref('vehicle');
+    const rankTab2 = ref('electricity');
+    const rankDate1 = ref('2026-06');
+    const rankDate2 = ref('2026-06');
+    const workOrderMonth = ref('2026-06');
+    const assetTypeTab = ref('space');
+    const propertyOmTab = ref('repair');
+    const propertyMonth = ref('2025-01');
+    const energyTypeTab = ref('electricity');
+    const energyPeriodTab = ref('month');
+    const envTempTab = ref('max');
+    const envAirTab = ref('max');
+    const securityMenuOpen = ref(false);
+    const platformMenuOpen = ref(false);
+    const fireRankTab = ref('alarm');
+    const fireMonth = ref('2025-01');
+    const overviewViewMode = ref('map');
+    const mapPopupProjectId = ref(null);
+    const mapPopupPos = ref({ x: 0, y: 0 });
+    const activeParkProjectId = ref('p1');
+    const overviewEnergyTab = ref('electricity');
+    const overviewChartDate = ref('2025-01');
+    const parkRotateX = ref(-12);
+    const parkRotateY = ref(0);
+    const parkScale = ref(1.1);
+    const parkOrbiting = ref(false);
+    const selectedParkBuilding = ref(null);
+    const parkBuildings = DASHBOARD_DATA.parkBuildings;
+    let parkOrbitStart = null;
+
+    const charts = {};
+    const MODULE_TABS = ['资产管理', '物业管理', '能源管理', '环境管理', '食堂管理', '消防管理'];
+    const MODULE_PARK_TABS = ['资产管理', '物业管理', '能源管理', '环境管理', '食堂管理'];
+
+    const isOverviewTab = computed(() => activeTab.value === '综合态势');
+    const isModuleSandboxTab = computed(() => MODULE_PARK_TABS.includes(activeTab.value));
+    const isOverviewMapMode = computed(() => isOverviewTab.value && overviewViewMode.value === 'map');
+    const isOverviewParkMode = computed(() => isOverviewTab.value && overviewViewMode.value === 'park');
+    const isModuleMapMode = computed(() => isModuleSandboxTab.value && overviewViewMode.value === 'map');
+    const isModuleParkMode = computed(() => isModuleSandboxTab.value && overviewViewMode.value === 'park');
+    const isSandboxMapMode = computed(() => isOverviewMapMode.value || isModuleMapMode.value);
+    const isSandboxParkMode = computed(() => isOverviewParkMode.value || isModuleParkMode.value);
+    const isParkSceneVisible = computed(() => isSandboxParkMode.value);
+    const isParkInteractiveVisible = computed(() => isSandboxParkMode.value);
+    const isAssetTab = computed(() => activeTab.value === '资产管理');
+    const isSecurityTab = computed(() => activeTab.value === '安全管理' || activeTab.value === '消防管理');
+    const securityNavLabel = computed(() => (
+      isSecurityTab.value ? activeTab.value : '综合安防'
+    ));
+    const isModuleSidebarTab = computed(() => MODULE_TABS.includes(activeTab.value) && !isAssetTab.value);
+
+    const currentProjects = computed(() => {
+      if (isOverviewParkMode.value) return parkProjects.value;
+      if (isAssetTab.value) return assetProjects.value;
+      if (activeTab.value === '物业管理') return propertyProjects.value;
+      if (activeTab.value === '安全管理') return securityProjects.value;
+      if (activeTab.value === '消防管理') return fireProjects.value;
+      if (isModuleSidebarTab.value) return moduleProjects.value;
+      return overviewProjects.value;
+    });
+
+    const overviewKpiData = computed(() => (
+      isOverviewParkMode.value ? DASHBOARD_DATA.parkKpiData : DASHBOARD_DATA.kpiData
+    ));
+
+    const overviewTrendTitle = computed(() => (
+      isOverviewParkMode.value
+        ? '12个月内项目空间设备趋势分析'
+        : '12月内项目空间数及设备数趋势分析'
+    ));
+
+    const mapPopupProject = computed(() => {
+      if (!mapPopupProjectId.value) return null;
+      return DASHBOARD_DATA.projectDetails[mapPopupProjectId.value] || null;
+    });
+
+    const activeParkDetail = computed(() => (
+      DASHBOARD_DATA.projectDetails[activeParkProjectId.value] || DASHBOARD_DATA.projectDetails.p1
+    ));
+
+    function pickParkSceneUrl() {
+      return DASHBOARD_DATA.parkSceneImage2x || DASHBOARD_DATA.parkSceneImage;
+    }
+
+    const parkSceneUrl = computed(() => pickParkSceneUrl());
+
+    const parkSceneTransformStyle = computed(() => ({
+      transform: `perspective(2200px) rotateX(${parkRotateX.value}deg) rotateY(${parkRotateY.value}deg) scale3d(${parkScale.value}, ${parkScale.value}, 1)`,
+      transition: parkOrbiting.value ? 'none' : 'transform 0.35s ease',
+    }));
+
+    function resolveProjectRootId(id) {
+      if (!id || id === 'all') return 'p1';
+      return id.includes('-') ? id.replace(/-\d+$/, '') : id;
+    }
+
+    const activeModuleProjectId = computed(() => resolveProjectRootId(selectedProject.value));
+
+    const activeParkBuildings = computed(() => {
+      const tab = activeTab.value;
+      if (tab === '食堂管理') {
+        return DASHBOARD_DATA.parkBuildings.filter((b) => b.id === 'c3');
+      }
+      return DASHBOARD_DATA.parkBuildings.filter((b) => b.id !== 'c3');
+    });
+
+    function getParkBuildingMarker(buildingId) {
+      const tab = activeTab.value;
+      const markers = DASHBOARD_DATA.moduleParkMarkers[tab];
+      if (!markers) return null;
+      if (tab === '能源管理') {
+        const key = energyTypeTab.value === 'water' ? 'water' : 'electricity';
+        return markers[key]?.[buildingId] || null;
+      }
+      return markers[buildingId] || null;
+    }
+
+    function parkMarkerStyle(b) {
+      return {
+        left: `${b.x + b.w / 2}%`,
+        top: `${b.y + 4}%`,
+      };
+    }
+
+    const moduleParkKpiData = computed(() => {
+      const tab = activeTab.value;
+      const data = DASHBOARD_DATA.moduleParkKpi[tab];
+      if (!data) return null;
+      if (tab === '能源管理') {
+        return energyTypeTab.value === 'water' ? data.water : data.electricity;
+      }
+      return data;
+    });
+
+    const energyBuildingRankList = computed(() => (
+      energyTypeTab.value === 'water'
+        ? DASHBOARD_DATA.waterBuildingRank
+        : DASHBOARD_DATA.energyBuildingRank
+    ));
+
+    const energyTypeDonutTitle = computed(() => (
+      energyTypeTab.value === 'water' ? '用水类型统计' : '用电类型统计'
+    ));
+
+    const leftSidebarTitle = computed(() => {
+      if (activeTab.value === '物业管理') return '办公用房列表';
+      return '项目筛选';
+    });
+
+    function parkBuildingStyle(b) {
+      return {
+        left: `${b.x}%`,
+        top: `${b.y}%`,
+        width: `${b.w}%`,
+        height: `${b.h}%`,
+      };
+    }
+
+    function syncMapVisibility() {
+      MapManager.setVisible(!isParkSceneVisible.value);
+    }
+
+    function resetParkView() {
+      parkRotateX.value = -12;
+      parkRotateY.value = 0;
+      parkScale.value = 1.1;
+      selectedParkBuilding.value = null;
+    }
+
+    function selectParkBuilding(building, e) {
+      selectedParkBuilding.value = building.id;
+      parkRotateX.value = building.focusRotateX;
+      parkRotateY.value = building.focusRotateY;
+      startParkOrbit(e);
+    }
+
+    function startParkOrbit(e) {
+      if (e.button !== 0) return;
+      if (!selectedParkBuilding.value) return;
+      parkOrbiting.value = true;
+      parkOrbitStart = {
+        x: e.clientX,
+        y: e.clientY,
+        rotateX: parkRotateX.value,
+        rotateY: parkRotateY.value,
+      };
+      document.addEventListener('mousemove', onParkOrbitMove);
+      document.addEventListener('mouseup', stopParkOrbit);
+    }
+
+    function onParkOrbitMove(e) {
+      if (!parkOrbiting.value || !parkOrbitStart) return;
+      const dx = e.clientX - parkOrbitStart.x;
+      const dy = e.clientY - parkOrbitStart.y;
+      parkRotateY.value = Math.max(-40, Math.min(40, parkOrbitStart.rotateY + dx * 0.18));
+      parkRotateX.value = Math.max(-32, Math.min(-2, parkOrbitStart.rotateX - dy * 0.14));
+    }
+
+    function stopParkOrbit() {
+      parkOrbiting.value = false;
+      parkOrbitStart = null;
+      document.removeEventListener('mousemove', onParkOrbitMove);
+      document.removeEventListener('mouseup', stopParkOrbit);
+    }
+
+    const mapPopupStyle = computed(() => ({
+      left: `${mapPopupPos.value.x}px`,
+      top: `${mapPopupPos.value.y}px`,
+    }));
+
+    function updateMapPopupPosition() {
+      if (!mapPopupProjectId.value) return;
+      const pt = MapManager.getProjectScreenPoint(mapPopupProjectId.value);
+      if (pt) mapPopupPos.value = pt;
+    }
+
+    const filteredMapProjects = computed(() => {
+      const q = searchQuery.value.trim().toLowerCase();
+      if (!q) return overviewMapProjects.value;
+      return overviewMapProjects.value.filter((p) => p.name.toLowerCase().includes(q));
+    });
+
+    const currentKpiData = computed(() => {
+      if (isModuleParkMode.value && moduleParkKpiData.value) {
+        return moduleParkKpiData.value;
+      }
+      const map = {
+        综合态势: DASHBOARD_DATA.kpiData,
+        资产管理: DASHBOARD_DATA.assetKpiData,
+        物业管理: DASHBOARD_DATA.propertyKpiData,
+        食堂管理: DASHBOARD_DATA.canteenKpiData,
+      };
+      return map[activeTab.value] || DASHBOARD_DATA.kpiData;
+    });
+
+    const searchPlaceholder = computed(() => {
+      if (activeTab.value === '安全管理') return '搜索项目/楼层/空间';
+      if (isModuleSidebarTab.value || isAssetTab.value || activeTab.value === '物业管理') return '搜索项目或空间';
+      return '搜索项目...';
+    });
+
+    const unitSuffix = computed(() => {
+      if (activeTab.value === '物业管理') return '个';
+      if (isModuleSidebarTab.value || isAssetTab.value) return '个';
+      return '个单体';
+    });
+
+    const assetTypeSummary = computed(() => {
+      const data = assetTypeTab.value === 'space' ? DASHBOARD_DATA.assetTypeSpace : DASHBOARD_DATA.assetTypeEquipment;
+      return `${data.totalLabel} | ${data.totalValue}${data.totalUnit}`;
+    });
+
+    const filteredProjects = computed(() => {
+      const q = searchQuery.value.trim().toLowerCase();
+      if (!q) return currentProjects.value;
+      return currentProjects.value.filter((p) => p.name.toLowerCase().includes(q));
+    });
+
+    const rankList1 = computed(() => {
+      const data = rankTab1.value === 'vehicle' ? DASHBOARD_DATA.rankVehicle : DASHBOARD_DATA.rankPerson;
+      return buildRankList(data, rankTab1.value === 'vehicle' ? '辆' : '人');
+    });
+
+    const rankList2 = computed(() => {
+      const data = rankTab2.value === 'electricity' ? DASHBOARD_DATA.rankElectricity : DASHBOARD_DATA.rankWater;
+      return buildRankList(data, rankTab2.value === 'electricity' ? 'kWh' : '吨');
+    });
+
+    const assetAreaRankList = computed(() => buildAreaRankList(DASHBOARD_DATA.assetAreaRank));
+
+    const propertyOmRankList = computed(() => buildRankList(
+      DASHBOARD_DATA.propertyOmRank[propertyOmTab.value], ''
+    ));
+
+    const envTempList = computed(() => (
+      envTempTab.value === 'max' ? DASHBOARD_DATA.tempTopMax : DASHBOARD_DATA.tempTopMin
+    ));
+
+    const energyCurrentKpi = computed(() => {
+      if (activeTab.value === '能源管理' && isModuleParkMode.value && moduleParkKpiData.value) {
+        return moduleParkKpiData.value;
+      }
+      return energyTypeTab.value === 'water' ? DASHBOARD_DATA.waterKpiData : DASHBOARD_DATA.energyKpiData;
+    });
+
+    const energyTypeLabel = computed(() => (energyTypeTab.value === 'water' ? '用水' : '用电'));
+    const energyDailyTitle = computed(() => `${energyTypeLabel.value}日环比分析`);
+    const energyDailyStat = computed(() => (
+      energyTypeTab.value === 'water' ? DASHBOARD_DATA.waterDailyStat : DASHBOARD_DATA.energyDailyStat
+    ));
+    const energyPeriodTitle = computed(() => (
+      energyTypeTab.value === 'water' ? '用水月环比分析' : '用电月/年同比分析'
+    ));
+    const energyPeriodStat = computed(() => (
+      energyTypeTab.value === 'water' ? DASHBOARD_DATA.waterMonthlyStat : DASHBOARD_DATA.energyPeriodStat
+    ));
+    const energyPeriodLabel = computed(() => {
+      if (energyTypeTab.value === 'water') return '当月截止当前用水';
+      return energyPeriodTab.value === 'year' ? '当年截止当前用电' : '当年截止当前用电';
+    });
+    const energyPeriodCompareLabel = computed(() => {
+      if (energyTypeTab.value === 'water') return '较上月';
+      return energyPeriodTab.value === 'year' ? '较上年' : '较上年';
+    });
+    const energyPeriodChartTitle = computed(() => (
+      energyTypeTab.value === 'water' ? '逐日用水趋势' : (energyPeriodTab.value === 'year' ? '逐年用电趋势' : '逐月用电趋势')
+    ));
+
+    const canteenStatus = DASHBOARD_DATA.canteenStatus;
+    const canteenGuest = DASHBOARD_DATA.canteenGuest;
+    const securityKpiData = DASHBOARD_DATA.securityKpiData;
+    const fireKpiData = DASHBOARD_DATA.fireKpiData;
+    const publicVehicle = DASHBOARD_DATA.publicVehicle;
+    const fireCompletionGauges = DASHBOARD_DATA.fireCompletionGauges;
+
+    const fireRankList = computed(() => {
+      const key = fireRankTab.value === 'fault' ? 'fault' : fireRankTab.value === 'danger' ? 'danger' : 'alarm';
+      return buildRankList(DASHBOARD_DATA.fireLocationRank[key], '次');
+    });
+
+    function getChart(id) {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      if (charts[id]) charts[id].dispose();
+      charts[id] = echarts.init(el);
+      return charts[id];
+    }
+
+    function disposeAllCharts() {
+      Object.keys(charts).forEach((k) => { charts[k]?.dispose(); delete charts[k]; });
+    }
+
+    function resizeAllCharts() {
+      Object.values(charts).forEach((c) => c?.resize());
+    }
+
+    function initOverviewCharts() {
+      const trendOption = isOverviewParkMode.value ? buildParkTrendOption() : buildTrendOption();
+      getChart('trendChart')?.setOption(trendOption);
+      getChart('overviewTrafficChart')?.setOption(buildOverviewTrafficOption());
+      getChart('overviewEnergyChart')?.setOption(buildOverviewEnergyOption(overviewEnergyTab.value));
+      getChart('overviewWorkOrderChart')?.setOption(buildOverviewWorkOrderOption());
+    }
+
+    function switchOverviewEnergy(type) {
+      overviewEnergyTab.value = type;
+      charts.overviewEnergyChart?.setOption(buildOverviewEnergyOption(type), true);
+    }
+
+    function closeMapPopup() {
+      mapPopupProjectId.value = null;
+    }
+
+    function openMapPopup(projectId) {
+      mapPopupProjectId.value = projectId;
+      nextTick(() => updateMapPopupPosition());
+    }
+
+    function selectMapProject(project) {
+      selectedProject.value = project.id;
+      MapManager.setActive(project.id);
+      openMapPopup(project.id);
+    }
+
+    function enterPark() {
+      if (mapPopupProjectId.value) {
+        activeParkProjectId.value = mapPopupProjectId.value;
+        selectedProject.value = mapPopupProjectId.value;
+      }
+      resetParkView();
+      overviewViewMode.value = 'park';
+      mapPopupProjectId.value = null;
+      syncMapVisibility();
+      nextTick(() => initChartsForTab());
+    }
+
+    function exitPark() {
+      stopParkOrbit();
+      resetParkView();
+      overviewViewMode.value = 'map';
+      syncMapVisibility();
+      nextTick(() => {
+        MapManager.invalidateSize();
+        initChartsForTab();
+      });
+    }
+
+    function initAssetCharts() {
+      getChart('assetTypeChart')?.setOption(buildAssetTypeOption(
+        assetTypeTab.value === 'space' ? DASHBOARD_DATA.assetTypeSpace : DASHBOARD_DATA.assetTypeEquipment
+      ));
+      getChart('facilityFaultChart')?.setOption(buildFacilityFaultOption());
+      getChart('assetTrendChart')?.setOption(buildAssetTrendOption());
+    }
+
+    function initPropertyCharts() {
+      getChart('propertyCategoryChart')?.setOption(buildPropertyCategoryOption());
+      getChart('workDurationChart')?.setOption(buildWorkDurationOption());
+    }
+
+    function initEnergyCharts() {
+      const type = energyTypeTab.value;
+      const period = energyTypeTab.value === 'water' ? 'month' : energyPeriodTab.value;
+      getChart('energyHourlyChart')?.setOption(buildEnergyHourlyOption(type));
+      getChart('energyPeriodChart')?.setOption(buildEnergyPeriodOption(type, period));
+      if (isModuleParkMode.value) {
+        const donutData = DASHBOARD_DATA.energyTypeDonut[type];
+        getChart('energyTypeDonutChart')?.setOption(buildSimpleDonutOption(donutData.items));
+      }
+    }
+
+    function initEnvCharts() {
+      getChart('airQualityChart')?.setOption(buildAirQualityOption(envAirTab.value));
+      getChart('alarmChart')?.setOption(buildAlarmOption());
+    }
+
+    function initCanteenCharts() {
+      getChart('canteenGuestChart')?.setOption(buildCanteenGuestOption());
+      getChart('canteenMarketingChart')?.setOption(buildCanteenMarketingOption());
+    }
+
+    function initSecurityCharts() {
+      getChart('publicVehicleChart')?.setOption(buildPublicVehicleOption());
+      getChart('vehicleTrafficChart')?.setOption(buildVehicleTrafficOption());
+      getChart('visitorTrendChart')?.setOption(buildVisitorTrendOption());
+    }
+
+    function initFireCharts() {
+      getChart('fireAlarmTrendChart')?.setOption(buildFireAlarmTrendOption());
+      DASHBOARD_DATA.fireCompletionGauges.forEach((g) => {
+        getChart(`fireGauge${g.id}`)?.setOption(buildFireGaugeOption(g));
+      });
+    }
+
+    function initChartsForTab() {
+      disposeAllCharts();
+      nextTick(() => {
+        const tab = activeTab.value;
+        if (tab === '综合态势') initOverviewCharts();
+        else if (tab === '资产管理') initAssetCharts();
+        else if (tab === '物业管理') initPropertyCharts();
+        else if (tab === '安全管理') initSecurityCharts();
+        else if (tab === '消防管理') initFireCharts();
+        else if (tab === '能源管理') initEnergyCharts();
+        else if (tab === '环境管理') initEnvCharts();
+        else if (tab === '食堂管理') initCanteenCharts();
+        setTimeout(() => { resizeAllCharts(); MapManager.invalidateSize(); }, 80);
+      });
+    }
+
+    function updateAssetTypeChart() {
+      if (!charts.assetTypeChart) return;
+      const data = assetTypeTab.value === 'space' ? DASHBOARD_DATA.assetTypeSpace : DASHBOARD_DATA.assetTypeEquipment;
+      charts.assetTypeChart.setOption(buildAssetTypeOption(data), true);
+    }
+
+    function updateAirQualityChart() {
+      charts.airQualityChart?.setOption(buildAirQualityOption(envAirTab.value), true);
+    }
+
+    function switchEnergyType(type) {
+      energyTypeTab.value = type;
+      if (type === 'water') energyPeriodTab.value = 'month';
+      nextTick(() => initEnergyCharts());
+    }
+
+    function switchEnergyPeriod(period) {
+      energyPeriodTab.value = period;
+      charts.energyPeriodChart?.setOption(
+        buildEnergyPeriodOption('electricity', period), true
+      );
+    }
+
+    function toggleProject(project) {
+      project.expanded = !project.expanded;
+      selectedProject.value = project.id;
+      if (isSandboxMapMode.value) {
+        MapManager.setActive(project.id);
+        openMapPopup(project.id);
+      } else if (isSandboxParkMode.value) {
+        resetParkView();
+      }
+    }
+
+    function selectProject(id) {
+      selectedProject.value = id;
+      const projectId = resolveProjectRootId(id);
+      if (isSandboxMapMode.value) {
+        MapManager.setActive(projectId);
+        openMapPopup(projectId);
+      } else if (isSandboxParkMode.value) {
+        resetParkView();
+      }
+    }
+
+    function onMapSelect(projectId) {
+      selectedProject.value = projectId;
+      if (isSandboxMapMode.value) {
+        openMapPopup(projectId);
+        MapManager.setActive(projectId);
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+
+    function togglePlatformMenu() {
+      platformMenuOpen.value = !platformMenuOpen.value;
+      securityMenuOpen.value = false;
+    }
+
+    function navigateToPlatform(url) {
+      window.location.href = url;
+    }
+
+    function onDocumentClick(e) {
+      if (!platformMenuOpen.value) return;
+      const wrap = document.querySelector('.platform-switch-wrap');
+      if (wrap && !wrap.contains(e.target)) {
+        platformMenuOpen.value = false;
+      }
+    }
+
+    function toggleSecurityMenu() {
+      securityMenuOpen.value = !securityMenuOpen.value;
+    }
+
+    function selectSecuritySub(sub) {
+      activeTab.value = sub;
+      securityMenuOpen.value = false;
+    }
+
+    function switchTab(tab) {
+      securityMenuOpen.value = false;
+      platformMenuOpen.value = false;
+      stopParkOrbit();
+      resetParkView();
+      overviewViewMode.value = 'map';
+      mapPopupProjectId.value = null;
+      activeTab.value = tab;
+      nextTick(() => {
+        syncMapVisibility();
+        MapManager.invalidateSize();
+      });
+    }
+
+    function handleResize() {
+      resizeAllCharts();
+      MapManager.invalidateSize();
+      updateMapPopupPosition();
+    }
+
+    watch(overviewViewMode, () => {
+      syncMapVisibility();
+      if (isOverviewTab.value || isModuleSandboxTab.value) {
+        nextTick(() => initChartsForTab());
+      }
+    });
+
+    watch(platformMenuOpen, (open) => {
+      if (open) {
+        nextTick(() => document.addEventListener('click', onDocumentClick));
+      } else {
+        document.removeEventListener('click', onDocumentClick);
+      }
+    });
+
+    watch(activeTab, () => {
+      syncMapVisibility();
+      initChartsForTab();
+    });
+
+    onMounted(() => {
+      MapManager.onViewChange = updateMapPopupPosition;
+      MapManager.init(onMapSelect);
+      MapManager.setActive(selectedProject.value);
+      syncMapVisibility();
+      initChartsForTab();
+      window.addEventListener('resize', handleResize);
+      setTimeout(() => MapManager.invalidateSize(), 100);
+    });
+
+    onUnmounted(() => {
+      MapManager.onViewChange = null;
+      stopParkOrbit();
+      document.removeEventListener('click', onDocumentClick);
+      window.removeEventListener('resize', handleResize);
+      disposeAllCharts();
+    });
+
+    return {
+      navTabs, activeTab, searchQuery, selectedProject,
+      currentKpiData, searchPlaceholder, unitSuffix,
+      filteredProjects, rankTab1, rankTab2, rankDate1, rankDate2, workOrderMonth,
+      rankList1, rankList2, assetTypeTab, assetTypeSummary, assetAreaRankList,
+      propertyOmTab, propertyMonth, propertyOmRankList,
+      energyTypeTab, energyPeriodTab, energyCurrentKpi, energyTypeLabel,
+      energyDailyTitle, energyDailyStat, energyPeriodTitle, energyPeriodStat,
+      energyPeriodLabel, energyPeriodCompareLabel, energyPeriodChartTitle,
+      envTempTab, envAirTab, envTempList,
+      canteenStatus, canteenGuest,
+      isSecurityTab, securityMenuOpen, securityNavLabel,
+      platformMenuOpen, togglePlatformMenu, navigateToPlatform,
+      isOverviewMapMode, isOverviewParkMode, isModuleSandboxTab, isModuleMapMode, isModuleParkMode,
+      isSandboxMapMode, isSandboxParkMode, isParkSceneVisible, isParkInteractiveVisible,
+      overviewKpiData, overviewTrendTitle,
+      overviewMapProjects, overviewSpaceCategories, overviewEquipmentCategories,
+      assetSpaceCategories, assetEquipmentCategories, envDeviceList: DASHBOARD_DATA.envDeviceList,
+      filteredMapProjects, mapPopupProjectId, mapPopupProject, mapPopupStyle, activeParkDetail,
+      parkSceneUrl, parkSceneTransformStyle, parkBuildings, activeParkBuildings, selectedParkBuilding, parkOrbiting,
+      parkBuildingStyle, parkMarkerStyle, getParkBuildingMarker, selectParkBuilding, startParkOrbit,
+      leftSidebarTitle, energyBuildingRankList, energyTypeDonutTitle, moduleParkKpiData,
+      overviewEnergyTab, overviewChartDate,
+      securityKpiData, fireKpiData, publicVehicle,
+      fireRankTab, fireMonth, fireCompletionGauges, fireRankList,
+      toggleProject, selectProject, toggleFullscreen, switchTab,
+      toggleSecurityMenu, selectSecuritySub,
+      closeMapPopup, enterPark, exitPark, switchOverviewEnergy, selectMapProject,
+      updateAssetTypeChart, updateAirQualityChart, switchEnergyType, switchEnergyPeriod,
+    };
+  },
+}).mount('#app');

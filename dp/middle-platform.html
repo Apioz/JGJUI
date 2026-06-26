@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>黄浦区机关事务信息管理平台--中台</title>
+  <link rel="stylesheet" href="css/middle-platform.css" />
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+</head>
+<body>
+  <div id="mp-app" class="mp-app">
+    <!-- 点击遮罩关闭下拉 -->
+    <div v-if="locationOpen || platformOpen" class="mp-overlay" @click="closeDropdowns"></div>
+
+    <!-- 顶栏 -->
+    <header class="mp-header">
+      <div class="mp-header-left">
+        <div class="mp-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
+          </svg>
+        </div>
+        <h1 class="mp-title">黄浦区机关事务信息管理平台--中台</h1>
+      </div>
+      <div class="mp-header-right">
+        <!-- 平台切换 -->
+        <div class="mp-platform-wrap" @click.stop>
+          <button class="mp-header-btn" title="切换平台" @click="togglePlatform">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </button>
+          <div v-show="platformOpen" class="mp-platform-dropdown">
+            <a href="index.html" class="mp-platform-item" @click="navigateToPlatform('index.html')">大屏</a>
+            <button class="mp-platform-item active">中台</button>
+            <button class="mp-platform-item" disabled style="opacity:0.5;cursor:not-allowed">资产</button>
+            <button class="mp-platform-item" disabled style="opacity:0.5;cursor:not-allowed">
+              其他业务系统 <span class="sub-arrow">›</span>
+            </button>
+          </div>
+        </div>
+        <button class="mp-header-btn" title="消息">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </button>
+        <button class="mp-header-btn" title="全屏" @click="toggleFullscreen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+        </button>
+        <span class="mp-datetime">{{ currentTime }}</span>
+        <button class="mp-header-btn" title="菜单" @click="toggleSidebar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <!-- 地点选择 -->
+        <div class="mp-location-select">
+          <button class="mp-location-btn" @click="toggleLocation">
+            {{ selectedLocation }}
+            <span class="chevron" :class="{ open: locationOpen }">▾</span>
+          </button>
+          <div v-show="locationOpen" class="mp-dropdown">
+            <button
+              v-for="loc in locations"
+              :key="loc"
+              class="mp-dropdown-item"
+              :class="{ active: selectedLocation === loc }"
+              @click="selectLocation(loc)"
+            >{{ loc }}</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="mp-body">
+      <!-- 侧边栏 -->
+      <aside class="mp-sidebar" :class="{ collapsed: sidebarCollapsed }">
+        <nav class="mp-nav">
+          <div v-for="item in menuItems" :key="item.id" class="mp-nav-item">
+            <button
+              class="mp-nav-link"
+              :class="{ active: isMenuActive(item) && !item.children }"
+              @click="toggleMenu(item)"
+            >
+              <span class="mp-nav-icon" v-html="getMenuIcon(item.icon)"></span>
+              <span class="mp-nav-label">{{ item.label }}</span>
+              <span v-if="item.children" class="mp-nav-arrow" :class="{ open: item.expanded }">▾</span>
+            </button>
+            <div v-if="item.children && item.expanded" class="mp-nav-children">
+              <button
+                v-for="child in item.children"
+                :key="child.id"
+                class="mp-nav-child"
+                :class="{ active: isSubActive(child.id) }"
+                @click="selectSubMenu(item, child)"
+              >{{ child.label }}</button>
+            </div>
+          </div>
+        </nav>
+      </aside>
+
+      <!-- 主内容 -->
+      <main class="mp-main">
+        <h2 class="mp-page-title">{{ pageTitle }}</h2>
+
+        <!-- 资产管理 — 办公用房 -->
+        <template v-if="showOffice">
+          <!-- 顶部统计卡片 -->
+          <div class="mp-summary-row">
+            <div v-for="card in summaryCards" :key="card.label" class="mp-summary-card">
+              <div class="mp-summary-icon" :style="{ background: card.color + '18', color: card.color }">
+                <span v-html="getSummaryIcon(card.icon)"></span>
+              </div>
+              <div class="mp-summary-body">
+                <div class="mp-summary-value">{{ card.value }}<span class="unit">{{ card.unit }}</span></div>
+                <div class="mp-summary-label">{{ card.label }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 历年数据对比（紧凑） -->
+          <div class="mp-card mp-compare-card mp-compare-compact">
+            <div class="mp-card-header">
+              <span class="mp-card-title">历年数据对比</span>
+              <div class="mp-compare-year-box">
+                <div class="mp-compare-year-field">
+                  <label>基准年</label>
+                  <select class="mp-compare-year-input" v-model.number="compareYearStart" @change="onCompareYearStartChange">
+                    <option v-for="y in compareYearStartOptions" :key="'s-' + y" :value="y">{{ y }}</option>
+                  </select>
+                </div>
+                <div class="mp-compare-year-arrow" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M13 6l6 6-6 6"/>
+                  </svg>
+                </div>
+                <div class="mp-compare-year-field">
+                  <label>对比年</label>
+                  <select class="mp-compare-year-input" v-model.number="compareYearEnd" @change="onCompareYearEndChange">
+                    <option v-for="y in compareYearEndOptions" :key="'e-' + y" :value="y">{{ y }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="mp-compare-list">
+              <div
+                v-for="(row, idx) in yearlyComparison.rows"
+                :key="row.name"
+                class="mp-compare-item"
+                :style="{ animationDelay: idx * 0.06 + 's' }"
+              >
+                <div class="mp-compare-item-left">
+                  <div class="mp-compare-metric-icon" :class="'icon-' + row.icon">
+                    <span v-html="getMetricIcon(row.icon)"></span>
+                  </div>
+                  <span class="mp-compare-metric-name">{{ row.name }}</span>
+                </div>
+
+                <div class="mp-compare-item-center">
+                  <div class="mp-compare-value-block is-base">
+                    <span class="mp-compare-value-label">{{ compareYearStart }}年</span>
+                    <span class="mp-compare-value-num">{{ getYearValue(row, compareYearStart) }}</span>
+                    <div class="mp-compare-value-bar">
+                      <div class="mp-compare-value-bar-fill base" :style="{ width: getCompareBarWidth(row, compareYearStart) + '%' }"></div>
+                    </div>
+                  </div>
+                  <div class="mp-compare-value-divider"></div>
+                  <div class="mp-compare-value-block is-target">
+                    <span class="mp-compare-value-label">{{ compareYearEnd }}年</span>
+                    <span class="mp-compare-value-num">{{ getYearValue(row, compareYearEnd) }}</span>
+                    <div class="mp-compare-value-bar">
+                      <div class="mp-compare-value-bar-fill target" :style="{ width: getCompareBarWidth(row, compareYearEnd) + '%' }"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mp-compare-item-right">
+                  <div class="mp-compare-trend" :class="trendClass(row)">
+                    <span class="mp-compare-trend-icon" v-html="getTrendIcon(row)"></span>
+                    <span class="mp-compare-trend-text">{{ formatTrend(row) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 办公用房使用面积占比 + 单位列表 -->
+          <div class="mp-card mp-area-section">
+            <div class="mp-card-header">
+              <div class="mp-card-header-left">
+                <button
+                  v-if="areaChartLevel === 'detail'"
+                  class="mp-back-btn"
+                  @click="backAreaChart"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  返回上一层
+                </button>
+                <span class="mp-card-title">办公用房使用面积占比</span>
+              </div>
+            </div>
+            <div id="mpAreaStack" class="mp-chart-box-lg"></div>
+
+            <div class="mp-unit-list-section">
+              <div class="mp-unit-list-head">
+                <span class="mp-unit-list-title">单位列表</span>
+                <div class="mp-unit-date-filters">
+                  <div class="mp-date-field">
+                    <label>开始日期</label>
+                    <input type="date" class="mp-date-input" v-model="unitChangeStart" />
+                  </div>
+                  <span class="mp-date-sep">至</span>
+                  <div class="mp-date-field">
+                    <label>结束日期</label>
+                    <input type="date" class="mp-date-input" v-model="unitChangeEnd" />
+                  </div>
+                  <button
+                    v-if="unitChangeStart || unitChangeEnd"
+                    class="mp-date-reset"
+                    @click="resetUnitChangeFilter"
+                  >重置</button>
+                </div>
+              </div>
+              <p v-if="unitChangeStart || unitChangeEnd" class="mp-unit-filter-hint">
+                已筛选 {{ filteredUnitList.length }} 个在指定时段内有变更的单位
+              </p>
+              <div class="mp-table-wrap mp-unit-table-wrap">
+                <table class="mp-table mp-unit-table">
+                  <thead>
+                    <tr>
+                      <th>单位名称</th>
+                      <th>面积 (m²)</th>
+                      <th>占比 (%)</th>
+                      <th>变更明细</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="filteredUnitList.length === 0">
+                      <td colspan="4" class="mp-table-empty">该时段内暂无单位变更记录</td>
+                    </tr>
+                    <tr v-for="unit in filteredUnitList" :key="unit.name">
+                      <td class="mp-unit-name">{{ unit.name }}</td>
+                      <td>{{ unit.area }}</td>
+                      <td>{{ unit.proportion }}</td>
+                      <td class="mp-change-detail-cell">
+                        <button
+                          v-if="unit.visibleChanges.length"
+                          type="button"
+                          class="mp-change-view-btn"
+                          @click="openUnitChangeModal(unit)"
+                        >查看</button>
+                        <span v-else class="mp-change-none">—</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- 单位变更明细弹窗 -->
+          <div
+            v-if="unitChangeModal"
+            class="mp-modal-overlay"
+            @click.self="closeUnitChangeModal"
+          >
+            <div class="mp-modal mp-modal-change" role="dialog" aria-modal="true">
+              <div class="mp-modal-header mp-modal-header-accent">
+                <div class="mp-modal-header-main">
+                  <div class="mp-modal-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M12 8v4l3 2"/>
+                      <circle cx="12" cy="12" r="9"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="mp-modal-title">变更明细</h3>
+                    <p class="mp-modal-subtitle">{{ unitChangeModal.name }}</p>
+                  </div>
+                </div>
+                <button type="button" class="mp-modal-close" aria-label="关闭" @click="closeUnitChangeModal">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="mp-modal-summary">
+                <div class="mp-modal-stat">
+                  <span class="mp-modal-stat-label">当前面积</span>
+                  <span class="mp-modal-stat-value">{{ unitChangeModal.area }}<small>m²</small></span>
+                </div>
+                <div class="mp-modal-stat-divider"></div>
+                <div class="mp-modal-stat">
+                  <span class="mp-modal-stat-label">当前占比</span>
+                  <span class="mp-modal-stat-value">{{ unitChangeModal.proportion }}<small>%</small></span>
+                </div>
+                <div class="mp-modal-stat-divider"></div>
+                <div class="mp-modal-stat">
+                  <span class="mp-modal-stat-label">变更次数</span>
+                  <span class="mp-modal-stat-value">{{ unitChangeModal.changes.length }}<small>次</small></span>
+                </div>
+              </div>
+
+              <div class="mp-modal-body">
+                <div v-if="unitChangeStart || unitChangeEnd" class="mp-modal-filter-tip">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M3 4h18M8 12h8M10 20h4"/>
+                  </svg>
+                  当前展示筛选时段内的 {{ unitChangeModal.changes.length }} 条变更记录
+                </div>
+
+                <div v-if="!unitChangeModal.changes.length" class="mp-modal-empty">
+                  <div class="mp-modal-empty-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <rect x="4" y="5" width="16" height="16" rx="2"/>
+                      <path d="M8 10h8M8 14h5"/>
+                    </svg>
+                  </div>
+                  <p>暂无变更记录</p>
+                </div>
+
+                <div v-else class="mp-change-timeline">
+                  <div
+                    v-for="(ch, ci) in unitChangeModal.changes"
+                    :key="'modal-ch-' + ci"
+                    class="mp-change-timeline-item"
+                    :class="{ 'is-latest': ci === 0 }"
+                  >
+                    <div class="mp-change-timeline-axis">
+                      <span class="mp-change-timeline-dot"></span>
+                      <span
+                        v-if="ci < unitChangeModal.changes.length - 1"
+                        class="mp-change-timeline-line"
+                      ></span>
+                    </div>
+                    <div class="mp-change-timeline-card">
+                      <div class="mp-change-timeline-head">
+                        <time class="mp-change-timeline-date">{{ formatChangeDate(ch.date) }}</time>
+                        <span v-if="ci === 0" class="mp-change-latest-tag">最新</span>
+                        <span
+                          v-else-if="ch.areaDelta != null || ch.proportionDelta != null"
+                          class="mp-change-vs-tag"
+                        >较上次变更</span>
+                      </div>
+                      <div class="mp-change-metrics-grid">
+                        <div class="mp-change-metric-box is-area">
+                          <div class="mp-change-metric-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                              <rect x="3" y="3" width="18" height="18" rx="2"/>
+                              <path d="M3 9h18M9 21V9"/>
+                            </svg>
+                          </div>
+                          <div class="mp-change-metric-body">
+                            <span class="mp-change-metric-label">使用面积</span>
+                            <span class="mp-change-metric-value">{{ ch.area }}<small>m²</small></span>
+                            <span
+                              v-if="ch.areaDelta != null"
+                              class="mp-change-metric-delta"
+                              :class="changeDeltaClass(ch.areaDelta)"
+                            >{{ formatChangeDelta(ch.areaDelta, 'm²') }}</span>
+                          </div>
+                        </div>
+                        <div class="mp-change-metric-box is-proportion">
+                          <div class="mp-change-metric-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                              <path d="M12 20V10M18 20V4M6 20v-4"/>
+                            </svg>
+                          </div>
+                          <div class="mp-change-metric-body">
+                            <span class="mp-change-metric-label">面积占比</span>
+                            <span class="mp-change-metric-value">{{ ch.proportion }}<small>%</small></span>
+                            <span
+                              v-if="ch.proportionDelta != null"
+                              class="mp-change-metric-delta"
+                              :class="changeDeltaClass(ch.proportionDelta)"
+                            >{{ formatChangeDelta(ch.proportionDelta, '%') }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- 资产管理 — 公务仓 -->
+        <template v-else-if="showWarehouse">
+          <!-- 库存物资数 -->
+          <div class="gw-section">
+            <div class="gw-section-head">
+              <h3 class="gw-section-title">库存物资数</h3>
+              <div class="gw-section-meta">
+                <span class="gw-freq-tag quarterly">在仓 · 本季度</span>
+                <span class="gw-freq-tag quarterly">累计 · 按季度</span>
+              </div>
+            </div>
+
+            <div class="gw-kpi-block">
+              <div class="gw-kpi-block-label">在仓物资</div>
+              <div class="gw-kpi-row cols-3">
+                <div class="gw-kpi-card highlight">
+                  <div class="gw-kpi-top">
+                    <span class="gw-kpi-name">在仓物资数量</span>
+                    <span class="gw-kpi-freq quarterly">本季度</span>
+                  </div>
+                  <div class="gw-kpi-value">{{ gwData.currentStock.total }}<span class="unit">件</span></div>
+                </div>
+                <div
+                  v-for="w in gwWarehouses"
+                  :key="'stock-' + w.id"
+                  class="gw-kpi-card"
+                >
+                  <div class="gw-kpi-top">
+                    <span class="gw-kpi-name">{{ w.shortName }}</span>
+                    <span class="gw-kpi-ratio">{{ gwStockRatio(w.id) }}%</span>
+                  </div>
+                  <div class="gw-kpi-value" :style="{ color: w.color }">{{ gwData.currentStock[w.id] }}<span class="unit">件</span></div>
+                  <div class="gw-kpi-sub">{{ w.name }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="gw-kpi-block">
+              <div class="gw-kpi-block-label">累计存放（本季度）</div>
+              <div class="gw-kpi-row cols-3 compact">
+                <div class="gw-kpi-card mini highlight">
+                  <div class="gw-kpi-top">
+                    <span class="gw-kpi-name">累计存放物资数量</span>
+                    <span class="gw-kpi-freq quarterly">本季度</span>
+                  </div>
+                  <div class="gw-kpi-value">{{ gwData.cumulative.currentQuarter.total }}<span class="unit">件</span></div>
+                  <div class="gw-kpi-change" :class="gwTrendClass(gwData.cumulative.currentQuarter)">
+                    环比 {{ formatGwChange(gwData.cumulative.currentQuarter) }}
+                  </div>
+                </div>
+                <div
+                  v-for="w in gwWarehouses"
+                  :key="'cum-' + w.id"
+                  class="gw-kpi-card mini"
+                >
+                  <div class="gw-kpi-top">
+                    <span class="gw-kpi-name">{{ w.shortName }}</span>
+                    <span class="gw-kpi-ratio">{{ gwCumulativeRatio(w.id) }}%</span>
+                  </div>
+                  <div class="gw-kpi-value" :style="{ color: w.color }">
+                    {{ gwData.cumulative.currentQuarter[w.id] }}<span class="unit">件</span>
+                  </div>
+                  <div class="gw-kpi-sub">{{ w.name }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="gw-grid-2 chart-table">
+              <div class="mp-card">
+                <div class="mp-card-header">
+                  <span class="mp-card-title">在仓物资分仓占比</span>
+                </div>
+                <div id="gwStockPie" class="gw-chart"></div>
+              </div>
+              <div class="mp-card">
+                <div class="mp-card-header">
+                  <span class="mp-card-title">累计存放历史变化趋势</span>
+                  <div class="gw-toggle-group sm">
+                    <button :class="{ active: gwCumulativeMode === 'quarter' }" @click="switchGwCumulativeMode('quarter')">按季度</button>
+                    <button :class="{ active: gwCumulativeMode === 'year' }" @click="switchGwCumulativeMode('year')">按年度</button>
+                  </div>
+                </div>
+                <div id="gwCumulativeTrend" class="gw-chart"></div>
+              </div>
+            </div>
+
+            <div class="mp-card">
+              <div class="mp-card-header">
+                <span class="mp-card-title">累计存放历史列表</span>
+                <div class="gw-history-filters">
+                  <div class="gw-toggle-group sm">
+                    <button :class="{ active: gwCumulativeMode === 'quarter' }" @click="switchGwCumulativeMode('quarter')">按季度</button>
+                    <button :class="{ active: gwCumulativeMode === 'year' }" @click="switchGwCumulativeMode('year')">按年度</button>
+                  </div>
+                  <select class="gw-filter-select" v-model="gwCumulativeHistoryYear">
+                    <option value="all">全部年份</option>
+                    <option v-for="y in gwCumulativeHistoryYears" :key="'cum-y-' + y" :value="y">{{ y }}年</option>
+                  </select>
+                  <select
+                    v-if="gwCumulativeMode === 'quarter'"
+                    class="gw-filter-select"
+                    v-model="gwCumulativeHistoryQuarter"
+                  >
+                    <option value="all">全部季度</option>
+                    <option v-for="q in gwCumulativeHistoryQuarters" :key="'cum-q-' + q" :value="q">{{ q }}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="mp-table-wrap">
+                <table class="mp-table gw-table">
+                  <thead>
+                    <tr>
+                      <th>周期</th>
+                      <th>合计</th>
+                      <th>{{ gwWarehouses[0].shortName }}</th>
+                      <th>{{ gwWarehouses[1].shortName }}</th>
+                      <th>环比变化</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in gwCumulativeHistory" :key="row.period">
+                      <td>{{ row.period }}</td>
+                      <td><strong>{{ row.total }}</strong></td>
+                      <td>{{ row.w1 }}</td>
+                      <td>{{ row.w2 }}</td>
+                      <td :class="row.change >= 0 ? 'gw-change-up' : 'gw-change-down'">{{ row.change >= 0 ? '+' : '' }}{{ row.change }}%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- 入库 -->
+          <div class="gw-section">
+            <div class="gw-section-head">
+              <h3 class="gw-section-title">入库</h3>
+              <span class="gw-freq-tag quarterly">按季度</span>
+            </div>
+
+            <div class="gw-metric-tabs">
+              <button
+                v-for="m in gwData.inbound.metrics"
+                :key="m.key"
+                class="gw-metric-tab"
+                :class="{ active: gwInboundMetric === m.key }"
+                @click="switchGwInboundMetric(m.key)"
+              >
+                <span class="gw-metric-tab-icon" v-html="getMetricIcon(m.icon)"></span>
+                {{ m.label }}
+              </button>
+            </div>
+
+            <div class="gw-kpi-row cols-3 compact">
+              <div class="gw-kpi-card mini highlight">
+                <div class="gw-kpi-name">{{ gwInboundMetricLabel }}</div>
+                <div class="gw-kpi-value">{{ gwInboundDisplay.value }}<span class="unit">{{ gwInboundDisplay.unit }}</span></div>
+                <div class="gw-kpi-change" :class="gwTrendClass(gwInboundDisplay.raw)">
+                  环比 {{ formatGwChange(gwInboundDisplay.raw) }}
+                </div>
+              </div>
+              <div class="gw-kpi-card mini" v-for="w in gwWarehouses" :key="'in-' + w.id">
+                <div class="gw-kpi-name">{{ w.shortName }}</div>
+                <div class="gw-kpi-value" :style="{ color: w.color }">{{ gwInboundDisplay[w.id] }}<span class="unit">{{ gwInboundDisplay.unit }}</span></div>
+                <div class="gw-kpi-sub">{{ w.name }}</div>
+              </div>
+            </div>
+
+            <div class="gw-grid-2 chart-table">
+              <div class="mp-card">
+                <div class="mp-card-header">
+                  <span class="mp-card-title">入库趋势</span>
+                  <div class="gw-toggle-group sm">
+                    <button :class="{ active: gwInboundTrendMode === 'quarter' }" @click="switchGwInboundTrendMode('quarter')">按季度</button>
+                    <button :class="{ active: gwInboundTrendMode === 'year' }" @click="switchGwInboundTrendMode('year')">按年度</button>
+                  </div>
+                </div>
+                <div id="gwInboundTrend" class="gw-chart"></div>
+              </div>
+              <div class="mp-card">
+                <div class="mp-card-header">
+                  <span class="mp-card-title">入库历史</span>
+                </div>
+                <div class="mp-table-wrap gw-table-scroll">
+                  <table class="mp-table gw-table">
+                    <thead>
+                      <tr>
+                        <th>年份</th>
+                        <th>合计</th>
+                        <th>{{ gwWarehouses[0].shortName }}</th>
+                        <th>{{ gwWarehouses[1].shortName }}</th>
+                        <th>环比</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="row in gwInboundHistory" :key="row.period">
+                        <td>{{ row.period }}</td>
+                        <td><strong>{{ row.total }}</strong></td>
+                        <td>{{ row.w1 }}</td>
+                        <td>{{ row.w2 }}</td>
+                        <td :class="row.change >= 0 ? 'gw-change-up' : 'gw-change-down'">{{ row.change >= 0 ? '+' : '' }}{{ row.change }}%</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 出库 -->
+          <div class="gw-section">
+            <div class="gw-section-head">
+              <h3 class="gw-section-title">出库</h3>
+              <span class="gw-freq-tag quarterly">按季度</span>
+            </div>
+
+            <div class="gw-metric-tabs">
+              <button
+                v-for="m in gwData.outbound.metrics"
+                :key="m.key"
+                class="gw-metric-tab"
+                :class="{ active: gwOutboundMetric === m.key }"
+                @click="switchGwOutboundMetric(m.key)"
+              >
+                <span class="gw-metric-tab-icon" v-html="getMetricIcon(m.icon)"></span>
+                {{ m.label }}
+              </button>
+            </div>
+
+            <div class="gw-kpi-row cols-3 compact">
+              <div class="gw-kpi-card mini highlight">
+                <div class="gw-kpi-name">{{ gwOutboundMetricLabel }}</div>
+                <div class="gw-kpi-value">{{ gwOutboundDisplay.value }}<span class="unit">{{ gwOutboundDisplay.unit }}</span></div>
+                <div class="gw-kpi-change" :class="gwTrendClass(gwOutboundDisplay.raw)">
+                  环比 {{ formatGwChange(gwOutboundDisplay.raw) }}
+                </div>
+              </div>
+              <div class="gw-kpi-card mini" v-for="w in gwWarehouses" :key="'out-' + w.id">
+                <div class="gw-kpi-name">{{ w.shortName }}</div>
+                <div class="gw-kpi-value" :style="{ color: w.color }">{{ gwOutboundDisplay[w.id] }}<span class="unit">{{ gwOutboundDisplay.unit }}</span></div>
+                <div class="gw-kpi-sub">{{ w.name }}</div>
+              </div>
+            </div>
+
+            <div class="gw-grid-2 chart-table">
+              <div class="mp-card">
+                <div class="mp-card-header">
+                  <span class="mp-card-title">出库趋势</span>
+                  <div class="gw-toggle-group sm">
+                    <button :class="{ active: gwOutboundTrendMode === 'quarter' }" @click="switchGwOutboundTrendMode('quarter')">按季度</button>
+                    <button :class="{ active: gwOutboundTrendMode === 'year' }" @click="switchGwOutboundTrendMode('year')">按年度</button>
+                  </div>
+                </div>
+                <div id="gwOutboundTrend" class="gw-chart"></div>
+              </div>
+              <div class="mp-card">
+                <div class="mp-card-header">
+                  <span class="mp-card-title">出库历史</span>
+                </div>
+                <div class="mp-table-wrap gw-table-scroll">
+                  <table class="mp-table gw-table">
+                    <thead>
+                      <tr>
+                        <th>年份</th>
+                        <th>合计</th>
+                        <th>{{ gwWarehouses[0].shortName }}</th>
+                        <th>{{ gwWarehouses[1].shortName }}</th>
+                        <th>环比</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="row in gwOutboundHistory" :key="row.period">
+                        <td>{{ row.period }}</td>
+                        <td><strong>{{ row.total }}</strong></td>
+                        <td>{{ row.w1 }}</td>
+                        <td>{{ row.w2 }}</td>
+                        <td :class="row.change >= 0 ? 'gw-change-up' : 'gw-change-down'">{{ row.change >= 0 ? '+' : '' }}{{ row.change }}%</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- 其他菜单 — 占位 -->
+        <template v-else>
+          <div class="mp-card">
+            <div class="mp-placeholder">
+              <div class="mp-placeholder-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <path d="M12 8v4M12 16h.01"/>
+                </svg>
+              </div>
+              <div class="mp-placeholder-text">{{ pageTitle }} — 页面开发中</div>
+              <div class="mp-placeholder-hint">该模块内容将在后续版本中补充</div>
+            </div>
+          </div>
+        </template>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+  <script src="js/middle-platform-data.js"></script>
+  <script src="js/warehouse-charts.js"></script>
+  <script src="js/middle-platform.js"></script>
+</body>
+</html>

@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, initial-scale=1.0" />
+  <title>黄浦区机关事务信息管理平台</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+</head>
+<body>
+  <div id="app" class="dashboard">
+    <div id="shMap" class="map-base"></div>
+    <div id="parkSceneBase" class="map-base park-scene-wrap" v-show="isParkSceneVisible">
+      <div class="park-scene-stage">
+        <div class="park-scene-inner" :style="parkSceneTransformStyle">
+          <img class="park-scene-img" :src="parkSceneUrl" alt="园区3D场景" draggable="false" />
+        </div>
+      </div>
+    </div>
+    <div class="gradient-overlay"></div>
+
+    <!-- 园区介绍弹窗 — 锚定地图标注 -->
+    <div
+      v-if="isSandboxMapMode && mapPopupProject"
+      class="map-project-popup glass-panel"
+      :style="mapPopupStyle"
+    >
+      <button class="popup-close" @click="closeMapPopup" aria-label="关闭">×</button>
+      <div class="popup-thumb">
+        <img :src="mapPopupProject.image" :alt="mapPopupProject.name" />
+      </div>
+      <div class="popup-info">
+        <h3 class="popup-title">{{ mapPopupProject.name }}</h3>
+        <p class="popup-desc">{{ mapPopupProject.description }}</p>
+        <div class="popup-meta">
+          <div class="popup-meta-row"><span>建筑面积</span><strong>{{ mapPopupProject.area }}{{ mapPopupProject.areaUnit }}</strong></div>
+          <div class="popup-meta-row popup-meta-address"><span>地址</span><strong>{{ mapPopupProject.address }}</strong></div>
+        </div>
+        <button class="popup-enter-btn" @click="enterPark">进入园区</button>
+      </div>
+    </div>
+
+
+    <div class="ui-shell" :class="{ 'ui-shell-elevated': platformMenuOpen }">
+    <header class="header">
+      <div class="header-left">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
+          </svg>
+        </div>
+        <h1 class="platform-title">黄浦区机关事务信息管理平台</h1>
+      </div>
+      <nav class="header-nav">
+        <template v-for="tab in navTabs" :key="tab">
+          <div
+            v-if="tab === '综合安防'"
+            class="nav-tab-wrap"
+          >
+            <a
+              href="#"
+              class="nav-tab"
+              :class="{ active: isSecurityTab }"
+              @click.prevent="toggleSecurityMenu"
+            >
+              {{ securityNavLabel }}
+              <span class="nav-chevron" :class="{ open: securityMenuOpen }">▾</span>
+            </a>
+            <div v-show="securityMenuOpen" class="nav-dropdown">
+              <a href="#" :class="{ active: activeTab === '安全管理' }" @click.prevent="selectSecuritySub('安全管理')">安全管理</a>
+              <a href="#" :class="{ active: activeTab === '消防管理' }" @click.prevent="selectSecuritySub('消防管理')">消防管理</a>
+            </div>
+          </div>
+          <a
+            v-else
+            href="#"
+            class="nav-tab"
+            :class="{ active: activeTab === tab }"
+            @click.prevent="switchTab(tab)"
+          >{{ tab }}</a>
+        </template>
+      </nav>
+      <div class="header-actions">
+        <div class="platform-switch-wrap" @click.stop>
+          <button class="action-btn" title="切换平台" @click="togglePlatformMenu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </button>
+          <div v-show="platformMenuOpen" class="platform-dropdown">
+            <button class="platform-dropdown-item active">大屏</button>
+            <a href="middle-platform.html" class="platform-dropdown-item" @click="navigateToPlatform('middle-platform.html')">中台</a>
+            <button class="platform-dropdown-item disabled" disabled>资产</button>
+            <button class="platform-dropdown-item disabled" disabled>其他业务系统 <span class="platform-sub-arrow">›</span></button>
+          </div>
+        </div>
+        <button class="action-btn" title="全屏" @click="toggleFullscreen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+        <button class="action-btn" title="主题">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+        <button class="action-btn" title="帮助">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+        </button>
+        <button class="action-btn" title="通知">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <button class="action-btn" title="用户">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </button>
+        <button class="action-btn" title="退出">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <aside class="sidebar left-sidebar" :class="{ 'left-sidebar-stack': isOverviewMapMode || isModuleMapMode || isModuleParkMode }">
+        <!-- 沙盘地图模式：项目列表 + 选中后显示分类 -->
+        <template v-if="isOverviewMapMode">
+          <div class="panel glass-panel transparent-panel overview-left-panel">
+            <div class="panel-header"><span class="panel-title">项目列表</span></div>
+            <div class="search-box overview-search-inline">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input v-model="searchQuery" type="text" placeholder="搜索项目..." />
+            </div>
+            <div class="filter-group-label">全部项目 <span class="filter-count">10个</span></div>
+            <div class="project-tree">
+              <div v-for="project in filteredMapProjects" :key="project.id" class="tree-item">
+                <div
+                  class="tree-node"
+                  :class="{ expanded: project.expanded, selected: selectedProject === project.id }"
+                  @click="selectMapProject(project)"
+                >
+                  <span class="tree-arrow" :class="{ open: project.expanded }" @click.stop="project.expanded = !project.expanded">▶</span>
+                  <span class="tree-label">{{ project.name }}</span>
+                  <span class="tree-count">{{ project.units }}个</span>
+                </div>
+                <div v-if="project.expanded" class="tree-children">
+                  <div v-for="child in project.children" :key="child.id" class="tree-child">
+                    <span>{{ child.name }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <template v-if="mapPopupProjectId">
+            <div class="panel glass-panel transparent-panel overview-left-panel">
+              <div class="panel-header"><span class="panel-title">空间分类</span></div>
+              <div class="project-tree">
+                <div v-for="project in overviewSpaceCategories" :key="project.id" class="tree-item">
+                  <div class="tree-node" :class="{ expanded: project.expanded }" @click="project.expanded = !project.expanded">
+                    <span class="tree-arrow" :class="{ open: project.expanded }">▶</span>
+                    <span class="tree-label">{{ project.name }}</span>
+                    <span class="tree-count">{{ project.units }}个</span>
+                  </div>
+                  <div v-if="project.expanded" class="tree-children">
+                    <div v-for="child in project.children" :key="child.id" class="tree-child">
+                      <span>{{ child.name }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="panel glass-panel transparent-panel overview-left-panel">
+              <div class="panel-header"><span class="panel-title">设备分类</span></div>
+              <div class="project-tree">
+                <div v-for="project in overviewEquipmentCategories" :key="project.id" class="tree-item">
+                  <div class="tree-node" :class="{ expanded: project.expanded }" @click="project.expanded = !project.expanded">
+                    <span class="tree-arrow" :class="{ open: project.expanded }">▶</span>
+                    <span class="tree-label">{{ project.name }}</span>
+                    <span class="tree-count">{{ project.units }}个</span>
+                  </div>
+                  <div v-if="project.expanded" class="tree-children">
+                    <div v-for="child in project.children" :key="child.id" class="tree-child">
+                      <span>{{ child.name }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </template>
+        <!-- 园区模式 -->
+        <div v-else-if="isOverviewParkMode" class="panel glass-panel transparent-panel">
+          <div class="panel-header">
+            <span class="panel-title">项目筛选</span>
+            <button class="park-back-link" @click="exitPark">返回地图</button>
+          </div>
+          <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input v-model="searchQuery" type="text" :placeholder="searchPlaceholder" />
+          </div>
+          <div class="project-tree">
+            <div v-for="project in filteredProjects" :key="project.id" class="tree-item">
+              <div
+                class="tree-node"
+                :class="{ expanded: project.expanded, selected: selectedProject === project.id }"
+                @click="toggleProject(project)"
+              >
+                <span class="tree-arrow" :class="{ open: project.expanded }">▶</span>
+                <span class="tree-label">{{ project.name }}</span>
+                <span class="tree-count">{{ project.units }}{{ unitSuffix }}</span>
+              </div>
+              <div v-if="project.expanded" class="tree-children">
+                <div
+                  v-for="child in project.children"
+                  :key="child.id"
+                  class="tree-child"
+                  :class="{ selected: selectedProject === child.id }"
+                  @click.stop="selectProject(child.id)"
+                >
+                  <span>{{ child.name }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 五模块沙盘地图模式 -->
+        <template v-else-if="isModuleMapMode">
+          <div class="panel glass-panel transparent-panel">
+            <div class="panel-header">
+              <span class="panel-title">项目筛选</span>
+            </div>
+            <div class="search-box">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input v-model="searchQuery" type="text" :placeholder="searchPlaceholder" />
+            </div>
+            <div class="project-tree">
+              <div v-for="project in filteredProjects" :key="project.id" class="tree-item">
+                <div
+                  class="tree-node"
+                  :class="{ expanded: project.expanded, selected: selectedProject === project.id }"
+                  @click="selectMapProject(project)"
+                >
+                  <span class="tree-arrow" :class="{ open: project.expanded }" @click.stop="project.expanded = !project.expanded">▶</span>
+                  <span class="tree-label">{{ project.name }}</span>
+                  <span class="tree-count">{{ project.units }}{{ unitSuffix }}</span>
+                </div>
+                <div v-if="project.expanded" class="tree-children">
+                  <div v-for="child in project.children" :key="child.id" class="tree-child">
+                    <span>{{ child.name }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+        <!-- 五模块园区 3D 模式 -->
+        <template v-else-if="isModuleParkMode">
+          <div class="panel glass-panel transparent-panel">
+            <div class="panel-header">
+              <span class="panel-title">{{ leftSidebarTitle }}</span>
+              <button class="park-back-link" @click="exitPark">返回地图</button>
+            </div>
+            <div class="search-box">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input v-model="searchQuery" type="text" :placeholder="searchPlaceholder" />
+            </div>
+            <div class="project-tree">
+              <div v-for="project in filteredProjects" :key="project.id" class="tree-item">
+                <div
+                  class="tree-node"
+                  :class="{ expanded: project.expanded, selected: selectedProject === project.id }"
+                  @click="toggleProject(project)"
+                >
+                  <span class="tree-arrow" :class="{ open: project.expanded }">▶</span>
+                  <span class="tree-label">{{ project.name }}</span>
+                  <span class="tree-count">{{ project.units }}{{ unitSuffix }}</span>
+                </div>
+                <div v-if="project.expanded" class="tree-children">
+                  <div
+                    v-for="child in project.children"
+                    :key="child.id"
+                    class="tree-child"
+                    :class="{ selected: selectedProject === child.id }"
+                    @click.stop="selectProject(child.id)"
+                  >
+                    <span>{{ child.name }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <template v-if="activeTab === '资产管理'">
+            <div class="panel glass-panel transparent-panel overview-left-panel">
+              <div class="panel-header"><span class="panel-title">空间分类</span></div>
+              <div class="project-tree">
+                <div v-for="project in assetSpaceCategories" :key="project.id" class="tree-item">
+                  <div class="tree-node" :class="{ expanded: project.expanded }" @click="project.expanded = !project.expanded">
+                    <span class="tree-arrow" :class="{ open: project.expanded }">▶</span>
+                    <span class="tree-label">{{ project.name }}</span>
+                    <span class="tree-count">{{ project.units }}个</span>
+                  </div>
+                  <div v-if="project.expanded" class="tree-children">
+                    <div v-for="child in project.children" :key="child.id" class="tree-child">
+                      <span>{{ child.name }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="panel glass-panel transparent-panel overview-left-panel">
+              <div class="panel-header"><span class="panel-title">设备分类</span></div>
+              <div class="project-tree">
+                <div v-for="project in assetEquipmentCategories" :key="project.id" class="tree-item">
+                  <div class="tree-node" :class="{ expanded: project.expanded }" @click="project.expanded = !project.expanded">
+                    <span class="tree-arrow" :class="{ open: project.expanded }">▶</span>
+                    <span class="tree-label">{{ project.name }}</span>
+                    <span class="tree-count">{{ project.units }}个</span>
+                  </div>
+                  <div v-if="project.expanded" class="tree-children">
+                    <div v-for="child in project.children" :key="child.id" class="tree-child">
+                      <span>{{ child.name }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <template v-if="activeTab === '能源管理'">
+            <div class="panel glass-panel transparent-panel overview-left-panel">
+              <div class="panel-header"><span class="panel-title">{{ energyTypeDonutTitle }}</span></div>
+              <div id="energyTypeDonutChart" class="chart-box asset-donut-chart"></div>
+            </div>
+            <div class="panel glass-panel transparent-panel rank-panel overview-left-panel">
+              <div class="panel-header"><span class="panel-title">当月能耗排名Top5</span></div>
+              <div class="rank-list energy-building-rank">
+                <div v-for="(item, index) in energyBuildingRankList" :key="item.name" class="rank-item">
+                  <div class="rank-badge" :class="{ first: index === 0 }">{{ index + 1 }}</div>
+                  <div class="rank-body">
+                    <div class="rank-row">
+                      <span class="rank-name">{{ item.name }}</span>
+                      <span class="rank-value">{{ item.value }}{{ item.unit }}</span>
+                    </div>
+                    <div class="rank-bar-track">
+                      <div class="rank-bar-fill" :class="{ first: index === 0 }" :style="{ width: (100 - index * 18) + '%' }"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <template v-if="activeTab === '环境管理'">
+            <div class="panel glass-panel transparent-panel overview-left-panel">
+              <div class="panel-header"><span class="panel-title">环境列表</span></div>
+              <div class="search-box env-search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" placeholder="搜索环境设备..." />
+              </div>
+              <div class="env-device-status">
+                <span class="env-online">在线 {{ envDeviceList.online }}</span>
+                <span class="env-offline">离线 {{ envDeviceList.offline }}</span>
+              </div>
+              <div class="env-device-list">
+                <div v-for="name in envDeviceList.items" :key="name" class="env-device-item">{{ name }}</div>
+              </div>
+            </div>
+          </template>
+        </template>
+        <!-- 其他模块（地图模式） -->
+        <div v-else class="panel glass-panel transparent-panel">
+          <div class="panel-header">
+            <span class="panel-title">项目筛选</span>
+          </div>
+          <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input v-model="searchQuery" type="text" :placeholder="searchPlaceholder" />
+          </div>
+          <div class="project-tree">
+            <div v-for="project in filteredProjects" :key="project.id" class="tree-item">
+              <div
+                class="tree-node"
+                :class="{ expanded: project.expanded, selected: selectedProject === project.id }"
+                @click="toggleProject(project)"
+              >
+                <span class="tree-arrow" :class="{ open: project.expanded }">▶</span>
+                <span class="tree-label">{{ project.name }}</span>
+                <span class="tree-count">{{ project.units }}{{ unitSuffix }}</span>
+              </div>
+              <div v-if="project.expanded" class="tree-children">
+                <div
+                  v-for="child in project.children"
+                  :key="child.id"
+                  class="tree-child"
+                  :class="{ selected: selectedProject === child.id }"
+                  @click.stop="selectProject(child.id)"
+                >
+                  <span>{{ child.name }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 综合态势 -->
+      <template v-if="activeTab === '综合态势'">
+        <section class="center-area">
+          <div class="kpi-row">
+            <div v-for="kpi in overviewKpiData" :key="kpi.label" class="kpi-card glass-panel">
+              <div class="kpi-icon" :style="{ color: kpi.color }">
+                <span v-html="kpi.icon"></span>
+              </div>
+              <div class="kpi-info">
+                <div class="kpi-value">{{ kpi.value }}<span class="kpi-unit">{{ kpi.unit }}</span></div>
+                <div class="kpi-label">{{ kpi.label }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="map-spacer">
+            <div
+              v-if="isOverviewParkMode"
+              class="park-scene-interactive"
+              :class="{ orbiting: parkOrbiting, 'has-building': selectedParkBuilding }"
+              @mousedown="startParkOrbit"
+            >
+              <div
+                v-for="b in activeParkBuildings"
+                :key="b.id"
+                class="park-building-hit"
+                :class="{ active: selectedParkBuilding === b.id }"
+                :style="parkBuildingStyle(b)"
+                :title="b.name"
+                @mousedown.stop="selectParkBuilding(b, $event)"
+              >
+                <span class="park-building-label">{{ b.name }}</span>
+              </div>
+              <div class="park-orbit-hint">{{ selectedParkBuilding ? '拖动查看不同角度' : '点击楼栋后可拖动查看不同角度' }}</div>
+            </div>
+          </div>
+
+          <div class="bottom-chart glass-panel transparent-panel">
+            <div class="panel-header">
+              <span class="panel-title">{{ overviewTrendTitle }}</span>
+            </div>
+            <div id="trendChart" class="chart-box"></div>
+          </div>
+        </section>
+
+        <aside class="sidebar right-sidebar">
+          <div class="panel glass-panel transparent-panel rank-panel">
+            <div class="panel-header">
+              <span class="panel-title">车辆/人员进出统计</span>
+              <div class="panel-controls">
+                <select class="date-select"><option>月</option></select>
+                <select class="date-select" v-model="overviewChartDate"><option value="2025-01">2025-01</option></select>
+              </div>
+            </div>
+            <div id="overviewTrafficChart" class="chart-box"></div>
+          </div>
+
+          <div class="panel glass-panel transparent-panel rank-panel">
+            <div class="panel-header">
+              <span class="panel-title">逐时能耗使用趋势</span>
+              <div class="panel-controls">
+                <select class="date-select"><option>日</option></select>
+                <select class="date-select" v-model="overviewChartDate"><option value="2025-01">2025-01</option></select>
+              </div>
+            </div>
+            <div class="panel-controls panel-controls-inner">
+              <div class="toggle-group">
+                <button :class="{ active: overviewEnergyTab === 'electricity' }" @click="switchOverviewEnergy('electricity')">用电</button>
+                <button :class="{ active: overviewEnergyTab === 'water' }" @click="switchOverviewEnergy('water')">用水</button>
+              </div>
+            </div>
+            <div id="overviewEnergyChart" class="chart-box"></div>
+          </div>
+
+          <div class="panel glass-panel transparent-panel">
+            <div class="panel-header">
+              <span class="panel-title">运维工单统计</span>
+              <div class="panel-controls">
+                <select class="date-select"><option>月</option></select>
+                <select class="date-select" v-model="overviewChartDate"><option value="2025-01">2025-01</option></select>
+              </div>
+            </div>
+            <div id="overviewWorkOrderChart" class="chart-box"></div>
+          </div>
+        </aside>
+      </template>
+
+      <!-- 资产管理 -->
+      <template v-else-if="activeTab === '资产管理'">
+        <section class="center-area">
+          <div class="kpi-row">
+            <div v-for="kpi in currentKpiData" :key="kpi.label" class="kpi-card glass-panel">
+              <div class="kpi-icon" :style="{ color: kpi.color }">
+                <span v-html="kpi.icon"></span>
+              </div>
+              <div class="kpi-info">
+                <div class="kpi-value">{{ kpi.value }}<span class="kpi-unit">{{ kpi.unit }}</span></div>
+                <div class="kpi-label">{{ kpi.label }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="map-spacer">
+            <div
+              v-if="isParkInteractiveVisible"
+              class="park-scene-interactive"
+              :class="{ orbiting: parkOrbiting, 'has-building': selectedParkBuilding }"
+              @mousedown="startParkOrbit"
+            >
+              <div
+                v-for="b in activeParkBuildings"
+                :key="b.id"
+                class="park-building-hit"
+                :class="{ active: selectedParkBuilding === b.id }"
+                :style="parkBuildingStyle(b)"
+                @mousedown.stop="selectParkBuilding(b, $event)"
+              >
+                <span class="park-building-label">{{ b.name }}</span>
+              </div>
+              <div
+                v-for="b in activeParkBuildings"
+                :key="'mk-' + b.id"
+                v-show="getParkBuildingMarker(b.id)"
+                class="park-scene-marker"
+                :style="parkMarkerStyle(b)"
+              >
+                <div class="park-marker-card">
+                  <strong>{{ getParkBuildingMarker(b.id)?.line1 }}</strong>
+                  <span>{{ getParkBuildingMarker(b.id)?.line2 }}</span>
+                </div>
+              </div>
+              <div class="park-orbit-hint">{{ selectedParkBuilding ? '拖动查看不同角度' : '点击楼栋后可拖动查看不同角度' }}</div>
+            </div>
+          </div>
+          <div class="bottom-chart glass-panel transparent-panel">
+            <div class="panel-header">
+              <span class="panel-title">12个月内项目空间设备趋势分析</span>
+            </div>
+            <div id="assetTrendChart" class="chart-box"></div>
+          </div>
+        </section>
+
+        <aside class="sidebar right-sidebar">
+          <div class="panel glass-panel transparent-panel asset-type-panel">
+            <div class="panel-header">
+              <span class="panel-title">按资产类型统计</span>
+              <div class="panel-controls">
+                <div class="toggle-group">
+                  <button :class="{ active: assetTypeTab === 'space' }" @click="assetTypeTab = 'space'; updateAssetTypeChart()">空间</button>
+                  <button :class="{ active: assetTypeTab === 'equipment' }" @click="assetTypeTab = 'equipment'; updateAssetTypeChart()">设备</button>
+                </div>
+              </div>
+            </div>
+            <div class="asset-type-sub">{{ assetTypeSummary }}</div>
+            <div id="assetTypeChart" class="chart-box asset-donut-chart"></div>
+          </div>
+
+          <div class="panel glass-panel transparent-panel rank-panel">
+            <div class="panel-header">
+              <span class="panel-title">按项目统计空间建筑面积排行榜</span>
+            </div>
+            <div class="rank-list asset-area-rank">
+              <div v-for="(item, index) in assetAreaRankList" :key="item.name + index" class="rank-item">
+                <div class="rank-badge" :class="{ first: index === 0 }">
+                  <span v-if="index === 0" class="rank-crown" aria-hidden="true">♛</span>
+                  <span v-else>{{ index + 1 }}</span>
+                </div>
+                <div class="rank-body">
+                  <div class="rank-row">
+                    <span class="rank-name">{{ item.name }}</span>
+                    <span class="rank-value">{{ item.displayValue }}㎡</span>
+                  </div>
+                  <div class="rank-bar-track">
+                    <div class="rank-bar-fill" :class="{ first: index === 0 }" :style="{ width: item.percent + '%' }"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel glass-panel transparent-panel">
+            <div class="panel-header">
+              <span class="panel-title">设施故障统计</span>
+            </div>
+            <div id="facilityFaultChart" class="chart-box"></div>
+          </div>
+        </aside>
+      </template>
+
+      <!-- 安全管理 -->
+      <template v-else-if="activeTab === '安全管理'">
+        <section class="center-area">
+          <div class="kpi-row kpi-row-3">
+            <div v-for="kpi in securityKpiData" :key="kpi.label" class="kpi-card glass-panel">
+              <div class="kpi-icon" :style="{ color: kpi.color }"><span v-html="kpi.icon"></span></div>
+              <div class="kpi-info">
+                <div class="kpi-value">{{ kpi.value }}<span class="kpi-unit">{{ kpi.unit }}</span></div>
+                <div class="kpi-label">{{ kpi.label }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="map-spacer"></div>
+        </section>
+        <aside class="sidebar right-sidebar">
+          <div class="panel glass-panel transparent-panel">
+            <div class="panel-header"><span class="panel-title">公车分析</span></div>
+            <div class="stat-summary stat-summary-inline">车辆总数 <strong>{{ publicVehicle.total }}</strong></div>
+            <div id="publicVehicleChart" class="chart-box asset-donut-chart"></div>
+          </div>
+          <div class="panel glass-panel transparent-panel rank-panel">
+            <div class="panel-header"><span class="panel-title">车辆进出统计</span></div>
+            <div class="vehicle-stat-row">
+              <div class="vehicle-stat"><strong>1,234</strong>辆<span>当月累计通行车辆</span></div>
+              <div class="vehicle-stat"><strong>1,000</strong>辆<span>上月累计通行车辆</span></div>
+            </div>
+            <div id="vehicleTrafficChart" class="chart-box"></div>
+          </div>
+          <div class="panel glass-panel transparent-panel">
+            <div class="panel-header"><span class="panel-title">访客月度环比变化趋势</span></div>
+            <div id="visitorTrendChart" class="chart-box"></div>
+          </div>
+        </aside>
+      </template>
+
+      <!-- 消防管理 -->
+      <template v-else-if="activeTab === '消防管理'">
+        <section class="center-area">
+          <div class="kpi-row">
+            <div v-for="kpi in fireKpiData" :key="kpi.label" class="kpi-card glass-panel">
+              <div class="kpi-icon" :style="{ color: kpi.color }"><span v-html="kpi.icon"></span></div>
+              <div class="kpi-info">
+                <div class="kpi-value" :class="{ 'kpi-alert': kpi.alert }">{{ kpi.value }}<span class="kpi-unit">{{ kpi.unit }}</span></div>
+                <div class="kpi-label">{{ kpi.label }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="map-spacer"></div>
+          <div class="bottom-chart glass-panel transparent-panel">
+            <div class="panel-header"><span class="panel-title">12个月内报警情况分析</span></div>
+            <div id="fireAlarmTrendChart" class="chart-box"></div>
+          </div>
+        </section>
+        <aside class="sidebar right-sidebar">
+          <div class="panel glass-panel transparent-panel rank-panel">
+            <div class="panel-header">
+              <span class="panel-title">事件处理完成率</span>
+              <div class="panel-controls">
+                <select class="date-select"><option>月</option></select>
+                <select class="date-select" v-model="fireMonth"><option value="2025-01">2025-01</option></select>
+              </div>
+            </div>
+            <div class="gauge-list">
+              <div v-for="g in fireCompletionGauges" :key="g.label" class="gauge-row">
+                <div class="gauge-ring">
+                  <div :id="'fireGauge' + g.id" class="gauge-chart"></div>
+                </div>
+                <div class="gauge-detail">
+                  <div class="gauge-stat-row">
+                    <span class="gauge-stat-label">未处理数</span>
+                    <span class="gauge-stat-value">{{ g.pending }}</span>
+                  </div>
+                  <div class="gauge-stat-row">
+                    <span class="gauge-stat-label">已处理数</span>
+                    <span class="gauge-stat-value">{{ g.done }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel glass-panel transparent-panel rank-panel">
+            <div class="panel-header">
+              <span class="panel-title">策报点位次数Top5排名</span>
+              <div class="panel-controls">
+                <select class="date-select"><option>月</option></select>
+                <select class="date-select" v-model="fireMonth"><option value="2025-01">2025-01</option></select>
+              </div>
+            </div>
+            <div class="panel-controls panel-controls-inner">
+              <div class="toggle-group">
+                <button :class="{ active: fireRankTab === 'alarm' }" @click="fireRankTab = 'alarm'">报警</button>
+                <button :class="{ active: fireRankTab === 'fault' }" @click="fireRankTab = 'fault'">故障</button>
+                <button :class="{ active: fireRankTab === 'danger' }" @click="fireRankTab = 'danger'">隐患</button>
+              </div>
+            </div>
+            <div class="rank-list">
+              <div v-for="(item, index) in fireRankList" :key="item.name" class="rank-item">
+                <div class="rank-badge" :class="{ first: index === 0 }">{{ index + 1 }}</div>
+                <div class="rank-body">
+                  <div class="rank-row">
+                    <span class="rank-name">{{ item.name }}</span>
+                    <span class="rank-value">{{ item.value }}次</span>
+                  </div>
+                  <div class="rank-bar-track">
+                    <div class="rank-bar-fill" :class="{ first: index === 0 }" :style="{ width: item.percent + '%' }"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </template>
+
+      <!-- 物业管理 -->
+      <template v-else-if="activeTab === '物业管理'">
+        <section class="center-area">
+          <div class="kpi-row">
+            <div v-for="kpi in currentKpiData" :key="kpi.label" class="kpi-card glass-panel">
+              <div class="kpi-icon" :style="{ color: kpi.color }"><span v-html="kpi.icon"></span></div>
+              <div class="kpi-info">
+                <div class="kpi-value">{{ kpi.value }}<span class="kpi-unit">{{ kpi.unit }}</span></div>
+                <div class="kpi-label">{{ kpi.label }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="map-spacer">
+            <div
+              v-if="isParkInteractiveVisible"
+              class="park-scene-interactive"
+              :class="{ orbiting: parkOrbiting, 'has-building': selectedParkBuilding }"
+              @mousedown="startParkOrbit"
+            >
+              <div v-for="b in activeParkBuildings" :key="b.id" class="park-building-hit" :class="{ active: selectedParkBuilding === b.id }" :style="parkBuildingStyle(b)" @mousedown.stop="selectParkBuilding(b, $event)">
+                <span class="park-building-label">{{ b.name }}</span>
+              </div>
+              <div v-for="b in activeParkBuildings" :key="'mk-' + b.id" v-show="getParkBuildingMarker(b.id)" class="park-scene-marker" :style="parkMarkerStyle(b)">
+                <div class="park-marker-card"><strong>{{ getParkBuildingMarker(b.id)?.line1 }}</strong><span>{{ getParkBuildingMarker(b.id)?.line2 }}</span></div>
+              </div>
+              <div class="park-orbit-hint">{{ selectedParkBuilding ? '拖动查看不同角度' : '点击楼栋后可拖动查看不同角度' }}</div>
+            </div>
+          </div>
+        </section>
+        <aside class="sidebar right-sidebar">
+          <div class="panel glass-panel transparent-panel rank-panel">
+            <div class="panel-header">
+              <span class="panel-title">按物业分类统计</span>
+              <div class="panel-controls">
+                <select class="date-select" v-model="propertyMonth"><option value="2025-01">2025-01</option></select>
+              </div>
+            </div>
+            <div id="propertyCategoryChart" class="chart-box"></div>
+          </div>
+          <div class="panel glass-panel transparent-panel">
+            <div class="panel-header"><span class="panel-title">工单处理时长</span></div>
+            <div class="duration-kpis">
+              <div class="duration-kpi"><span class="duration-val">35</span><span class="duration-unit">分钟</span><span class="duration-label">平均首次响应时长</span></div>
+              <div class="duration-kpi"><span class="duration-val">90</span><span class="duration-unit">小时</span><span class="duration-label">平均解决完成时长</span></div>
+            </div>
+            <div id="workDurationChart" class="chart-box chart-box-sm"></div>
+          </div>
+          <div class="panel glass-panel transparent-panel rank-panel">
+            <div class="panel-header">
+              <span class="panel-title">物业运维TOP5</span>
+              <div class="panel-controls">
+                <div class="toggle-group">
+                  <button :class="{ active: propertyOmTab === 'repair' }" @click="propertyOmTab = 'repair'">报修</button>
+                  <button :class="{ active: propertyOmTab === 'inspection' }" @click="propertyOmTab = 'inspection'">巡检</button>
+                  <button :class="{ active: propertyOmTab === 'maintenance' }" @click="propertyOmTab = 'maintenance'">维保</button>
+                </div>
+              </div>
+            </div>
+            <div class="rank-list">
+              <div v-for="(item, index) in propertyOmRankList" :key="item.name" class="rank-item">
+                <div class="rank-badge" :class="{ first: index === 0 }">{{ index + 1 }}</div>
+                <div class="rank-body">
+                  <div class="rank-row">
+                    <span class="rank-name">{{ item.name }}</span>
+                    <span class="rank-value">{{ item.value }}</span>
+                  </div>
+                  <div class="rank-bar-track"><div class="rank-bar-fill" :class="{ first: index === 0 }" :style="{ width: item.percent + '%' }"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </template>
+
+      <!-- 能源管理 -->
+      <template v-else-if="activeTab === '能源管理'">
+        <section class="center-area center-area-energy">
+          <div class="kpi-row kpi-row-3">
+            <div v-for="kpi in energyCurrentKpi" :key="kpi.label" class="kpi-card glass-panel">
+              <div class="kpi-icon" :style="{ color: kpi.color }"><span v-html="kpi.icon"></span></div>
+              <div class="kpi-info">
+                <div class="kpi-value">{{ kpi.value }}<span class="kpi-unit">{{ kpi.unit }}</span></div>
+                <div class="kpi-label">{{ kpi.label }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="map-spacer">
+            <div
+              v-if="isParkInteractiveVisible"
+              class="park-scene-interactive"
+              :class="{ orbiting: parkOrbiting, 'has-building': selectedParkBuilding }"
+              @mousedown="startParkOrbit"
+            >
+              <div v-for="b in activeParkBuildings" :key="b.id" class="park-building-hit" :class="{ active: selectedParkBuilding === b.id }" :style="parkBuildingStyle(b)" @mousedown.stop="selectParkBuilding(b, $event)">
+                <span class="park-building-label">{{ b.name }}</span>
+              </div>
+              <div v-for="b in activeParkBuildings" :key="'mk-' + b.id" v-show="getParkBuildingMarker(b.id)" class="park-scene-marker" :style="parkMarkerStyle(b)">
+                <div class="park-marker-card"><strong>{{ getParkBuildingMarker(b.id)?.line1 }}</strong><span>{{ getParkBuildingMarker(b.id)?.line2 }}</span></div>
+              </div>
+              <div class="park-orbit-hint">{{ selectedParkBuilding ? '拖动查看不同角度' : '点击楼栋后可拖动查看不同角度' }}</div>
+            </div>
+          </div>
+          <div class="energy-map-toggle glass-panel">
+            <button :class="{ active: energyTypeTab === 'electricity' }" @click="switchEnergyType('electricity')">用电(12)</button>
+            <button :class="{ active: energyTypeTab === 'water' }" @click="switchEnergyType('water')">用水(32)</button>
+          </div>
+        </section>
+        <aside class="sidebar right-sidebar">
+          <div class="panel glass-panel transparent-panel rank-panel">
+            <div class="panel-header"><span class="panel-title">{{ energyDailyTitle }}</span></div>
+            <div class="stat-summary">
+              <div class="stat-main">今日截止当前{{ energyTypeLabel }} <strong>{{ energyDailyStat.value }}</strong> {{ energyDailyStat.unit }}</div>
+              <div class="stat-diff">较昨日 <span class="stat-up">▲ {{ energyDailyStat.diff }}{{ energyDailyStat.diffUnit }} {{ energyDailyStat.percent }}%</span></div>
+            </div>
+            <div class="panel-sub-title">逐时{{ energyTypeLabel }}趋势</div>
+            <div id="energyHourlyChart" class="chart-box"></div>
+          </div>
+          <div class="panel glass-panel transparent-panel rank-panel">
+            <div class="panel-header">
+              <span class="panel-title">{{ energyPeriodTitle }}</span>
+              <div class="panel-controls" v-if="energyTypeTab === 'electricity'">
+                <div class="toggle-group">
+                  <button :class="{ active: energyPeriodTab === 'year' }" @click="switchEnergyPeriod('year')">年度</button>
+                  <button :class="{ active: energyPeriodTab === 'month' }" @click="switchEnergyPeriod('month')">月度</button>
+                </div>
+              </div>
+            </div>
+            <div class="stat-summary">
+              <div class="stat-main">{{ energyPeriodLabel }} <strong>{{ energyPeriodStat.value }}</strong> {{ energyPeriodStat.unit }}</div>
+              <div class="stat-diff">{{ energyPeriodCompareLabel }} <span class="stat-up">▲ {{ energyPeriodStat.diff }}{{ energyPeriodStat.diffUnit }} {{ energyPeriodStat.percent }}%</span></div>
+            </div>
+            <div class="panel-sub-title">{{ energyPeriodChartTitle }}</div>
+            <div id="energyPeriodChart" class="chart-box"></div>
+          </div>
+        </aside>
+      </template>
+
+      <!-- 环境管理 -->
+      <template v-else-if="activeTab === '环境管理'">
+        <section class="center-area">
+          <div v-if="isModuleParkMode" class="kpi-row">
+            <div v-for="kpi in currentKpiData" :key="kpi.label" class="kpi-card glass-panel">
+              <div class="kpi-icon" :style="{ color: kpi.color }"><span v-html="kpi.icon"></span></div>
+              <div class="kpi-info">
+                <div class="kpi-value" :class="{ 'kpi-alert': kpi.alert }">{{ kpi.value }}<span class="kpi-unit">{{ kpi.unit }}</span></div>
+                <div class="kpi-label">{{ kpi.label }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="map-spacer">
+            <div
+              v-if="isParkInteractiveVisible"
+              class="park-scene-interactive"
+              :class="{ orbiting: parkOrbiting, 'has-building': selectedParkBuilding }"
+              @mousedown="startParkOrbit"
+            >
+              <div v-for="b in activeParkBuildings" :key="b.id" class="park-building-hit" :class="{ active: selectedParkBuilding === b.id }" :style="parkBuildingStyle(b)" @mousedown.stop="selectParkBuilding(b, $event)">
+                <span class="park-building-label">{{ b.name }}</span>
+              </div>
+              <div v-for="b in activeParkBuildings" :key="'mk-' + b.id" v-show="getParkBuildingMarker(b.id)" class="park-scene-marker" :style="parkMarkerStyle(b)">
+                <div class="park-marker-card"><strong>{{ getParkBuildingMarker(b.id)?.line1 }}</strong><span>{{ getParkBuildingMarker(b.id)?.line2 }}</span></div>
+              </div>
+              <div class="park-orbit-hint">{{ selectedParkBuilding ? '拖动查看不同角度' : '点击楼栋后可拖动查看不同角度' }}</div>
+            </div>
+          </div>
+        </section>
+        <aside class="sidebar right-sidebar">
+          <div class="panel glass-panel transparent-panel rank-panel">
+            <div class="panel-header">
+              <span class="panel-title">温度TOP5</span>
+              <div class="panel-controls">
+                <div class="toggle-group">
+                  <button :class="{ active: envTempTab === 'max' }" @click="envTempTab = 'max'">最高温度</button>
+                  <button :class="{ active: envTempTab === 'min' }" @click="envTempTab = 'min'">最低温度</button>
+                </div>
+              </div>
+            </div>
+            <div class="env-top-list">
+              <div v-for="(item, index) in envTempList" :key="item.name" class="env-top-item">
+                <span class="env-top-badge">TOP{{ index + 1 }}</span>
+                <span class="env-top-name">{{ item.name }}</span>
+                <span class="env-top-value">{{ item.value }}℃</span>
+              </div>
+            </div>
+          </div>
+          <div class="panel glass-panel transparent-panel rank-panel">
+            <div class="panel-header">
+              <span class="panel-title">当天空气质量数值对比</span>
+              <div class="panel-controls">
+                <div class="toggle-group">
+                  <button :class="{ active: envAirTab === 'max' }" @click="envAirTab = 'max'; updateAirQualityChart()">最高值</button>
+                  <button :class="{ active: envAirTab === 'min' }" @click="envAirTab = 'min'; updateAirQualityChart()">最低值</button>
+                </div>
+              </div>
+            </div>
+            <div id="airQualityChart" class="chart-box"></div>
+          </div>
+          <div class="panel glass-panel transparent-panel">
+            <div class="panel-header"><span class="panel-title">设备月度报警次数统计</span></div>
+            <div id="alarmChart" class="chart-box"></div>
+          </div>
+        </aside>
+      </template>
+
+      <!-- 食堂管理 -->
+      <template v-else-if="activeTab === '食堂管理'">
+        <section class="center-area">
+          <div class="kpi-row">
+            <div v-for="kpi in currentKpiData" :key="kpi.label" class="kpi-card glass-panel">
+              <div class="kpi-icon" :style="{ color: kpi.color }"><span v-html="kpi.icon"></span></div>
+              <div class="kpi-info">
+                <div class="kpi-value">{{ kpi.value }}<span class="kpi-unit">{{ kpi.unit }}</span></div>
+                <div class="kpi-label">{{ kpi.label }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="map-spacer">
+            <div
+              v-if="isParkInteractiveVisible"
+              class="park-scene-interactive"
+              :class="{ orbiting: parkOrbiting, 'has-building': selectedParkBuilding }"
+              @mousedown="startParkOrbit"
+            >
+              <div v-for="b in activeParkBuildings" :key="b.id" class="park-building-hit" :class="{ active: selectedParkBuilding === b.id }" :style="parkBuildingStyle(b)" @mousedown.stop="selectParkBuilding(b, $event)">
+                <span class="park-building-label">{{ b.name }}</span>
+              </div>
+              <div v-for="b in activeParkBuildings" :key="'mk-' + b.id" v-show="getParkBuildingMarker(b.id)" class="park-scene-marker" :style="parkMarkerStyle(b)">
+                <div class="park-marker-card"><strong>{{ getParkBuildingMarker(b.id)?.line1 }}</strong><span>{{ getParkBuildingMarker(b.id)?.line2 }}</span></div>
+              </div>
+              <div class="park-orbit-hint">{{ selectedParkBuilding ? '拖动查看不同角度' : '点击楼栋后可拖动查看不同角度' }}</div>
+            </div>
+          </div>
+        </section>
+        <aside class="sidebar right-sidebar">
+          <div class="panel glass-panel transparent-panel">
+            <div class="panel-header"><span class="panel-title">食堂监管状态</span></div>
+            <div class="status-table-wrap">
+              <table class="status-table">
+                <thead><tr><th v-for="h in canteenStatus.headers" :key="h">{{ h }}</th></tr></thead>
+                <tbody>
+                  <tr v-for="(row, i) in canteenStatus.rows" :key="i">
+                    <td v-for="(cell, j) in row" :key="j" :class="{ pass: cell === '通过' }">{{ cell }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel glass-panel transparent-panel rank-panel">
+            <div class="panel-header"><span class="panel-title">客饭预定数</span></div>
+            <div class="stat-summary stat-summary-inline">合计 <strong>{{ canteenGuest.total }}</strong></div>
+            <div id="canteenGuestChart" class="chart-box"></div>
+          </div>
+          <div class="panel glass-panel transparent-panel">
+            <div class="panel-header">
+              <span class="panel-title">各食堂当周营销统计</span>
+              <div class="panel-controls">
+                <div class="toggle-group">
+                  <button class="active">人数</button>
+                  <button disabled>金额</button>
+                </div>
+              </div>
+            </div>
+            <div id="canteenMarketingChart" class="chart-box"></div>
+          </div>
+        </aside>
+      </template>
+
+      <template v-else>
+        <section class="center-area placeholder-area">
+          <div class="placeholder-msg glass-panel">{{ activeTab }} — 页面开发中</div>
+        </section>
+      </template>
+    </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/module-charts.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
