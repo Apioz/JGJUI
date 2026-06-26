@@ -198,31 +198,104 @@ function buildSimpleDonutOption(items) {
   };
 }
 
-function buildFacilityFaultOption() {
-  const { months, values } = DASHBOARD_DATA.facilityFault;
+function buildGwStockPieOption(stock, warehouses) {
+  const centerX = '36%';
   return {
-    grid: { top: 24, right: 12, bottom: 22, left: 36 },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}<br/>{c} 件 ({d}%)',
+      backgroundColor: 'rgba(10, 30, 60, 0.88)',
+      borderColor: 'rgba(0, 191, 255, 0.3)',
+      textStyle: { color: '#fff', fontSize: 12 },
+    },
+    legend: {
+      orient: 'vertical',
+      right: 8,
+      top: 'center',
+      itemWidth: 8,
+      itemHeight: 8,
+      itemGap: 6,
+      textStyle: { color: CHART_THEME.textColor, fontSize: 10 },
+    },
+    graphic: [{
+      type: 'group',
+      left: centerX,
+      top: '50%',
+      bounding: 'raw',
+      children: [
+        {
+          type: 'text',
+          style: {
+            text: '本季总数',
+            textAlign: 'center',
+            textVerticalAlign: 'middle',
+            fill: 'rgba(255,255,255,0.75)',
+            fontSize: 10,
+          },
+          top: -10,
+        },
+        {
+          type: 'text',
+          style: {
+            text: String(stock.total),
+            textAlign: 'center',
+            textVerticalAlign: 'middle',
+            fill: CHART_THEME.textColor,
+            fontSize: 18,
+            fontWeight: 'bold',
+          },
+          top: 10,
+        },
+      ],
+    }],
+    series: [{
+      type: 'pie',
+      radius: ['42%', '68%'],
+      center: [centerX, '50%'],
+      label: { show: false },
+      labelLine: { show: false },
+      data: warehouses.map((w, i) => ({
+        name: w.shortName,
+        value: i === 0 ? stock.w1 : stock.w2,
+        itemStyle: { color: w.color },
+      })),
+    }],
+  };
+}
+
+function buildGwCumulativeTrendOption(labels, w1Data, w2Data, warehouses) {
+  return {
+    grid: { top: 36, right: 12, bottom: 22, left: 44 },
+    legend: {
+      top: 4, right: 8,
+      textStyle: { color: CHART_THEME.textColor, fontSize: 10 },
+      itemWidth: 12, itemHeight: 8,
+      data: warehouses.map((w) => w.shortName),
+    },
     xAxis: {
-      type: 'category', data: months,
+      type: 'category', data: labels,
       axisLine: { lineStyle: { color: CHART_THEME.axisLine } },
       axisTick: { show: false },
       axisLabel: { color: CHART_THEME.textColor, fontSize: 9 },
     },
     yAxis: {
-      type: 'value', min: 90, max: 240,
+      type: 'value',
       axisLine: { show: false }, axisTick: { show: false },
       axisLabel: { color: CHART_THEME.textColor, fontSize: 9 },
       splitLine: { lineStyle: { color: CHART_THEME.splitLine } },
     },
-    series: [{
-      type: 'line', smooth: true, symbol: 'circle', symbolSize: 5,
-      data: values,
-      lineStyle: { color: CHART_THEME.cyan, width: 2 },
-      itemStyle: { color: CHART_THEME.cyan },
-      areaStyle: {
-        color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: CHART_THEME.cyanGradient },
+    series: [
+      {
+        name: warehouses[0].shortName, type: 'line', smooth: true, symbol: 'circle', symbolSize: 5,
+        data: w1Data, lineStyle: { color: warehouses[0].color, width: 2 },
+        itemStyle: { color: warehouses[0].color },
       },
-    }],
+      {
+        name: warehouses[1].shortName, type: 'line', smooth: true, symbol: 'circle', symbolSize: 5,
+        data: w2Data, lineStyle: { color: warehouses[1].color, width: 2 },
+        itemStyle: { color: warehouses[1].color },
+      },
+    ],
     tooltip: {
       trigger: 'axis',
       backgroundColor: 'rgba(10, 30, 60, 0.88)',
@@ -299,6 +372,9 @@ createApp({
     const rankDate2 = ref('2026-06');
     const workOrderMonth = ref('2026-06');
     const assetTypeTab = ref('space');
+    const gwCumulativeMode = ref('year');
+    const gwData = MIDDLE_PLATFORM_DATA.publicWarehouse;
+    const gwWarehouses = gwData.warehouses;
     const propertyOmTab = ref('repair');
     const propertyMonth = ref('2025-01');
     const energyTypeTab = ref('electricity');
@@ -561,8 +637,6 @@ createApp({
       return buildRankList(data, rankTab2.value === 'electricity' ? 'kWh' : '吨');
     });
 
-    const assetAreaRankList = computed(() => buildAreaRankList(DASHBOARD_DATA.assetAreaRank));
-
     const propertyOmRankList = computed(() => buildRankList(
       DASHBOARD_DATA.propertyOmRank[propertyOmTab.value], ''
     ));
@@ -684,8 +758,36 @@ createApp({
       getChart('assetTypeChart')?.setOption(buildAssetTypeOption(
         assetTypeTab.value === 'space' ? DASHBOARD_DATA.assetTypeSpace : DASHBOARD_DATA.assetTypeEquipment
       ));
-      getChart('facilityFaultChart')?.setOption(buildFacilityFaultOption());
+      getChart('gwStockPieChart')?.setOption(buildGwStockPieOption(gwData.currentStock, gwWarehouses));
+      updateGwCumulativeChart();
       getChart('assetTrendChart')?.setOption(buildAssetTrendOption());
+    }
+
+    function updateGwCumulativeChart() {
+      const mode = gwCumulativeMode.value;
+      const src = mode === 'year' ? gwData.cumulative.yearlyTrend : gwData.cumulative.quarterlyTrend;
+      let labels;
+      let w1;
+      let w2;
+      if (mode === 'year') {
+        const start = Math.max(0, src.labels.length - 3);
+        labels = src.labels.slice(start).map((y) => `${y}年`);
+        w1 = src.w1.slice(start);
+        w2 = src.w2.slice(start);
+      } else {
+        labels = src.labels;
+        w1 = src.w1;
+        w2 = src.w2;
+      }
+      getChart('gwCumulativeTrendChart')?.setOption(
+        buildGwCumulativeTrendOption(labels, w1, w2, gwWarehouses),
+        true
+      );
+    }
+
+    function switchGwCumulativeMode(mode) {
+      gwCumulativeMode.value = mode;
+      updateGwCumulativeChart();
     }
 
     function initPropertyCharts() {
@@ -889,7 +991,8 @@ createApp({
       navTabs, activeTab, searchQuery, selectedProject,
       currentKpiData, searchPlaceholder, unitSuffix,
       filteredProjects, rankTab1, rankTab2, rankDate1, rankDate2, workOrderMonth,
-      rankList1, rankList2, assetTypeTab, assetTypeSummary, assetAreaRankList,
+      rankList1, rankList2, assetTypeTab, assetTypeSummary,
+      gwCumulativeMode, switchGwCumulativeMode,
       propertyOmTab, propertyMonth, propertyOmRankList,
       energyTypeTab, energyPeriodTab, energyCurrentKpi, energyTypeLabel,
       energyDailyTitle, energyDailyStat, energyPeriodTitle, energyPeriodStat,

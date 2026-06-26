@@ -14,6 +14,14 @@
     <aside class="sidebar">
       <h1>智慧园区<br/>交互原型</h1>
       <p class="sidebar-desc">完整登录流程 + 项目切换 + 食堂/能源数据总览 + 通讯录管理。</p>
+      <div class="platform-switch-section">
+        <div class="platform-switch-title">切换系统</div>
+        <div class="platform-switch-list">
+          <a href="../dp/index.html" class="platform-switch-item">🖥️ 大屏</a>
+          <a href="../dp/middle-platform.html" class="platform-switch-item">📊 中台</a>
+          <div class="platform-switch-item active">📱 小程序</div>
+        </div>
+      </div>
       <div class="guide-list">
         <div class="guide-item" onclick="App.goLogin()">🔐 登录页</div>
         <div class="guide-item" onclick="App.enterApp('p1')">🏠 进入首页</div>
@@ -27,7 +35,19 @@
     <div class="phone-frame">
       <div id="status-bar" class="status-bar">
         <span>12:00</span>
-        <span class="status-icons">📶 🔋</span>
+        <div class="status-bar-actions">
+          <div class="phone-platform-wrap hidden" id="phone-platform-wrap">
+            <button class="phone-platform-btn" type="button" onclick="App.togglePhonePlatformMenu(event)" title="切换系统" aria-label="切换系统">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </button>
+            <div class="phone-platform-menu hidden" id="phone-platform-menu">
+              <a href="../dp/index.html" class="phone-platform-item">大屏</a>
+              <a href="../dp/middle-platform.html" class="phone-platform-item">中台</a>
+              <span class="phone-platform-item active">小程序</span>
+            </div>
+          </div>
+          <span class="status-icons">📶 🔋</span>
+        </div>
       </div>
 
       <div id="nav-bar" class="nav-bar hidden">

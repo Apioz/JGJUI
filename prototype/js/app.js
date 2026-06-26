@@ -223,6 +223,15 @@ const MOCK = {
       { name: '装饰品', value: 58, percent: '8%', color: '#4A90E2' }
     ]
   },
+  warehouseStock: {
+    total: 822,
+    w1: 484,
+    w2: 338,
+    warehouses: [
+      { shortName: '黄埔仓', color: '#1890ff' },
+      { shortName: '闵行仓', color: '#69c0ff' },
+    ],
+  },
   smartCard: {
     periods: {
       today: {
@@ -701,6 +710,17 @@ function renderWarehouseStackedBar(warehouses) {
     </div>`
 }
 
+function renderWarehouseStockPieSection() {
+  const stock = MOCK.warehouseStock
+  const items = [
+    { name: stock.warehouses[0].shortName, count: stock.w1, color: stock.warehouses[0].color },
+    { name: stock.warehouses[1].shortName, count: stock.w2, color: stock.warehouses[1].color },
+  ]
+  return `
+    <div class="pie-wrap">${renderPieChart(items, stock.total)}<div class="pie-center">本季总数<strong>${stock.total}</strong></div></div>
+    <div class="chart-legend-wrap">${items.map(t => `<span class="legend-tag"><span style="color:${t.color}">●</span>${t.name} ${t.count}件</span>`).join('')}</div>`
+}
+
 function renderPublicWarehouseSection() {
   const w = MOCK.publicWarehouse
   const cats = w.categories
@@ -982,7 +1002,7 @@ function renderHome() {
           </div>
           <div class="energy-icon-item" onclick="App.goToAssetSection('asset-warehouse')">
             <div class="energy-icon-graph">${Icons.icon('warehouse', { size: 32, color: '#9254DE' })}</div>
-            <div class="energy-icon-name">公务仓</div>
+            <div class="energy-icon-name">公物仓</div>
           </div>
         </div>
       </div>
@@ -1237,7 +1257,7 @@ function renderData() {
           ${renderOfficeSpaceSection()}
         </div>
         <div class="card" id="asset-warehouse-section" style="margin-top:10px">
-          <div class="chart-card-title" style="margin-bottom:12px">公务仓</div>
+          <div class="chart-card-title" style="margin-bottom:12px">公物仓</div>
           ${renderPublicWarehouseSection()}
         </div>
       </div>
@@ -1380,15 +1400,15 @@ function renderAssetData() {
         <div class="chart-legend-wrap">${types.map(t=>`<span class="legend-tag"><span style="color:${t.color}">●</span>${t.name}</span>`).join('')}</div>
       </div>
       <div class="chart-card">
-        <div class="chart-card-title" style="margin-bottom:12px">按项目统计空间建筑面积排行榜</div>
-        ${renderBarChart(MOCK.spaceRanking, true)}
+        <div class="chart-card-title" style="margin-bottom:12px">本季在仓物资分仓占比</div>
+        ${renderWarehouseStockPieSection()}
       </div>
       <div class="chart-card" id="asset-data-office-section">
         <div class="chart-card-title" style="margin-bottom:12px">办公用房</div>
         ${renderOfficeSpaceSection()}
       </div>
       <div class="chart-card" id="asset-data-warehouse-section">
-        <div class="chart-card-title" style="margin-bottom:12px">公务仓</div>
+        <div class="chart-card-title" style="margin-bottom:12px">公物仓</div>
         ${renderPublicWarehouseSection()}
       </div>
     </div>`
@@ -1811,6 +1831,11 @@ function render() {
     const fabAvatar = document.getElementById('xiaoyu-fab-avatar')
     if (fabAvatar) fabAvatar.innerHTML = xiaoyuAvatarSvg(50)
   }
+
+  const phonePlatform = document.getElementById('phone-platform-wrap')
+  if (phonePlatform) {
+    phonePlatform.classList.toggle('hidden', state.authPhase === 'login')
+  }
 }
 
 function scrollToAssetSection(target) {
@@ -2121,8 +2146,20 @@ const App = {
     render()
   },
 
-  showToast
+  showToast,
+
+  togglePhonePlatformMenu(e) {
+    e.stopPropagation()
+    const menu = document.getElementById('phone-platform-menu')
+    if (menu) menu.classList.toggle('hidden')
+  },
+
+  closePhonePlatformMenu() {
+    const menu = document.getElementById('phone-platform-menu')
+    if (menu) menu.classList.add('hidden')
+  }
 }
 
 window.App = App
 document.addEventListener('DOMContentLoaded', () => { render() })
+document.addEventListener('click', () => { App.closePhonePlatformMenu() })

@@ -89,6 +89,7 @@
           <div v-show="platformMenuOpen" class="platform-dropdown">
             <button class="platform-dropdown-item active">大屏</button>
             <a href="middle-platform.html" class="platform-dropdown-item" @click="navigateToPlatform('middle-platform.html')">中台</a>
+            <a href="../prototype/index.html" class="platform-dropdown-item" @click="navigateToPlatform('../prototype/index.html')">小程序</a>
             <button class="platform-dropdown-item disabled" disabled>资产</button>
             <button class="platform-dropdown-item disabled" disabled>其他业务系统 <span class="platform-sub-arrow">›</span></button>
           </div>
@@ -553,34 +554,24 @@
             <div id="assetTypeChart" class="chart-box asset-donut-chart"></div>
           </div>
 
-          <div class="panel glass-panel transparent-panel rank-panel">
+          <div class="panel glass-panel transparent-panel">
             <div class="panel-header">
-              <span class="panel-title">按项目统计空间建筑面积排行榜</span>
+              <span class="panel-title">本季在仓物资分仓占比</span>
             </div>
-            <div class="rank-list asset-area-rank">
-              <div v-for="(item, index) in assetAreaRankList" :key="item.name + index" class="rank-item">
-                <div class="rank-badge" :class="{ first: index === 0 }">
-                  <span v-if="index === 0" class="rank-crown" aria-hidden="true">♛</span>
-                  <span v-else>{{ index + 1 }}</span>
-                </div>
-                <div class="rank-body">
-                  <div class="rank-row">
-                    <span class="rank-name">{{ item.name }}</span>
-                    <span class="rank-value">{{ item.displayValue }}㎡</span>
-                  </div>
-                  <div class="rank-bar-track">
-                    <div class="rank-bar-fill" :class="{ first: index === 0 }" :style="{ width: item.percent + '%' }"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div id="gwStockPieChart" class="chart-box asset-donut-chart"></div>
           </div>
 
           <div class="panel glass-panel transparent-panel">
             <div class="panel-header">
-              <span class="panel-title">设施故障统计</span>
+              <span class="panel-title">累计存放历史变化趋势</span>
+              <div class="panel-controls">
+                <div class="toggle-group">
+                  <button :class="{ active: gwCumulativeMode === 'quarter' }" @click="switchGwCumulativeMode('quarter')">按季度</button>
+                  <button :class="{ active: gwCumulativeMode === 'year' }" @click="switchGwCumulativeMode('year')">按年度</button>
+                </div>
+              </div>
             </div>
-            <div id="facilityFaultChart" class="chart-box"></div>
+            <div id="gwCumulativeTrendChart" class="chart-box"></div>
           </div>
         </aside>
       </template>
@@ -977,6 +968,7 @@
   <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/middle-platform-data.js"></script>
   <script src="js/module-charts.js"></script>
   <script src="js/map.js"></script>
   <script src="js/dashboard.js"></script>

@@ -1,4 +1,5 @@
 function buildGwStockPieOption(data, warehouses) {
+  const centerX = '38%';
   return {
     tooltip: { trigger: 'item', formatter: '{b}<br/>{c} 件 ({d}%)' },
     legend: {
@@ -6,11 +7,43 @@ function buildGwStockPieOption(data, warehouses) {
       itemWidth: 10, itemHeight: 10,
       textStyle: { fontSize: 12, color: '#595959' },
     },
+    graphic: [{
+      type: 'group',
+      left: centerX,
+      top: '50%',
+      bounding: 'raw',
+      children: [
+        {
+          type: 'text',
+          style: {
+            text: '本季总数',
+            textAlign: 'center',
+            textVerticalAlign: 'middle',
+            fill: '#8c8c8c',
+            fontSize: 12,
+          },
+          top: -12,
+        },
+        {
+          type: 'text',
+          style: {
+            text: String(data.total),
+            textAlign: 'center',
+            textVerticalAlign: 'middle',
+            fill: '#262626',
+            fontSize: 22,
+            fontWeight: 'bold',
+          },
+          top: 10,
+        },
+      ],
+    }],
     series: [{
       type: 'pie',
       radius: ['42%', '68%'],
-      center: ['38%', '50%'],
-      label: { show: true, formatter: '{b}\n{d}%', fontSize: 11 },
+      center: [centerX, '50%'],
+      label: { show: false },
+      labelLine: { show: false },
       data: warehouses.map((w, i) => ({
         name: w.shortName,
         value: i === 0 ? data.w1 : data.w2,

@@ -103,7 +103,7 @@ createApp({
     const currentTime = ref('');
     const charts = {};
 
-    // 公务仓状态
+    // 公物仓状态
     const gwData = MIDDLE_PLATFORM_DATA.publicWarehouse;
     const gwWarehouses = gwData.warehouses;
     const gwCumulativeMode = ref('quarter');
@@ -136,7 +136,7 @@ createApp({
 
     const pageTitle = computed(() => {
       if (currentView.value === 'office') return '办公用房';
-      if (currentView.value === 'warehouse') return '公务仓';
+      if (currentView.value === 'warehouse') return '公物仓';
       const menu = menuItems.value.find((m) => m.id === activeMenuId.value);
       if (menu?.children) {
         const sub = menu.children.find((c) => c.id === activeSubId.value);

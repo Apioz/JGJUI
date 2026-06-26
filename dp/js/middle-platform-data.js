@@ -10,7 +10,7 @@ const MIDDLE_PLATFORM_DATA = {
       expanded: true,
       children: [
         { id: 'asset-office', label: '办公用房', path: 'office' },
-        { id: 'asset-warehouse', label: '公务仓', path: 'warehouse' },
+        { id: 'asset-warehouse', label: '公物仓', path: 'warehouse' },
       ],
     },
     {
@@ -259,7 +259,7 @@ const MIDDLE_PLATFORM_DATA = {
     },
   ],
 
-  /** 公务仓 — 双仓库数据 */
+  /** 公物仓 — 双仓库数据 */
   publicWarehouse: {
     warehouses: [
       { id: 'w1', name: '黄埔仓（通岸家园）', shortName: '黄埔仓', color: '#1890ff' },

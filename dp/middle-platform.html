@@ -35,6 +35,7 @@
           <div v-show="platformOpen" class="mp-platform-dropdown">
             <a href="index.html" class="mp-platform-item" @click="navigateToPlatform('index.html')">大屏</a>
             <button class="mp-platform-item active">中台</button>
+            <a href="../prototype/index.html" class="mp-platform-item" @click="navigateToPlatform('../prototype/index.html')">小程序</a>
             <button class="mp-platform-item" disabled style="opacity:0.5;cursor:not-allowed">资产</button>
             <button class="mp-platform-item" disabled style="opacity:0.5;cursor:not-allowed">
               其他业务系统 <span class="sub-arrow">›</span>
@@ -391,7 +392,7 @@
           </div>
         </template>
 
-        <!-- 资产管理 — 公务仓 -->
+        <!-- 资产管理 — 公物仓 -->
         <template v-else-if="showWarehouse">
           <!-- 库存物资数 -->
           <div class="gw-section">
@@ -461,7 +462,7 @@
             <div class="gw-grid-2 chart-table">
               <div class="mp-card">
                 <div class="mp-card-header">
-                  <span class="mp-card-title">在仓物资分仓占比</span>
+                  <span class="mp-card-title">本季在仓物资分仓占比</span>
                 </div>
                 <div id="gwStockPie" class="gw-chart"></div>
               </div>
