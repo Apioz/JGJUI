@@ -511,6 +511,57 @@ const DASHBOARD_DATA = {
     ],
   },
 
+  /** 园区办公用房总使用面积占比（沙盘选中/进入园区时展示） */
+  parkOfficeAreaChart: {
+    default: {
+      totalArea: 1213,
+      items: [
+        { name: '区级统筹', proportion: 58, color: '#1d39c4' },
+        { name: '机管局', proportion: 2, color: '#597ef7' },
+        { name: '区建设管理委', proportion: 2, color: '#85a5ff' },
+        { name: '其他', proportion: 38, color: '#d6e4ff' },
+      ],
+    },
+    byProject: {
+      p1: {
+        totalArea: 1213,
+        items: [
+          { name: '区级统筹', proportion: 58, color: '#1d39c4' },
+          { name: '机管局', proportion: 2, color: '#597ef7' },
+          { name: '区建设管理委', proportion: 2, color: '#85a5ff' },
+          { name: '其他', proportion: 38, color: '#d6e4ff' },
+        ],
+      },
+      p2: {
+        totalArea: 980,
+        items: [
+          { name: '区级统筹', proportion: 52, color: '#1d39c4' },
+          { name: '机管局', proportion: 3, color: '#597ef7' },
+          { name: '区建设管理委', proportion: 4, color: '#85a5ff' },
+          { name: '其他', proportion: 41, color: '#d6e4ff' },
+        ],
+      },
+      p3: {
+        totalArea: 856,
+        items: [
+          { name: '区级统筹', proportion: 48, color: '#1d39c4' },
+          { name: '机管局', proportion: 5, color: '#597ef7' },
+          { name: '区建设管理委', proportion: 3, color: '#85a5ff' },
+          { name: '其他', proportion: 44, color: '#d6e4ff' },
+        ],
+      },
+      p4: {
+        totalArea: 742,
+        items: [
+          { name: '区级统筹', proportion: 45, color: '#1d39c4' },
+          { name: '机管局', proportion: 6, color: '#597ef7' },
+          { name: '区建设管理委', proportion: 4, color: '#85a5ff' },
+          { name: '其他', proportion: 45, color: '#d6e4ff' },
+        ],
+      },
+    },
+  },
+
   assetAreaRank: [
     { name: '300号', value: 2321412 },
     { name: '288号', value: 2000412 },

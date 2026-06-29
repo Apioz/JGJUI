@@ -371,6 +371,47 @@ const XIAOYU_ATTACH_EXTRA = [
   { id: 'plugin', name: '插件', icon: 'plugin' }
 ]
 
+const XIAOYU_AGENTS = [
+  {
+    id: 'park', name: '园区问答', tag: '通用智能体', version: '1.0.0', status: '可用',
+    desc: '解答园区概况、设施与服务相关问题', taskAbility: '不支持定时任务', chatCount: 12, color: '#4A90E2', icon: 'building'
+  },
+  {
+    id: 'repair', name: '报修助手', tag: '通用智能体', version: '1.0.0', status: '可用',
+    desc: '协助提交报修、查询报修进度与处理状态', taskAbility: '不支持定时任务', chatCount: 8, color: '#FA8C16', icon: 'repair'
+  },
+  {
+    id: 'workorder', name: '工单查询', tag: '通用智能体', version: '1.0.0', status: '可用',
+    desc: '查询维保、巡检及报修工单进度', taskAbility: '不支持定时任务', chatCount: 15, color: '#9254DE', icon: 'workorder'
+  }
+]
+
+const XIAOYU_NOTIFY_TYPES = [
+  { id: 'abnormal', label: '异常提醒' },
+  { id: 'message', label: '消息提醒' },
+  { id: 'event', label: '事件提醒' }
+]
+
+const XIAOYU_ACCOUNT = {
+  nickname: '15552872859', account: '15552872859', userId: '1981632619449364481',
+  department: '未填写', role: '小程序管理员', lastLoginIp: '未知', lastLoginTime: '未知'
+}
+
+const XIAOYU_NOTIFY_DATA = {
+  abnormal: [
+    { id: 'a1', title: '3号楼空调机组温度异常', type: '异常提醒', priority: '紧急', sender: '系统监测', time: '2026-06-26 09:15:22', read: false },
+    { id: 'a2', title: '地下车库烟感设备离线', type: '异常提醒', priority: '重要', sender: '系统监测', time: '2026-06-25 18:40:11', read: true }
+  ],
+  message: [
+    { id: 'm1', title: '报修工单待处理提醒', type: '消息提醒', priority: '普通', sender: '物业管理', time: '2026-06-26 08:30:00', read: false },
+    { id: 'm2', title: '食堂留样检测已通过', type: '消息提醒', priority: '普通', sender: '食堂管理', time: '2026-06-25 12:00:00', read: true }
+  ],
+  event: [
+    { id: 'e1', title: '智能体任务需要人工介入', type: '事件提醒', priority: '重要', sender: '系统通知', time: '2026-06-01 17:00:09', read: true },
+    { id: 'e2', title: '定时巡检任务执行完成', type: '事件提醒', priority: '普通', sender: '系统通知', time: '2026-05-28 10:20:33', read: false }
+  ]
+}
+
 const state = {
   authPhase: 'login',
   loginMode: 'account',
@@ -415,13 +456,24 @@ const state = {
   workOrderListFilter: '全部',
   xiaoyuMessages: [],
   xiaoyuInput: '',
-  xiaoyuHistoryOpen: false,
+  xiaoyuPhase: 'agents',
+  xiaoyuActiveAgentId: null,
+  xiaoyuWorkbenchOpen: false,
+  xiaoyuMsgMenuOpen: false,
   xiaoyuAttachOpen: false,
+  xiaoyuAgentDetailOpen: false,
+  xiaoyuFeedbackOpen: false,
+  xiaoyuFeedbackScore: 0,
+  xiaoyuFeedbackText: '',
+  xiaoyuNotifyCategory: 'abnormal',
+  xiaoyuNotifyTab: 'all',
+  xiaoyuNotifySelected: [],
   xiaoyuSessions: [
-    { id: 's1', title: '能耗查询', time: '今天 10:30', preview: '今日用电 1,280 kWh...' },
-    { id: 's2', title: '报修进度', time: '昨天 16:20', preview: '您的报修工单 WO-2024...' },
-    { id: 's3', title: '食堂推荐', time: '6月20日', preview: '推荐今日特色：红烧排骨...' }
+    { id: 's1', agentId: 'workorder', title: '能耗查询', time: '今天 10:30', preview: '今日用电 1,280 kWh...' },
+    { id: 's2', agentId: 'park', title: '报修进度', time: '昨天 16:20', preview: '您的报修工单 WO-2024...' },
+    { id: 's3', agentId: 'repair', title: '食堂推荐', time: '6月20日', preview: '推荐今日特色：红烧排骨...' }
   ],
+  xiaoyuTasks: [],
   xiaoyuActiveSessionId: null
 }
 
@@ -1107,110 +1159,374 @@ function getXiaoyuReply(text) {
   return `我是小禹，您的智慧园区助手。可以帮您查询能耗、工单、食堂、公告和园区数据，请随时提问。`
 }
 
-function renderXiaoyu() {
-  const u = MOCK.userProfile
-  const msgs = state.xiaoyuMessages
-  const hasMessages = msgs.length > 0
+function getXiaoyuAgent(id) {
+  return XIAOYU_AGENTS.find(a => a.id === id) || XIAOYU_AGENTS[0]
+}
 
+function getXiaoyuHeaderTitle() {
+  if (state.xiaoyuPhase === 'notifications') return '消息通知'
+  if (state.xiaoyuPhase === 'profile') return '个人中心'
+  if (state.xiaoyuPhase === 'agents') return '小禹'
+  return '聊天'
+}
+
+function getXiaoyuNotifyList() {
+  const list = XIAOYU_NOTIFY_DATA[state.xiaoyuNotifyCategory] || []
+  if (state.xiaoyuNotifyTab === 'unread') return list.filter(n => !n.read)
+  if (state.xiaoyuNotifyTab === 'read') return list.filter(n => n.read)
+  return list
+}
+
+function renderXiaoyuHeader() {
+  const showMsgAvatar = state.xiaoyuPhase === 'chat' || state.xiaoyuPhase === 'agents'
+  const unreadTotal = Object.values(XIAOYU_NOTIFY_DATA).flat().filter(n => !n.read).length
+  return `
+    <div class="xiaoyu-header">
+      <button class="xiaoyu-header-btn" onclick="App.toggleXiaoyuWorkbench(true)" title="工作台">
+        ${Icons.icon('menu', { size: 22, color: '#333' })}
+      </button>
+      <div class="xiaoyu-header-title"><span>${getXiaoyuHeaderTitle()}</span></div>
+      <div class="xiaoyu-header-actions">
+        ${showMsgAvatar ? `
+          <div class="xiaoyu-msg-wrap">
+            <button class="xiaoyu-header-btn xiaoyu-msg-btn" onclick="App.toggleXiaoyuMsgMenu(event)" title="消息">
+              ${Icons.icon('notify', { size: 22, color: '#333' })}
+              ${unreadTotal ? `<span class="xiaoyu-msg-badge">${unreadTotal > 99 ? '99+' : unreadTotal}</span>` : ''}
+            </button>
+            ${state.xiaoyuMsgMenuOpen ? `
+              <div class="xiaoyu-msg-dropdown" onclick="event.stopPropagation()">
+                ${XIAOYU_NOTIFY_TYPES.map(t => `
+                  <button class="xiaoyu-msg-dropdown-item" onclick="App.xiaoyuOpenNotifications('${t.id}')">${t.label}</button>`).join('')}
+              </div>` : ''}
+          </div>
+          <button class="xiaoyu-user-avatar" onclick="App.xiaoyuOpenProfile()" title="个人中心">
+            ${Icons.icon('user', { size: 18, color: '#4A90E2' })}
+          </button>` : `
+          <span class="xiaoyu-header-spacer"></span>`}
+      </div>
+    </div>`
+}
+
+function renderXiaoyuAgentCard(agent) {
+  return `
+    <div class="xiaoyu-agent-card">
+      <div class="xiaoyu-agent-card-main">
+        <div class="xiaoyu-agent-logo">${Icons.icon(agent.icon, { size: 28, color: agent.color })}</div>
+        <div class="xiaoyu-agent-info">
+          <div class="xiaoyu-agent-name">${agent.name}</div>
+          <div class="xiaoyu-agent-tags">
+            <span class="xiaoyu-agent-tag">${agent.tag}</span>
+            <span class="xiaoyu-agent-version">${agent.version}</span>
+          </div>
+          <div class="xiaoyu-agent-actions">
+            <button class="xiaoyu-agent-detail-link" onclick="App.toggleXiaoyuAgentDetail(true)">详情</button>
+            <button class="xiaoyu-feedback-link" onclick="App.toggleXiaoyuFeedback(true)">反馈与建议</button>
+          </div>
+        </div>
+        <button class="xiaoyu-agent-newchat" onclick="App.xiaoyuNewChat()">新建对话</button>
+      </div>
+    </div>`
+}
+
+function renderXiaoyuAgentPicker() {
+  const u = MOCK.userProfile
   return `
     <div class="xiaoyu-page">
-      <div class="xiaoyu-header">
-        <button class="xiaoyu-header-btn" onclick="App.closeSubPage()" title="返回首页">
-          ${Icons.icon('back-home', { size: 22, color: '#333' })}
-        </button>
-        <div class="xiaoyu-header-title">
-          ${xiaoyuAvatarHtml(28)}
-          <span>小禹</span>
+      ${renderXiaoyuHeader()}
+      <div class="xiaoyu-body xiaoyu-agent-picker">
+        <div class="xiaoyu-welcome">
+          ${xiaoyuAvatarHtml(72)}
+          <div class="xiaoyu-greeting">嗨 ${u.name}，今天需要小禹帮您做什么？</div>
+          <div class="xiaoyu-quick-actions">
+            ${XIAOYU_QUICK_ACTIONS.map(a => `
+              <button class="xiaoyu-quick-chip" onclick="App.xiaoyuQuickAsk('${a.prompt.replace(/'/g, "\\'")}')">${a.text}</button>`).join('')}
+          </div>
         </div>
-        <div class="xiaoyu-header-actions">
-          <button class="xiaoyu-header-btn xiaoyu-tool-btn" onclick="App.xiaoyuNewChat()" title="新对话">
-            ${Icons.icon('new-chat', { size: 20, color: '#4A90E2' })}
-          </button>
-          <button class="xiaoyu-header-btn xiaoyu-tool-btn" onclick="App.toggleXiaoyuHistory()" title="历史对话">
-            ${Icons.icon('history', { size: 20, color: '#4A90E2' })}
-          </button>
-        </div>
-      </div>
-
-      <div class="xiaoyu-body" id="xiaoyu-body">
-        ${hasMessages ? `
-          <div class="xiaoyu-messages">
-            ${msgs.map(m => `
-              <div class="xiaoyu-msg ${m.role}">
-                ${m.role === 'assistant' ? `<div class="xiaoyu-msg-avatar">${xiaoyuAvatarHtml(32)}</div>` : ''}
-                <div class="xiaoyu-msg-bubble">${m.content}</div>
-              </div>`).join('')}
-          </div>` : `
-          <div class="xiaoyu-welcome">
-            ${xiaoyuAvatarHtml(64)}
-            <div class="xiaoyu-greeting">嗨 ${u.name}，今天需要小禹帮您做什么？</div>
-            <div class="xiaoyu-quick-actions">
-              ${XIAOYU_QUICK_ACTIONS.map(a => `
-                <button class="xiaoyu-quick-chip" onclick="App.xiaoyuSend('${a.prompt.replace(/'/g, "\\'")}')">${a.text}</button>`).join('')}
-            </div>
-          </div>`}
-      </div>
-
-      <div class="xiaoyu-footer${state.xiaoyuAttachOpen ? ' attach-open' : ''}">
-        ${state.xiaoyuAttachOpen ? `
-          <div class="xiaoyu-attach-panel">
-            <div class="xiaoyu-attach-handle"></div>
-            <div class="xiaoyu-attach-grid">
-              ${XIAOYU_ATTACH_GRID.map(item => `
-                <button class="xiaoyu-attach-item" onclick="App.xiaoyuAttachAction('${item.id}')">
-                  <span class="xiaoyu-attach-icon">${Icons.icon(item.icon, { size: 24, color: '#333' })}</span>
-                  <span class="xiaoyu-attach-name">${item.name}</span>
-                </button>`).join('')}
-            </div>
-            <div class="xiaoyu-attach-list">
-              ${XIAOYU_ATTACH_EXTRA.map(item => `
-                <button class="xiaoyu-attach-row" onclick="App.xiaoyuAttachAction('${item.id}')">
-                  <span class="xiaoyu-attach-row-icon">${Icons.icon(item.icon, { size: 22, color: '#333' })}</span>
-                  <span class="xiaoyu-attach-row-name">${item.name}</span>
-                  ${item.extra ? `<span class="xiaoyu-attach-row-extra">${item.extra} ›</span>` : '<span class="xiaoyu-attach-row-arrow">›</span>'}
-                </button>`).join('')}
-            </div>
-          </div>` : ''}
-        <div class="xiaoyu-functions">
+        <div class="xiaoyu-smart-cards">
           ${XIAOYU_FUNCTIONS.map(f => `
-            <button class="xiaoyu-func-btn" onclick="App.xiaoyuUseFunction('${f.id}')">
-              ${Icons.icon(f.icon, { size: 18, color: f.color })}
-              <span>${f.name}</span>
+            <button class="xiaoyu-smart-card" style="--card-accent:${f.color}" onclick="App.xiaoyuSelectAgent('${f.id}')">
+              <span class="xiaoyu-smart-card-icon">${Icons.icon(f.icon, { size: 28, color: f.color })}</span>
+              <span class="xiaoyu-smart-card-name">${f.name}</span>
             </button>`).join('')}
         </div>
-        <div class="xiaoyu-input-bar">
-          <div class="xiaoyu-input-wrap">
-            <input type="text" class="xiaoyu-input" placeholder="尽管问，园区的事交给我"
-              value="${state.xiaoyuInput.replace(/"/g, '&quot;')}"
-              oninput="App.updateXiaoyuInput(this.value)"
-              onkeydown="if(event.key==='Enter')App.xiaoyuSend()" />
-            <button class="xiaoyu-attach-btn${state.xiaoyuAttachOpen ? ' active' : ''}" onclick="App.toggleXiaoyuAttach()">
-              ${Icons.icon('plus', { size: 20, color: state.xiaoyuAttachOpen ? '#4A90E2' : '#999' })}
+      </div>
+      ${renderXiaoyuOverlays()}
+    </div>`
+}
+
+function renderXiaoyuChatBody(agent) {
+  const msgs = state.xiaoyuMessages
+  if (msgs.length) {
+    return `
+      <div class="xiaoyu-messages">
+        ${msgs.map(m => `
+          <div class="xiaoyu-msg ${m.role}">
+            ${m.role === 'assistant' ? `<div class="xiaoyu-msg-avatar">${xiaoyuAvatarHtml(32)}</div>` : ''}
+            <div class="xiaoyu-msg-bubble">${m.content}</div>
+          </div>`).join('')}
+      </div>`
+  }
+  return `<div class="xiaoyu-chat-empty"><p>请输入您的问题，${agent.name}随时为您服务</p></div>`
+}
+
+function renderXiaoyuChatFooter() {
+  return `
+    <div class="xiaoyu-footer${state.xiaoyuAttachOpen ? ' attach-open' : ''}">
+      ${state.xiaoyuAttachOpen ? `
+        <div class="xiaoyu-attach-panel">
+          <div class="xiaoyu-attach-handle"></div>
+          <div class="xiaoyu-attach-grid">
+            ${XIAOYU_ATTACH_GRID.map(item => `
+              <button class="xiaoyu-attach-item" onclick="App.xiaoyuAttachAction('${item.id}')">
+                <span class="xiaoyu-attach-icon">${Icons.icon(item.icon, { size: 24, color: '#333' })}</span>
+                <span class="xiaoyu-attach-name">${item.name}</span>
+              </button>`).join('')}
+          </div>
+          <div class="xiaoyu-attach-list">
+            ${XIAOYU_ATTACH_EXTRA.map(item => `
+              <button class="xiaoyu-attach-row" onclick="App.xiaoyuAttachAction('${item.id}')">
+                <span class="xiaoyu-attach-row-icon">${Icons.icon(item.icon, { size: 22, color: '#333' })}</span>
+                <span class="xiaoyu-attach-row-name">${item.name}</span>
+                ${item.extra ? `<span class="xiaoyu-attach-row-extra">${item.extra} ›</span>` : '<span class="xiaoyu-attach-row-arrow">›</span>'}
+              </button>`).join('')}
+            <button class="xiaoyu-attach-row" onclick="App.xiaoyuClearChat()">
+              <span class="xiaoyu-attach-row-icon">${Icons.icon('broom', { size: 22, color: '#333' })}</span>
+              <span class="xiaoyu-attach-row-name">清空对话</span>
+              <span class="xiaoyu-attach-row-arrow">›</span>
             </button>
           </div>
-          <button class="xiaoyu-send-btn" onclick="App.xiaoyuSend()">
-            ${Icons.icon('send', { size: 20, color: '#fff' })}
-          </button>
+        </div>` : ''}
+      <div class="xiaoyu-input-bar v2">
+        <button class="xiaoyu-attach-btn${state.xiaoyuAttachOpen ? ' active' : ''}" onclick="App.toggleXiaoyuAttach()" title="更多">
+          ${Icons.icon('plus', { size: 20, color: state.xiaoyuAttachOpen ? '#4A90E2' : '#666' })}
+        </button>
+        <div class="xiaoyu-input-wrap">
+          <input type="text" class="xiaoyu-input" placeholder="请输入内容"
+            value="${state.xiaoyuInput.replace(/"/g, '&quot;')}"
+            oninput="App.updateXiaoyuInput(this.value)"
+            onkeydown="if(event.key==='Enter')App.xiaoyuSend()" />
         </div>
+        <button class="xiaoyu-tool-icon" onclick="App.xiaoyuAttachAction('voice')" title="语音">
+          ${Icons.icon('voice', { size: 20, color: '#666' })}
+        </button>
+        <button class="xiaoyu-send-btn" onclick="App.xiaoyuSend()">
+          ${Icons.icon('send', { size: 18, color: '#fff' })}
+        </button>
       </div>
+    </div>`
+}
 
-      ${state.xiaoyuHistoryOpen ? `
-        <div class="xiaoyu-history-mask" onclick="App.toggleXiaoyuHistory(false)">
-          <div class="xiaoyu-history-panel" onclick="event.stopPropagation()">
-            <div class="xiaoyu-history-header">
-              <span>历史对话</span>
-              <button class="xiaoyu-history-close" onclick="App.toggleXiaoyuHistory(false)">×</button>
-            </div>
-            <div class="xiaoyu-history-list">
-              ${state.xiaoyuSessions.map(s => `
-                <div class="xiaoyu-history-item" onclick="App.xiaoyuLoadSession('${s.id}')">
-                  <div class="xiaoyu-history-title">${s.title}</div>
-                  <div class="xiaoyu-history-preview">${s.preview}</div>
-                  <div class="xiaoyu-history-time">${s.time}</div>
-                </div>`).join('')}
+function renderXiaoyuWorkbench() {
+  if (!state.xiaoyuWorkbenchOpen) return ''
+  const taskDone = state.xiaoyuTasks.filter(t => t.done).length
+  return `
+    <div class="xiaoyu-workbench-mask" onclick="App.toggleXiaoyuWorkbench(false)">
+      <div class="xiaoyu-workbench-panel" onclick="event.stopPropagation()">
+        <div class="xiaoyu-workbench-head">
+          ${xiaoyuAvatarHtml(36)}
+          <span>小禹工作台</span>
+          <button class="xiaoyu-workbench-close" onclick="App.toggleXiaoyuWorkbench(false)">×</button>
+        </div>
+        <div class="xiaoyu-workbench-body">
+          <div class="xiaoyu-wb-section">
+            <div class="xiaoyu-wb-section-title">我的智能体 (${XIAOYU_AGENTS.length})</div>
+            <div class="xiaoyu-wb-agent-list">
+              ${XIAOYU_AGENTS.map(a => `
+                <button class="xiaoyu-wb-agent-item${state.xiaoyuActiveAgentId === a.id ? ' active' : ''}" onclick="App.xiaoyuSelectAgent('${a.id}')">
+                  <span class="xiaoyu-wb-agent-icon">${Icons.icon(a.icon, { size: 20, color: a.color })}</span>
+                  <span>${a.name}</span>
+                </button>`).join('')}
             </div>
           </div>
+          <div class="xiaoyu-wb-section">
+            <div class="xiaoyu-wb-section-title">历史对话 (${state.xiaoyuSessions.length})</div>
+            ${state.xiaoyuSessions.length ? `
+              <div class="xiaoyu-wb-history-list">
+                ${state.xiaoyuSessions.map(s => `
+                  <button class="xiaoyu-wb-history-item" onclick="App.xiaoyuLoadSession('${s.id}')">
+                    <div class="xiaoyu-wb-history-title">${s.title}</div>
+                    <div class="xiaoyu-wb-history-preview">${s.preview}</div>
+                    <div class="xiaoyu-wb-history-time">${s.time}</div>
+                  </button>`).join('')}
+              </div>` : '<div class="xiaoyu-wb-empty">暂无历史对话</div>'}
+          </div>
+          <div class="xiaoyu-wb-section">
+            <div class="xiaoyu-wb-section-title">我的任务 (${taskDone}/${state.xiaoyuTasks.length})</div>
+            ${state.xiaoyuTasks.length ? state.xiaoyuTasks.map(t => `
+              <div class="xiaoyu-wb-task-item">${t.title}</div>`).join('') : '<div class="xiaoyu-wb-empty">暂无任务</div>'}
+          </div>
+        </div>
+        <button class="xiaoyu-wb-home-btn" onclick="App.closeSubPage()">返回首页</button>
+      </div>
+    </div>`
+}
+
+function renderXiaoyuAgentDetailModal(agent) {
+  if (!state.xiaoyuAgentDetailOpen || !agent) return ''
+  return `
+    <div class="xiaoyu-modal-mask" onclick="App.toggleXiaoyuAgentDetail(false)">
+      <div class="xiaoyu-modal-panel" onclick="event.stopPropagation()">
+        <div class="xiaoyu-modal-header">
+          <span>智能体详情</span>
+          <button onclick="App.toggleXiaoyuAgentDetail(false)">×</button>
+        </div>
+        <div class="xiaoyu-modal-body">
+          <div class="xiaoyu-detail-head">
+            <div class="xiaoyu-detail-logo">${Icons.icon(agent.icon, { size: 32, color: agent.color })}</div>
+            <div>
+              <div class="xiaoyu-detail-name">${agent.name}</div>
+              <div class="xiaoyu-detail-meta">版本：${agent.version}</div>
+              <div class="xiaoyu-detail-meta">当前状态：<span class="status-ok">${agent.status}</span></div>
+              <span class="xiaoyu-agent-tag">${agent.tag}</span>
+            </div>
+          </div>
+          <div class="xiaoyu-detail-field"><label>简介</label><p>${agent.desc}</p></div>
+          <div class="xiaoyu-detail-field"><label>任务能力</label><p>${agent.taskAbility}</p></div>
+          <div class="xiaoyu-detail-stat">
+            <span>即时对话次数</span>
+            <strong>${agent.chatCount} 次</strong>
+          </div>
+        </div>
+        <button class="xiaoyu-modal-primary" onclick="App.toggleXiaoyuAgentDetail(false)">知道了</button>
+      </div>
+    </div>`
+}
+
+function renderXiaoyuFeedbackModal() {
+  if (!state.xiaoyuFeedbackOpen) return ''
+  return `
+    <div class="xiaoyu-modal-mask" onclick="App.toggleXiaoyuFeedback(false)">
+      <div class="xiaoyu-modal-panel" onclick="event.stopPropagation()">
+        <div class="xiaoyu-modal-header">
+          <span>反馈与建议</span>
+          <button onclick="App.toggleXiaoyuFeedback(false)">×</button>
+        </div>
+        <div class="xiaoyu-modal-body">
+          <div class="xiaoyu-feedback-rate">
+            <span>请为我们的服务打分</span>
+            <span class="xiaoyu-feedback-score">${state.xiaoyuFeedbackScore}/10</span>
+          </div>
+          <div class="xiaoyu-star-row">
+            ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => `
+              <button class="xiaoyu-star${n <= state.xiaoyuFeedbackScore ? ' active' : ''}" onclick="App.xiaoyuSetFeedbackScore(${n})">★</button>`).join('')}
+          </div>
+          <label class="xiaoyu-feedback-label">您的建议</label>
+          <textarea class="xiaoyu-feedback-text" maxlength="500" placeholder="请输入您的宝贵建议..."
+            oninput="App.updateXiaoyuFeedbackText(this.value)">${state.xiaoyuFeedbackText}</textarea>
+          <div class="xiaoyu-feedback-count">${state.xiaoyuFeedbackText.length}/500</div>
+        </div>
+        <div class="xiaoyu-modal-actions">
+          <button class="xiaoyu-modal-secondary" onclick="App.toggleXiaoyuFeedback(false)">取消</button>
+          <button class="xiaoyu-modal-primary${state.xiaoyuFeedbackScore ? '' : ' disabled'}" ${state.xiaoyuFeedbackScore ? '' : 'disabled'} onclick="App.xiaoyuSubmitFeedback()">提交反馈</button>
+        </div>
+      </div>
+    </div>`
+}
+
+function renderXiaoyuOverlays() {
+  const agent = state.xiaoyuActiveAgentId ? getXiaoyuAgent(state.xiaoyuActiveAgentId) : null
+  return renderXiaoyuWorkbench() + renderXiaoyuAgentDetailModal(agent) + renderXiaoyuFeedbackModal()
+}
+
+function renderXiaoyuNotifications() {
+  const list = getXiaoyuNotifyList()
+  const isEvent = state.xiaoyuNotifyCategory === 'event'
+  const tabs = ['all', 'unread', 'read']
+  const tabLabels = { all: '全部', unread: '未读', read: '已读' }
+  return `
+    <div class="xiaoyu-page">
+      ${renderXiaoyuHeader()}
+      <div class="xiaoyu-notify-tabs">
+        ${tabs.map(t => `
+          <button class="xiaoyu-notify-tab${state.xiaoyuNotifyTab === t ? ' active' : ''}" onclick="App.setXiaoyuNotifyTab('${t}')">${tabLabels[t]}</button>`).join('')}
+      </div>
+      ${isEvent && list.length ? `
+        <div class="xiaoyu-notify-actions">
+          <button class="xiaoyu-notify-action" disabled>标记已读</button>
+          <button class="xiaoyu-notify-action" disabled>删除</button>
+          <button class="xiaoyu-notify-action outline" onclick="App.xiaoyuMarkAllNotifyRead()">全部已读</button>
+          <button class="xiaoyu-notify-action danger" onclick="App.showToast('已全部删除')">全部删除</button>
         </div>` : ''}
+      <div class="xiaoyu-body xiaoyu-notify-body">
+        ${list.length ? list.map(n => `
+          <div class="xiaoyu-notify-card${n.read ? ' read' : ''}">
+            ${isEvent ? `<input type="checkbox" class="xiaoyu-notify-check" onclick="event.stopPropagation()" />` : ''}
+            <div class="xiaoyu-notify-card-main">
+              <div class="xiaoyu-notify-card-top">
+                <strong>${n.title}</strong>
+                <span class="xiaoyu-notify-read-tag ${n.read ? 'read' : 'unread'}">${n.read ? '已读' : '未读'}</span>
+              </div>
+              <div class="xiaoyu-notify-meta"><span>类型</span><em>${n.type}</em></div>
+              <div class="xiaoyu-notify-meta"><span>优先级</span><em class="${n.priority === '重要' || n.priority === '紧急' ? 'priority-high' : ''}">${n.priority}</em></div>
+              <div class="xiaoyu-notify-meta"><span>发送者</span><em>${n.sender}</em></div>
+              <div class="xiaoyu-notify-meta"><span>时间</span><em>${n.time}</em></div>
+            </div>
+          </div>`).join('') : '<div class="xiaoyu-notify-empty">暂无通知</div>'}
+      </div>
+      <div class="xiaoyu-notify-footer">
+        <span>共 ${list.length} 条</span>
+        <span>每页 10 条</span>
+        <div class="xiaoyu-notify-pager">
+          <button disabled>上一页</button>
+          <span>1 / 1</span>
+          <button disabled>下一页</button>
+        </div>
+      </div>
+      <button class="xiaoyu-back-floating" onclick="App.xiaoyuBackFromSub()">‹ 返回</button>
+      ${renderXiaoyuOverlays()}
+    </div>`
+}
+
+function renderXiaoyuProfile() {
+  const acc = XIAOYU_ACCOUNT
+  return `
+    <div class="xiaoyu-page">
+      ${renderXiaoyuHeader()}
+      <div class="xiaoyu-body xiaoyu-profile-body">
+        <div class="xiaoyu-profile-card">
+          <div class="xiaoyu-profile-card-title">个人中心</div>
+          <div class="xiaoyu-profile-user">
+            <div class="xiaoyu-profile-avatar">${Icons.icon('user', { size: 36, color: '#999' })}</div>
+            <div class="xiaoyu-profile-nick">
+              昵称：${acc.nickname}
+              <button class="xiaoyu-copy-btn" onclick="App.showToast('已复制')">${Icons.icon('copy', { size: 14, color: '#4A90E2' })}</button>
+            </div>
+          </div>
+        </div>
+        <div class="xiaoyu-profile-card">
+          <div class="xiaoyu-profile-card-title">账号信息</div>
+          <div class="xiaoyu-profile-rows">
+            <div class="xiaoyu-profile-row"><span>账号</span><em>${acc.account}</em></div>
+            <div class="xiaoyu-profile-row"><span>用户ID</span><em>${acc.userId}</em></div>
+            <div class="xiaoyu-profile-row"><span>部门</span><em>${acc.department}</em></div>
+            <div class="xiaoyu-profile-row"><span>角色</span><em>${acc.role}</em></div>
+            <div class="xiaoyu-profile-row"><span>最近登录IP</span><em>${acc.lastLoginIp}</em></div>
+            <div class="xiaoyu-profile-row"><span>最近登录时间</span><em>${acc.lastLoginTime}</em></div>
+          </div>
+        </div>
+        <button class="btn-block btn-primary" onclick="App.showToast('资料已保存')">保存资料</button>
+        <button class="btn-block btn-outline xiaoyu-logout-btn" onclick="App.logout()">退出登录</button>
+      </div>
+      <button class="xiaoyu-back-floating" onclick="App.xiaoyuBackFromSub()">‹ 返回</button>
+      ${renderXiaoyuOverlays()}
+    </div>`
+}
+
+function renderXiaoyu() {
+  if (state.xiaoyuPhase === 'notifications') return renderXiaoyuNotifications()
+  if (state.xiaoyuPhase === 'profile') return renderXiaoyuProfile()
+  if (state.xiaoyuPhase === 'agents' || !state.xiaoyuActiveAgentId) return renderXiaoyuAgentPicker()
+
+  const agent = getXiaoyuAgent(state.xiaoyuActiveAgentId)
+  return `
+    <div class="xiaoyu-page">
+      ${renderXiaoyuHeader()}
+      <div class="xiaoyu-body" id="xiaoyu-body">
+        ${renderXiaoyuAgentCard(agent)}
+        ${renderXiaoyuChatBody(agent)}
+      </div>
+      ${renderXiaoyuChatFooter()}
+      ${renderXiaoyuOverlays()}
     </div>`
 }
 
@@ -1933,6 +2249,14 @@ const App = {
     if (state.authPhase !== 'app' && page !== 'forgotPassword' && page !== 'register') {
       return showToast('请先登录')
     }
+    if (page === 'xiaoyu') {
+      state.xiaoyuMsgMenuOpen = false
+      state.xiaoyuWorkbenchOpen = false
+      state.xiaoyuAgentDetailOpen = false
+      state.xiaoyuFeedbackOpen = false
+      if (!state.xiaoyuActiveAgentId) state.xiaoyuPhase = 'agents'
+      else if (state.xiaoyuPhase !== 'notifications' && state.xiaoyuPhase !== 'profile') state.xiaoyuPhase = 'chat'
+    }
     state.currentSubPage = page
     render()
     stopCarousel()
@@ -1998,6 +2322,127 @@ const App = {
 
   updateXiaoyuInput(v) { state.xiaoyuInput = v },
 
+  xiaoyuSelectAgent(id) {
+    const isNew = state.xiaoyuActiveAgentId !== id || state.xiaoyuPhase === 'agents'
+    state.xiaoyuActiveAgentId = id
+    state.xiaoyuPhase = 'chat'
+    if (isNew) {
+      state.xiaoyuMessages = []
+      state.xiaoyuInput = ''
+    }
+    state.xiaoyuWorkbenchOpen = false
+    state.xiaoyuMsgMenuOpen = false
+    render()
+  },
+
+  xiaoyuQuickAsk(prompt) {
+    state.xiaoyuActiveAgentId = 'park'
+    state.xiaoyuPhase = 'chat'
+    state.xiaoyuMessages = []
+    state.xiaoyuInput = ''
+    state.xiaoyuWorkbenchOpen = false
+    state.xiaoyuMsgMenuOpen = false
+    render()
+    setTimeout(() => App.xiaoyuSend(prompt), 50)
+  },
+
+  toggleXiaoyuWorkbench(show) {
+    state.xiaoyuWorkbenchOpen = show !== undefined ? show : !state.xiaoyuWorkbenchOpen
+    if (state.xiaoyuWorkbenchOpen) {
+      state.xiaoyuMsgMenuOpen = false
+      state.xiaoyuAgentDetailOpen = false
+      state.xiaoyuFeedbackOpen = false
+    }
+    render()
+  },
+
+  toggleXiaoyuMsgMenu(e) {
+    if (e) e.stopPropagation()
+    state.xiaoyuMsgMenuOpen = !state.xiaoyuMsgMenuOpen
+    render()
+  },
+
+  closeXiaoyuMsgMenu() {
+    if (!state.xiaoyuMsgMenuOpen) return
+    state.xiaoyuMsgMenuOpen = false
+    render()
+  },
+
+  xiaoyuOpenNotifications(category) {
+    state.xiaoyuNotifyCategory = category
+    state.xiaoyuNotifyTab = 'all'
+    state.xiaoyuPhase = 'notifications'
+    state.xiaoyuMsgMenuOpen = false
+    render()
+  },
+
+  xiaoyuOpenProfile() {
+    state.xiaoyuPhase = 'profile'
+    state.xiaoyuMsgMenuOpen = false
+    render()
+  },
+
+  xiaoyuBackFromSub() {
+    state.xiaoyuPhase = state.xiaoyuActiveAgentId ? 'chat' : 'agents'
+    render()
+  },
+
+  setXiaoyuNotifyTab(tab) {
+    state.xiaoyuNotifyTab = tab
+    render()
+  },
+
+  xiaoyuMarkAllNotifyRead() {
+    const list = XIAOYU_NOTIFY_DATA[state.xiaoyuNotifyCategory] || []
+    list.forEach(n => { n.read = true })
+    showToast('已全部标记为已读')
+    render()
+  },
+
+  toggleXiaoyuAgentDetail(show) {
+    state.xiaoyuAgentDetailOpen = show !== undefined ? show : !state.xiaoyuAgentDetailOpen
+    render()
+  },
+
+  toggleXiaoyuFeedback(show) {
+    state.xiaoyuFeedbackOpen = show !== undefined ? show : !state.xiaoyuFeedbackOpen
+    render()
+  },
+
+  xiaoyuSetFeedbackScore(n) {
+    state.xiaoyuFeedbackScore = n
+    render()
+  },
+
+  updateXiaoyuFeedbackText(v) {
+    state.xiaoyuFeedbackText = v.slice(0, 500)
+    const el = document.querySelector('.xiaoyu-feedback-text')
+    const countEl = document.querySelector('.xiaoyu-feedback-count')
+    if (countEl) countEl.textContent = state.xiaoyuFeedbackText.length + '/500'
+  },
+
+  xiaoyuSubmitFeedback() {
+    if (!state.xiaoyuFeedbackScore) return
+    state.xiaoyuFeedbackOpen = false
+    state.xiaoyuFeedbackScore = 0
+    state.xiaoyuFeedbackText = ''
+    showToast('感谢您的反馈')
+    render()
+  },
+
+  xiaoyuClearChat() {
+    if (!state.xiaoyuMessages.length) {
+      state.xiaoyuAttachOpen = false
+      render()
+      return showToast('当前没有对话内容')
+    }
+    if (!confirm('确定清空当前对话？')) return
+    state.xiaoyuMessages = []
+    state.xiaoyuAttachOpen = false
+    render()
+    showToast('对话已清空')
+  },
+
   xiaoyuSend(text) {
     const msg = (text || state.xiaoyuInput || '').trim()
     if (!msg) return
@@ -2028,6 +2473,7 @@ const App = {
       const first = state.xiaoyuMessages.find(m => m.role === 'user')
       state.xiaoyuSessions.unshift({
         id: 's' + Date.now(),
+        agentId: state.xiaoyuActiveAgentId || 'park',
         title: first ? first.content.slice(0, 12) : '新对话',
         time: '刚刚',
         preview: state.xiaoyuMessages[state.xiaoyuMessages.length - 1]?.content.slice(0, 30) + '...'
@@ -2035,21 +2481,13 @@ const App = {
     }
     state.xiaoyuMessages = []
     state.xiaoyuInput = ''
-    state.xiaoyuHistoryOpen = false
     state.xiaoyuAttachOpen = false
     render()
     showToast('已开始新对话')
   },
 
-  toggleXiaoyuHistory(show) {
-    state.xiaoyuHistoryOpen = show !== undefined ? show : !state.xiaoyuHistoryOpen
-    if (state.xiaoyuHistoryOpen) state.xiaoyuAttachOpen = false
-    render()
-  },
-
   toggleXiaoyuAttach(show) {
     state.xiaoyuAttachOpen = show !== undefined ? show : !state.xiaoyuAttachOpen
-    if (state.xiaoyuAttachOpen) state.xiaoyuHistoryOpen = false
     render()
   },
 
@@ -2067,11 +2505,13 @@ const App = {
     const session = state.xiaoyuSessions.find(s => s.id === id)
     if (!session) return
     state.xiaoyuActiveSessionId = id
+    state.xiaoyuActiveAgentId = session.agentId || 'park'
+    state.xiaoyuPhase = 'chat'
     state.xiaoyuMessages = [
       { role: 'user', content: session.title },
       { role: 'assistant', content: session.preview }
     ]
-    state.xiaoyuHistoryOpen = false
+    state.xiaoyuWorkbenchOpen = false
     render()
     showToast('已加载历史对话')
   },
@@ -2162,4 +2602,7 @@ const App = {
 
 window.App = App
 document.addEventListener('DOMContentLoaded', () => { render() })
-document.addEventListener('click', () => { App.closePhonePlatformMenu() })
+document.addEventListener('click', () => {
+  App.closePhonePlatformMenu()
+  App.closeXiaoyuMsgMenu()
+})

@@ -198,6 +198,73 @@ function buildSimpleDonutOption(items) {
   };
 }
 
+function buildOfficeAreaPieOption(chartData) {
+  const centerX = '36%';
+  const totalText = `${formatNumber(chartData.totalArea)}㎡`;
+  return {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}<br/>{c}% ({d}%)',
+      backgroundColor: 'rgba(10, 30, 60, 0.88)',
+      borderColor: 'rgba(0, 191, 255, 0.3)',
+      textStyle: { color: '#fff', fontSize: 12 },
+    },
+    legend: {
+      orient: 'vertical',
+      right: 8,
+      top: 'center',
+      itemWidth: 8,
+      itemHeight: 8,
+      itemGap: 6,
+      textStyle: { color: CHART_THEME.textColor, fontSize: 10 },
+    },
+    graphic: [{
+      type: 'group',
+      left: centerX,
+      top: '50%',
+      bounding: 'raw',
+      children: [
+        {
+          type: 'text',
+          style: {
+            text: '总面积',
+            textAlign: 'center',
+            textVerticalAlign: 'middle',
+            fill: 'rgba(255,255,255,0.75)',
+            fontSize: 10,
+          },
+          top: -10,
+        },
+        {
+          type: 'text',
+          style: {
+            text: totalText,
+            textAlign: 'center',
+            textVerticalAlign: 'middle',
+            fill: CHART_THEME.textColor,
+            fontSize: 16,
+            fontWeight: 'bold',
+          },
+          top: 10,
+        },
+      ],
+    }],
+    series: [{
+      type: 'pie',
+      radius: ['42%', '68%'],
+      center: [centerX, '50%'],
+      avoidLabelOverlap: true,
+      label: { show: false },
+      labelLine: { show: false },
+      data: chartData.items.map((item) => ({
+        name: item.name,
+        value: item.proportion,
+        itemStyle: { color: item.color },
+      })),
+    }],
+  };
+}
+
 function buildGwStockPieOption(stock, warehouses) {
   const centerX = '36%';
   return {
@@ -414,6 +481,26 @@ createApp({
     const isParkSceneVisible = computed(() => isSandboxParkMode.value);
     const isParkInteractiveVisible = computed(() => isSandboxParkMode.value);
     const isAssetTab = computed(() => activeTab.value === '资产管理');
+
+    const isAssetParkScope = computed(() => {
+      if (!isAssetTab.value) return false;
+      if (isModuleParkMode.value) return true;
+      if (isModuleMapMode.value && mapPopupProjectId.value) return true;
+      return false;
+    });
+
+    const assetSecondPanelTitle = computed(() => (
+      isAssetParkScope.value ? '办公用房总使用面积占比' : '本季在仓物资分仓占比'
+    ));
+
+    function getActiveOfficeAreaChart() {
+      const pid = isModuleParkMode.value
+        ? activeModuleProjectId.value
+        : mapPopupProjectId.value;
+      const charts = DASHBOARD_DATA.parkOfficeAreaChart;
+      return charts.byProject?.[pid] || charts.default;
+    }
+
     const isSecurityTab = computed(() => activeTab.value === '安全管理' || activeTab.value === '消防管理');
     const securityNavLabel = computed(() => (
       isSecurityTab.value ? activeTab.value : '综合安防'
@@ -754,11 +841,21 @@ createApp({
       });
     }
 
+    function updateAssetSecondPanelChart() {
+      const chart = getChart('gwStockPieChart');
+      if (!chart) return;
+      if (isAssetParkScope.value) {
+        chart.setOption(buildOfficeAreaPieOption(getActiveOfficeAreaChart()), true);
+      } else {
+        chart.setOption(buildGwStockPieOption(gwData.currentStock, gwWarehouses), true);
+      }
+    }
+
     function initAssetCharts() {
       getChart('assetTypeChart')?.setOption(buildAssetTypeOption(
         assetTypeTab.value === 'space' ? DASHBOARD_DATA.assetTypeSpace : DASHBOARD_DATA.assetTypeEquipment
       ));
-      getChart('gwStockPieChart')?.setOption(buildGwStockPieOption(gwData.currentStock, gwWarehouses));
+      updateAssetSecondPanelChart();
       updateGwCumulativeChart();
       getChart('assetTrendChart')?.setOption(buildAssetTrendOption());
     }
@@ -969,6 +1066,12 @@ createApp({
       initChartsForTab();
     });
 
+    watch([isAssetParkScope, mapPopupProjectId, activeModuleProjectId], () => {
+      if (activeTab.value === '资产管理') {
+        nextTick(() => updateAssetSecondPanelChart());
+      }
+    });
+
     onMounted(() => {
       MapManager.onViewChange = updateMapPopupPosition;
       MapManager.init(onMapSelect);
@@ -993,6 +1096,7 @@ createApp({
       filteredProjects, rankTab1, rankTab2, rankDate1, rankDate2, workOrderMonth,
       rankList1, rankList2, assetTypeTab, assetTypeSummary,
       gwCumulativeMode, switchGwCumulativeMode,
+      isAssetParkScope, assetSecondPanelTitle,
       propertyOmTab, propertyMonth, propertyOmRankList,
       energyTypeTab, energyPeriodTab, energyCurrentKpi, energyTypeLabel,
       energyDailyTitle, energyDailyStat, energyPeriodTitle, energyPeriodStat,

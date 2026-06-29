@@ -62,9 +62,9 @@
 }
 
 .xiaoyu-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
   align-items: center;
-  justify-content: space-between;
   padding: 8px 12px;
   border-bottom: 1px solid #eee;
   flex-shrink: 0;
@@ -74,6 +74,7 @@
 .xiaoyu-header-title {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   font-size: 16px;
   font-weight: 600;
@@ -84,6 +85,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  justify-content: flex-end;
 }
 
 .xiaoyu-header-btn {
@@ -487,4 +489,368 @@
 .xiaoyu-history-time {
   font-size: 11px;
   color: #ccc;
+}
+
+/* ===== 小禹 v2 ===== */
+.xiaoyu-header-title span { font-size: 16px; font-weight: 600; }
+
+.xiaoyu-header-spacer { width: 72px; height: 1px; }
+
+.xiaoyu-msg-wrap { position: relative; }
+.xiaoyu-msg-btn { position: relative; }
+.xiaoyu-msg-badge {
+  position: absolute; top: 2px; right: 2px; min-width: 16px; height: 16px; padding: 0 4px;
+  background: #FF4D4F; color: #fff; font-size: 10px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; line-height: 1;
+}
+.xiaoyu-msg-dropdown {
+  position: absolute; top: calc(100% + 6px); right: 0; min-width: 120px;
+  background: #fff; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  border: 1px solid #eee; z-index: 40; overflow: hidden;
+}
+.xiaoyu-msg-dropdown-item {
+  display: block; width: 100%; border: none; background: #fff; text-align: left;
+  padding: 12px 16px; font-size: 14px; color: #333; cursor: pointer;
+}
+.xiaoyu-msg-dropdown-item:active { background: #F5F6FA; }
+
+.xiaoyu-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%; border: 1px solid #D6EBFA;
+  background: #E8F4FD; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; padding: 0;
+}
+
+.xiaoyu-agent-picker {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  min-height: 100%;
+}
+
+.xiaoyu-agent-picker .xiaoyu-welcome {
+  padding: 28px 20px 12px;
+  flex-shrink: 0;
+}
+
+.xiaoyu-agent-picker .xiaoyu-greeting {
+  font-size: 17px;
+  line-height: 1.55;
+  max-width: 280px;
+}
+
+.xiaoyu-smart-cards {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 16px 40px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.xiaoyu-smart-card {
+  flex: 1;
+  min-width: 0;
+  max-width: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 8px 14px;
+  border: 1px solid #E8F4FD;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(74, 144, 226, 0.08);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  text-align: center;
+}
+
+.xiaoyu-smart-card:active {
+  transform: scale(0.96);
+  border-color: var(--card-accent, #4A90E2);
+  box-shadow: 0 6px 20px rgba(74, 144, 226, 0.14);
+}
+
+.xiaoyu-smart-card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #F8FBFF, #EEF6FF);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(74, 144, 226, 0.1);
+}
+
+.xiaoyu-smart-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.35;
+  word-break: keep-all;
+}
+
+.xiaoyu-smart-card-arrow {
+  display: none;
+}
+
+.xiaoyu-picker-title { font-size: 18px; font-weight: 600; color: #333; margin-bottom: 6px; }
+.xiaoyu-picker-desc { font-size: 13px; color: #999; margin-bottom: 16px; }
+.xiaoyu-agent-grid { display: flex; flex-direction: column; gap: 12px; }
+.xiaoyu-agent-select-card {
+  border: 1px solid #E8F4FD; background: linear-gradient(135deg, #F8FBFF, #fff);
+  border-radius: 14px; padding: 16px; text-align: left; cursor: pointer; transition: all 0.15s;
+}
+.xiaoyu-agent-select-card:active { border-color: #4A90E2; box-shadow: 0 4px 16px rgba(74,144,226,0.12); }
+.xiaoyu-agent-select-icon { margin-bottom: 10px; }
+.xiaoyu-agent-select-name { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 6px; }
+.xiaoyu-agent-select-tag {
+  display: inline-block; font-size: 11px; color: #52C41A; background: #F6FFED;
+  border: 1px solid #B7EB8F; border-radius: 4px; padding: 2px 8px; margin-bottom: 8px;
+}
+.xiaoyu-agent-select-desc { font-size: 13px; color: #666; line-height: 1.5; }
+
+.xiaoyu-agent-card {
+  background: linear-gradient(135deg, #E8F4FD, #F0F7FF);
+  border-radius: 12px; padding: 12px; margin-bottom: 12px; border: 1px solid #D6EBFA;
+}
+.xiaoyu-agent-card-main { display: flex; gap: 10px; align-items: flex-start; }
+.xiaoyu-agent-logo {
+  width: 48px; height: 48px; background: #fff; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(74,144,226,0.1);
+}
+.xiaoyu-agent-info { flex: 1; min-width: 0; }
+.xiaoyu-agent-name { font-size: 15px; font-weight: 600; color: #333; margin-bottom: 6px; }
+.xiaoyu-agent-tags { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.xiaoyu-agent-tag {
+  font-size: 11px; color: #52C41A; background: #F6FFED; border: 1px solid #B7EB8F;
+  border-radius: 4px; padding: 2px 8px;
+}
+.xiaoyu-agent-version { font-size: 11px; color: #999; }
+.xiaoyu-agent-detail-link {
+  border: 1px solid #4A90E2; background: #fff; color: #4A90E2; font-size: 12px;
+  border-radius: 6px; padding: 2px 10px; cursor: pointer;
+}
+.xiaoyu-agent-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.xiaoyu-feedback-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #D6EBFA;
+  background: #fff;
+  color: #4A90E2;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 10px;
+  border-radius: 6px;
+}
+.xiaoyu-agent-newchat {
+  flex-shrink: 0; border: none; background: #4A90E2; color: #fff; font-size: 12px;
+  border-radius: 8px; padding: 8px 12px; cursor: pointer; white-space: nowrap;
+}
+
+.xiaoyu-chat-empty { padding: 24px 12px; text-align: center; color: #999; font-size: 14px; }
+
+.xiaoyu-input-bar.v2 {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.xiaoyu-input-bar.v2 .xiaoyu-input-wrap {
+  flex: 1;
+  min-width: 0;
+  border-radius: 12px;
+}
+.xiaoyu-input-bar.v2 .xiaoyu-attach-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F5F6FA;
+  border-radius: 10px;
+}
+.xiaoyu-input-bar.v2 .xiaoyu-tool-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #F5F6FA;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.xiaoyu-input-bar.v2 .xiaoyu-tool-icon:active { background: #E8F4FD; }
+.xiaoyu-input-bar.v2 .xiaoyu-send-btn { width: 36px; height: 36px; flex-shrink: 0; }
+
+.xiaoyu-workbench-mask {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.35); z-index: 50;
+  display: flex; justify-content: flex-start;
+}
+.xiaoyu-workbench-panel {
+  width: 280px; height: 100%; background: #F5F6FA; display: flex; flex-direction: column;
+  box-shadow: 4px 0 24px rgba(0,0,0,0.12);
+}
+.xiaoyu-workbench-head {
+  display: flex; align-items: center; gap: 10px; padding: 16px;
+  background: #fff; border-bottom: 1px solid #eee; font-size: 16px; font-weight: 600;
+}
+.xiaoyu-workbench-close {
+  margin-left: auto; border: none; background: none; font-size: 22px; color: #999; cursor: pointer;
+}
+.xiaoyu-workbench-body { flex: 1; overflow-y: auto; padding: 12px; }
+.xiaoyu-wb-section { margin-bottom: 16px; }
+.xiaoyu-wb-section-title { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 10px; }
+.xiaoyu-wb-empty { font-size: 13px; color: #999; padding: 8px 4px; }
+.xiaoyu-wb-agent-list { display: flex; flex-direction: column; gap: 6px; }
+.xiaoyu-wb-agent-item {
+  display: flex; align-items: center; gap: 8px; border: none; background: #fff;
+  border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #333; cursor: pointer; text-align: left;
+}
+.xiaoyu-wb-agent-item.active { background: #E8F4FD; color: #4A90E2; }
+.xiaoyu-wb-history-item {
+  display: block; width: 100%; border: none; background: #fff; border-radius: 10px;
+  padding: 10px 12px; margin-bottom: 6px; text-align: left; cursor: pointer;
+}
+.xiaoyu-wb-history-title { font-size: 13px; font-weight: 600; color: #333; }
+.xiaoyu-wb-history-preview { font-size: 12px; color: #999; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.xiaoyu-wb-history-time { font-size: 11px; color: #ccc; margin-top: 4px; }
+.xiaoyu-wb-home-btn {
+  margin: 12px; border: 1px solid #D6EBFA; background: #fff; color: #4A90E2;
+  border-radius: 10px; padding: 12px; font-size: 14px; cursor: pointer;
+}
+
+.xiaoyu-modal-mask {
+  position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 60;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.xiaoyu-modal-panel {
+  width: 100%; max-width: 320px; background: #fff; border-radius: 14px; overflow: hidden;
+  max-height: 85%; display: flex; flex-direction: column;
+}
+.xiaoyu-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: 1px solid #eee; font-weight: 600;
+}
+.xiaoyu-modal-header button { border: none; background: none; font-size: 20px; color: #999; cursor: pointer; }
+.xiaoyu-modal-body { padding: 16px; overflow-y: auto; flex: 1; }
+.xiaoyu-modal-primary {
+  margin: 0 16px 16px; border: none; background: #4A90E2; color: #fff;
+  border-radius: 10px; padding: 12px; font-size: 15px; cursor: pointer;
+}
+.xiaoyu-modal-primary.disabled { background: #ccc; cursor: not-allowed; }
+.xiaoyu-modal-secondary {
+  flex: 1; border: 1px solid #eee; background: #F5F6FA; color: #666;
+  border-radius: 10px; padding: 12px; font-size: 15px; cursor: pointer;
+}
+.xiaoyu-modal-actions { display: flex; gap: 10px; padding: 0 16px 16px; }
+
+.xiaoyu-detail-head { display: flex; gap: 12px; margin-bottom: 16px; }
+.xiaoyu-detail-logo {
+  width: 56px; height: 56px; background: #F5F6FA; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.xiaoyu-detail-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.xiaoyu-detail-meta { font-size: 13px; color: #666; margin-bottom: 4px; }
+.status-ok { color: #52C41A; }
+.xiaoyu-detail-field { margin-bottom: 14px; }
+.xiaoyu-detail-field label { display: block; font-size: 13px; color: #999; margin-bottom: 4px; }
+.xiaoyu-detail-field p { font-size: 14px; color: #333; }
+.xiaoyu-detail-stat {
+  background: #F5F6FA; border-radius: 10px; padding: 14px; display: flex;
+  justify-content: space-between; align-items: center; font-size: 13px; color: #666;
+}
+.xiaoyu-detail-stat strong { font-size: 18px; color: #333; }
+
+.xiaoyu-feedback-rate { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
+.xiaoyu-feedback-score { color: #4A90E2; font-weight: 600; }
+.xiaoyu-star-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 16px; }
+.xiaoyu-star {
+  border: none; background: none; font-size: 22px; color: #ddd; cursor: pointer; padding: 0 2px;
+}
+.xiaoyu-star.active { color: #FAAD14; }
+.xiaoyu-feedback-label { display: block; font-size: 14px; color: #333; margin-bottom: 8px; }
+.xiaoyu-feedback-text {
+  width: 100%; min-height: 100px; border: 1px solid #eee; border-radius: 10px;
+  padding: 10px 12px; font-size: 14px; resize: none; outline: none; font-family: inherit;
+}
+.xiaoyu-feedback-count { text-align: right; font-size: 12px; color: #999; margin-top: 6px; }
+
+.xiaoyu-notify-tabs {
+  display: flex; border-bottom: 1px solid #eee; background: #fff; flex-shrink: 0;
+}
+.xiaoyu-notify-tab {
+  flex: 1; border: none; background: none; padding: 12px; font-size: 14px; color: #999; cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.xiaoyu-notify-tab.active { color: #4A90E2; border-bottom-color: #4A90E2; font-weight: 600; }
+.xiaoyu-notify-actions {
+  display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 12px; background: #fff; border-bottom: 1px solid #f0f0f0;
+}
+.xiaoyu-notify-action {
+  border: 1px solid #eee; background: #F5F6FA; color: #999; font-size: 12px;
+  border-radius: 8px; padding: 6px 10px; cursor: pointer;
+}
+.xiaoyu-notify-action.outline { background: #fff; color: #4A90E2; border-color: #4A90E2; }
+.xiaoyu-notify-action.danger { background: #FF4D4F; color: #fff; border-color: #FF4D4F; }
+.xiaoyu-notify-body { padding: 12px; }
+.xiaoyu-notify-empty { text-align: center; color: #999; padding: 48px 16px; font-size: 14px; }
+.xiaoyu-notify-card {
+  background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 10px;
+  border: 1px solid #eee; display: flex; gap: 10px;
+}
+.xiaoyu-notify-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+.xiaoyu-notify-card-top strong { font-size: 14px; color: #333; flex: 1; }
+.xiaoyu-notify-read-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; }
+.xiaoyu-notify-read-tag.read { background: #F6FFED; color: #52C41A; }
+.xiaoyu-notify-read-tag.unread { background: #FFF7E6; color: #FA8C16; }
+.xiaoyu-notify-meta { display: flex; font-size: 13px; margin-bottom: 4px; }
+.xiaoyu-notify-meta span { width: 56px; color: #999; flex-shrink: 0; }
+.xiaoyu-notify-meta em { font-style: normal; color: #333; }
+.xiaoyu-notify-meta .priority-high { color: #FA8C16; }
+.xiaoyu-notify-footer {
+  flex-shrink: 0; padding: 12px 16px 24px; border-top: 1px solid #eee;
+  font-size: 12px; color: #999; display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+}
+.xiaoyu-notify-pager { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.xiaoyu-notify-pager button { border: 1px solid #eee; background: #fff; border-radius: 6px; padding: 4px 10px; font-size: 12px; color: #999; }
+
+.xiaoyu-profile-body { padding: 12px 16px 24px; }
+.xiaoyu-profile-card {
+  background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #eee;
+}
+.xiaoyu-profile-card-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+.xiaoyu-profile-user { display: flex; align-items: center; gap: 14px; }
+.xiaoyu-profile-avatar {
+  width: 64px; height: 64px; border-radius: 50%; background: #F5F6FA;
+  display: flex; align-items: center; justify-content: center;
+}
+.xiaoyu-profile-nick { font-size: 14px; color: #333; display: flex; align-items: center; gap: 6px; }
+.xiaoyu-copy-btn { border: none; background: none; cursor: pointer; padding: 0; display: flex; }
+.xiaoyu-profile-row {
+  display: flex; justify-content: space-between; padding: 12px 0;
+  border-bottom: 1px solid #f5f5f5; font-size: 14px;
+}
+.xiaoyu-profile-row span { color: #999; }
+.xiaoyu-profile-row em { font-style: normal; color: #333; text-align: right; max-width: 60%; word-break: break-all; }
+.xiaoyu-logout-btn { margin-top: 10px; }
+.xiaoyu-back-floating {
+  position: absolute; left: 12px; bottom: 20px; z-index: 10;
+  border: 1px solid #D6EBFA; background: #fff; color: #4A90E2;
+  border-radius: 20px; padding: 8px 14px; font-size: 13px; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
