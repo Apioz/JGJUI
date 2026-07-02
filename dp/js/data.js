@@ -256,7 +256,6 @@ const DASHBOARD_DATA = {
       { label: '报警数', value: '5', unit: '条', color: '#ff4757', alert: true, icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' },
     ],
     食堂管理: [
-      { label: '采购订单总金额', value: '2,710', unit: '元', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>' },
       { label: '食堂库存总数', value: '1,948', unit: '', color: '#ff9500', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>' },
       { label: '客饭预定数', value: '72', unit: '', color: '#ff9500', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>' },
       { label: '线上预定数', value: '386', unit: '', color: '#ff9500', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>' },
@@ -412,17 +411,17 @@ const DASHBOARD_DATA = {
   ],
 
   rankElectricity: [
-    { name: '中山东一路13号', value: 98 },
-    { name: '延安东路300号', value: 85 },
-    { name: '广东路689号', value: 72 },
-    { name: '福州路120号', value: 65 },
+    { name: '延安东路300号', value: 122 },
+    { name: '河南南路288号', value: 132 },
+    { name: '重庆南路139号', value: 100 },
+    { name: '重庆南路100号', value: 90 },
   ],
 
   rankWater: [
-    { name: '河南南路288号', value: 92 },
-    { name: '人民大道200号', value: 78 },
-    { name: '中山东一路13号', value: 68 },
-    { name: '延安东路300号', value: 55 },
+    { name: '延安东路300号', value: 98 },
+    { name: '河南南路288号', value: 112 },
+    { name: '重庆南路139号', value: 86 },
+    { name: '重庆南路100号', value: 75 },
   ],
 
   workOrder: {
@@ -779,7 +778,6 @@ const DASHBOARD_DATA = {
 
   /** 食堂管理 */
   canteenKpiData: [
-    { label: '采购订单总金额', value: '27200', unit: '元', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>' },
     { label: '食堂库存总数', value: '4832', unit: '', color: '#ff9500', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>' },
     { label: '客饭预定数', value: '483', unit: '', color: '#ff9500', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>' },
     { label: '线上预定数', value: '386', unit: '', color: '#ff9500', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>' },

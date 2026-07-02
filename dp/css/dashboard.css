@@ -1546,6 +1546,36 @@ html, body {
 }
 .date-select option { background: #061629; }
 
+.date-input {
+  width: 118px;
+  color-scheme: dark;
+}
+
+.date-input[type="number"] {
+  width: 72px;
+}
+
+.rank-item.clickable {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.rank-item.clickable:hover .rank-name {
+  color: var(--cyan);
+}
+
+.overview-energy-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.overview-energy-detail-head .panel-sub-title {
+  margin: 0;
+}
+
 @media (max-width: 1400px) {
   :root { --panel-w: 280px; }
   .platform-title { font-size: 16px; }

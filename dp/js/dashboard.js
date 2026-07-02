@@ -21,6 +21,31 @@ function formatNumber(n) {
   return Number(n).toLocaleString('en-US');
 }
 
+const TIME_UNITS = [
+  { value: 'day', label: '日' },
+  { value: 'month', label: '月' },
+  { value: 'year', label: '年' },
+];
+
+const YEAR_INPUT_MIN = 2000;
+const YEAR_INPUT_MAX = 2100;
+
+function defaultDateForUnit(unit) {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  if (unit === 'day') return `${y}-${m}-${d}`;
+  if (unit === 'month') return `${y}-${m}`;
+  return String(y);
+}
+
+function dateInputTypeForUnit(unit) {
+  if (unit === 'day') return 'date';
+  if (unit === 'month') return 'month';
+  return 'number';
+}
+
 function buildRankList(data, unit) {
   const max = Math.max(...data.map((d) => d.value), 1);
   return data.map((item) => ({
@@ -443,7 +468,8 @@ createApp({
     const gwData = MIDDLE_PLATFORM_DATA.publicWarehouse;
     const gwWarehouses = gwData.warehouses;
     const propertyOmTab = ref('repair');
-    const propertyMonth = ref('2025-01');
+    const propertyPeriod = ref('month');
+    const propertyDate = ref(defaultDateForUnit('month'));
     const energyTypeTab = ref('electricity');
     const energyPeriodTab = ref('month');
     const envTempTab = ref('max');
@@ -451,7 +477,8 @@ createApp({
     const securityMenuOpen = ref(false);
     const platformMenuOpen = ref(false);
     const fireRankTab = ref('alarm');
-    const fireMonth = ref('2025-01');
+    const firePeriod = ref('month');
+    const fireDate = ref(defaultDateForUnit('month'));
     const fireSubSystem = ref('event');
     const fireFloorMode = ref(false);
     const fireSelectedFloor = ref('1F');
@@ -464,7 +491,13 @@ createApp({
     const mapPopupPos = ref({ x: 0, y: 0 });
     const activeParkProjectId = ref('p1');
     const overviewEnergyTab = ref('electricity');
-    const overviewChartDate = ref('2025-01');
+    const overviewEnergyProject = ref(null);
+    const overviewTrafficPeriod = ref('month');
+    const overviewTrafficDate = ref(defaultDateForUnit('month'));
+    const overviewEnergyPeriod = ref('day');
+    const overviewEnergyDate = ref(defaultDateForUnit('day'));
+    const overviewWorkOrderPeriod = ref('month');
+    const overviewWorkOrderDate = ref(defaultDateForUnit('month'));
     const parkRotateX = ref(-12);
     const parkRotateY = ref(0);
     const parkScale = ref(1.1);
@@ -754,8 +787,50 @@ createApp({
 
     const rankList2 = computed(() => {
       const data = rankTab2.value === 'electricity' ? DASHBOARD_DATA.rankElectricity : DASHBOARD_DATA.rankWater;
-      return buildRankList(data, rankTab2.value === 'electricity' ? 'kWh' : '吨');
+      return buildRankList(data, rankTab2.value === 'electricity' ? 'kwh' : 'm³');
     });
+
+    const overviewEnergyRankList = computed(() => {
+      const data = overviewEnergyTab.value === 'water' ? DASHBOARD_DATA.rankWater : DASHBOARD_DATA.rankElectricity;
+      const unit = overviewEnergyTab.value === 'water' ? 'm³' : 'kwh';
+      return buildRankList(data.slice(0, 4), unit);
+    });
+
+    const overviewEnergyPanelTitle = computed(() => (
+      overviewEnergyProject.value ? '逐时能耗使用趋势' : '逐时能耗使用TOP4'
+    ));
+
+    const overviewEnergyTypeLabel = computed(() => (
+      overviewEnergyTab.value === 'water' ? '用水' : '用电'
+    ));
+
+    const timeUnits = TIME_UNITS;
+    const yearInputMin = YEAR_INPUT_MIN;
+    const yearInputMax = YEAR_INPUT_MAX;
+
+    function dateInputType(unit) {
+      return dateInputTypeForUnit(unit);
+    }
+
+    function syncTrafficDate() {
+      overviewTrafficDate.value = defaultDateForUnit(overviewTrafficPeriod.value);
+    }
+
+    function syncOverviewEnergyDate() {
+      overviewEnergyDate.value = defaultDateForUnit(overviewEnergyPeriod.value);
+    }
+
+    function syncWorkOrderDate() {
+      overviewWorkOrderDate.value = defaultDateForUnit(overviewWorkOrderPeriod.value);
+    }
+
+    function syncFireDate() {
+      fireDate.value = defaultDateForUnit(firePeriod.value);
+    }
+
+    function syncPropertyDate() {
+      propertyDate.value = defaultDateForUnit(propertyPeriod.value);
+    }
 
     const propertyOmRankList = computed(() => buildRankList(
       DASHBOARD_DATA.propertyOmRank[propertyOmTab.value], ''
@@ -914,13 +989,33 @@ createApp({
       const trendOption = isOverviewParkMode.value ? buildParkTrendOption() : buildTrendOption();
       getChart('trendChart')?.setOption(trendOption);
       getChart('overviewTrafficChart')?.setOption(buildOverviewTrafficOption());
-      getChart('overviewEnergyChart')?.setOption(buildOverviewEnergyOption(overviewEnergyTab.value));
+      if (overviewEnergyProject.value) {
+        getChart('overviewEnergyChart')?.setOption(buildOverviewEnergyOption(overviewEnergyTab.value));
+      }
       getChart('overviewWorkOrderChart')?.setOption(buildOverviewWorkOrderOption());
+    }
+
+    function selectOverviewEnergyProject(name) {
+      overviewEnergyProject.value = name;
+      nextTick(() => {
+        getChart('overviewEnergyChart')?.setOption(buildOverviewEnergyOption(overviewEnergyTab.value));
+        resizeAllCharts();
+      });
+    }
+
+    function clearOverviewEnergyProject() {
+      overviewEnergyProject.value = null;
+      if (charts.overviewEnergyChart) {
+        charts.overviewEnergyChart.dispose();
+        delete charts.overviewEnergyChart;
+      }
     }
 
     function switchOverviewEnergy(type) {
       overviewEnergyTab.value = type;
-      charts.overviewEnergyChart?.setOption(buildOverviewEnergyOption(type), true);
+      if (overviewEnergyProject.value) {
+        charts.overviewEnergyChart?.setOption(buildOverviewEnergyOption(type), true);
+      }
     }
 
     function closeMapPopup() {
@@ -1271,7 +1366,7 @@ createApp({
       rankList1, rankList2, assetTypeTab, assetTypeSummary,
       gwCumulativeMode, switchGwCumulativeMode,
       isAssetParkScope, assetSecondPanelTitle,
-      propertyOmTab, propertyMonth, propertyOmRankList,
+      propertyOmTab, propertyPeriod, propertyDate, propertyOmRankList,
       energyTypeTab, energyPeriodTab, energyCurrentKpi, energyTypeLabel,
       energyDailyTitle, energyDailyStat, energyPeriodTitle, energyPeriodStat,
       energyPeriodLabel, energyPeriodCompareLabel, energyPeriodChartTitle,
@@ -1288,9 +1383,14 @@ createApp({
       parkSceneUrl, parkSceneTransformStyle, parkBuildings, activeParkBuildings, selectedParkBuilding, parkOrbiting,
       parkBuildingStyle, parkMarkerStyle, getParkBuildingMarker, selectParkBuilding, startParkOrbit,
       leftSidebarTitle, energyBuildingRankList, energyTypeDonutTitle, moduleParkKpiData,
-      overviewEnergyTab, overviewChartDate,
+      overviewEnergyTab, overviewEnergyProject, overviewEnergyRankList, overviewEnergyPanelTitle,
+      overviewEnergyTypeLabel, overviewTrafficPeriod, overviewTrafficDate,
+      overviewEnergyPeriod, overviewEnergyDate, overviewWorkOrderPeriod, overviewWorkOrderDate,
+      timeUnits, yearInputMin, yearInputMax, dateInputType,
+      syncTrafficDate, syncOverviewEnergyDate, syncWorkOrderDate, syncFireDate, syncPropertyDate,
+      selectOverviewEnergyProject, clearOverviewEnergyProject,
       securityKpiData, fireKpiData, publicVehicle,
-      fireRankTab, fireMonth, fireCompletionGauges, fireRankList,
+      fireRankTab, firePeriod, fireDate, fireCompletionGauges, fireRankList,
       isFireTab, isFireFloorMode, isFireParkMode, isFireMapMode, isFireMapWithPopup,
       isFireEventMode, isFireSystemMode, showFireSafetyPanel, showFireDevicePanel,
       fireSubSystem, fireSubSystems, switchFireSubSystem,

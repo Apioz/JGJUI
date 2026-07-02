@@ -84,7 +84,7 @@
           <div v-for="item in menuItems" :key="item.id" class="mp-nav-item">
             <button
               class="mp-nav-link"
-              :class="{ active: isMenuActive(item) && !item.children }"
+              :class="{ active: item.path ? isSubActive(item.id) : (isMenuActive(item) && !item.children) }"
               @click="toggleMenu(item)"
             >
               <span class="mp-nav-icon" v-html="getMenuIcon(item.icon)"></span>
@@ -92,13 +92,53 @@
               <span v-if="item.children" class="mp-nav-arrow" :class="{ open: item.expanded }">▾</span>
             </button>
             <div v-if="item.children && item.expanded" class="mp-nav-children">
-              <button
-                v-for="child in item.children"
-                :key="child.id"
-                class="mp-nav-child"
-                :class="{ active: isSubActive(child.id) }"
-                @click="selectSubMenu(item, child)"
-              >{{ child.label }}</button>
+              <template v-for="child in item.children" :key="child.id">
+                <button
+                  v-if="child.path"
+                  class="mp-nav-child"
+                  :class="{ active: isSubActive(child.id) }"
+                  @click="selectMenuLeaf(item, child)"
+                >{{ child.label }}</button>
+                <div v-else class="mp-nav-group">
+                  <button
+                    class="mp-nav-child mp-nav-group-head"
+                    :class="{ open: child.expanded }"
+                    @click="toggleNavGroup(child)"
+                  >
+                    {{ child.label }}
+                    <span class="mp-nav-arrow sm" :class="{ open: child.expanded }">▾</span>
+                  </button>
+                  <div v-if="child.expanded" class="mp-nav-children level-2">
+                    <template v-for="sub in child.children" :key="sub.id">
+                      <button
+                        v-if="sub.path"
+                        class="mp-nav-child"
+                        :class="{ active: isSubActive(sub.id) }"
+                        @click="selectMenuLeaf(item, sub)"
+                      >{{ sub.label }}</button>
+                      <div v-else class="mp-nav-group">
+                        <button
+                          class="mp-nav-child mp-nav-group-head"
+                          :class="{ open: sub.expanded }"
+                          @click="toggleNavGroup(sub)"
+                        >
+                          {{ sub.label }}
+                          <span class="mp-nav-arrow sm" :class="{ open: sub.expanded }">▾</span>
+                        </button>
+                        <div v-if="sub.expanded" class="mp-nav-children level-3">
+                          <button
+                            v-for="leaf in sub.children"
+                            :key="leaf.id"
+                            class="mp-nav-child"
+                            :class="{ active: isSubActive(leaf.id) }"
+                            @click="selectMenuLeaf(item, leaf)"
+                          >{{ leaf.label }}</button>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
         </nav>
@@ -613,8 +653,10 @@
           </div>
         </template>
 
+        <div id="mp-views-mount"></div>
+
         <!-- 其他菜单 — 占位 -->
-        <template v-else>
+        <template v-if="currentView === 'coming'">
           <div class="mp-card">
             <div class="mp-placeholder">
               <div class="mp-placeholder-icon">
@@ -634,6 +676,17 @@
 
   <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
   <script src="js/middle-platform-data.js"></script>
+  <script src="js/middle-platform-modules-data.js"></script>
+  <script src="js/middle-platform-module-charts.js"></script>
+  <script src="js/middle-platform-pages-data.js"></script>
+  <script src="js/middle-platform-views-template.js"></script>
+  <script src="js/middle-platform-pages-views.js"></script>
+  <script src="js/middle-platform-canteen-property-data.js"></script>
+  <script src="js/middle-platform-canteen-property-views.js"></script>
+  <script src="js/middle-platform-property-ext-data.js"></script>
+  <script src="js/middle-platform-property-ext-views.js"></script>
+  <script src="js/middle-platform-env-risk-data.js"></script>
+  <script src="js/middle-platform-env-risk-views.js"></script>
   <script src="js/warehouse-charts.js"></script>
   <script src="js/middle-platform.js"></script>
 </body>

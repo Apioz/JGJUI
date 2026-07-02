@@ -251,8 +251,23 @@
               <div class="panel-header">
                 <span class="panel-title">消防安全等级</span>
                 <div class="panel-controls">
-                  <select class="date-select"><option>月</option></select>
-                  <select class="date-select" v-model="fireMonth"><option value="2025-01">2025-01</option></select>
+                  <select class="date-select" v-model="firePeriod" @change="syncFireDate">
+                    <option v-for="u in timeUnits" :key="'fire-map-' + u.value" :value="u.value">{{ u.label }}</option>
+                  </select>
+                  <input
+                    v-if="dateInputType(firePeriod) !== 'number'"
+                    class="date-select date-input"
+                    :type="dateInputType(firePeriod)"
+                    v-model="fireDate"
+                  />
+                  <input
+                    v-else
+                    class="date-select date-input"
+                    type="number"
+                    :min="yearInputMin"
+                    :max="yearInputMax"
+                    v-model="fireDate"
+                  />
                 </div>
               </div>
               <div class="fire-grade-box">
@@ -396,8 +411,23 @@
               <div class="panel-header">
                 <span class="panel-title">消防安全等级</span>
                 <div class="panel-controls">
-                  <select class="date-select"><option>月</option></select>
-                  <select class="date-select" v-model="fireMonth"><option value="2025-01">2025-01</option></select>
+                  <select class="date-select" v-model="firePeriod" @change="syncFireDate">
+                    <option v-for="u in timeUnits" :key="'fire-map-' + u.value" :value="u.value">{{ u.label }}</option>
+                  </select>
+                  <input
+                    v-if="dateInputType(firePeriod) !== 'number'"
+                    class="date-select date-input"
+                    :type="dateInputType(firePeriod)"
+                    v-model="fireDate"
+                  />
+                  <input
+                    v-else
+                    class="date-select date-input"
+                    type="number"
+                    :min="yearInputMin"
+                    :max="yearInputMax"
+                    v-model="fireDate"
+                  />
                 </div>
               </div>
               <div class="fire-grade-box">
@@ -526,8 +556,23 @@
             <div class="panel-header">
               <span class="panel-title">车辆/人员进出统计</span>
               <div class="panel-controls">
-                <select class="date-select"><option>月</option></select>
-                <select class="date-select" v-model="overviewChartDate"><option value="2025-01">2025-01</option></select>
+                <select class="date-select" v-model="overviewTrafficPeriod" @change="syncTrafficDate">
+                  <option v-for="u in timeUnits" :key="'traffic-' + u.value" :value="u.value">{{ u.label }}</option>
+                </select>
+                <input
+                  v-if="dateInputType(overviewTrafficPeriod) !== 'number'"
+                  class="date-select date-input"
+                  :type="dateInputType(overviewTrafficPeriod)"
+                  v-model="overviewTrafficDate"
+                />
+                <input
+                  v-else
+                  class="date-select date-input"
+                  type="number"
+                  :min="yearInputMin"
+                  :max="yearInputMax"
+                  v-model="overviewTrafficDate"
+                />
               </div>
             </div>
             <div id="overviewTrafficChart" class="chart-box"></div>
@@ -535,10 +580,25 @@
 
           <div class="panel glass-panel transparent-panel rank-panel">
             <div class="panel-header">
-              <span class="panel-title">逐时能耗使用趋势</span>
+              <span class="panel-title">{{ overviewEnergyPanelTitle }}</span>
               <div class="panel-controls">
-                <select class="date-select"><option>日</option></select>
-                <select class="date-select" v-model="overviewChartDate"><option value="2025-01">2025-01</option></select>
+                <select class="date-select" v-model="overviewEnergyPeriod" @change="syncOverviewEnergyDate">
+                  <option v-for="u in timeUnits" :key="'energy-' + u.value" :value="u.value">{{ u.label }}</option>
+                </select>
+                <input
+                  v-if="dateInputType(overviewEnergyPeriod) !== 'number'"
+                  class="date-select date-input"
+                  :type="dateInputType(overviewEnergyPeriod)"
+                  v-model="overviewEnergyDate"
+                />
+                <input
+                  v-else
+                  class="date-select date-input"
+                  type="number"
+                  :min="yearInputMin"
+                  :max="yearInputMax"
+                  v-model="overviewEnergyDate"
+                />
               </div>
             </div>
             <div class="panel-controls panel-controls-inner">
@@ -547,15 +607,57 @@
                 <button :class="{ active: overviewEnergyTab === 'water' }" @click="switchOverviewEnergy('water')">用水</button>
               </div>
             </div>
-            <div id="overviewEnergyChart" class="chart-box"></div>
+
+            <div v-if="!overviewEnergyProject" class="rank-list energy-building-rank">
+              <div
+                v-for="(item, index) in overviewEnergyRankList"
+                :key="item.name"
+                class="rank-item clickable"
+                @click="selectOverviewEnergyProject(item.name)"
+              >
+                <div class="rank-badge" :class="{ first: index === 0 }">{{ index + 1 }}</div>
+                <div class="rank-body">
+                  <div class="rank-row">
+                    <span class="rank-name">{{ item.name }}</span>
+                    <span class="rank-value">{{ item.value }}{{ item.unit }}</span>
+                  </div>
+                  <div class="rank-bar-track">
+                    <div class="rank-bar-fill" :class="{ first: index === 0 }" :style="{ width: item.percent + '%' }"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <template v-else>
+              <div class="overview-energy-detail-head">
+                <button type="button" class="park-back-link" @click="clearOverviewEnergyProject">返回 TOP4</button>
+                <span class="panel-sub-title">{{ overviewEnergyProject }} · 逐时{{ overviewEnergyTypeLabel }}趋势</span>
+              </div>
+              <div id="overviewEnergyChart" class="chart-box"></div>
+            </template>
           </div>
 
           <div class="panel glass-panel transparent-panel">
             <div class="panel-header">
               <span class="panel-title">运维工单统计</span>
               <div class="panel-controls">
-                <select class="date-select"><option>月</option></select>
-                <select class="date-select" v-model="overviewChartDate"><option value="2025-01">2025-01</option></select>
+                <select class="date-select" v-model="overviewWorkOrderPeriod" @change="syncWorkOrderDate">
+                  <option v-for="u in timeUnits" :key="'workorder-' + u.value" :value="u.value">{{ u.label }}</option>
+                </select>
+                <input
+                  v-if="dateInputType(overviewWorkOrderPeriod) !== 'number'"
+                  class="date-select date-input"
+                  :type="dateInputType(overviewWorkOrderPeriod)"
+                  v-model="overviewWorkOrderDate"
+                />
+                <input
+                  v-else
+                  class="date-select date-input"
+                  type="number"
+                  :min="yearInputMin"
+                  :max="yearInputMax"
+                  v-model="overviewWorkOrderDate"
+                />
               </div>
             </div>
             <div id="overviewWorkOrderChart" class="chart-box"></div>
@@ -810,8 +912,23 @@
             <div class="panel-header">
               <span class="panel-title">事件处理完成率</span>
               <div class="panel-controls">
-                <select class="date-select"><option>月</option></select>
-                <select class="date-select" v-model="fireMonth"><option value="2025-01">2025-01</option></select>
+                <select class="date-select" v-model="firePeriod" @change="syncFireDate">
+                  <option v-for="u in timeUnits" :key="'fire-l-' + u.value" :value="u.value">{{ u.label }}</option>
+                </select>
+                <input
+                  v-if="dateInputType(firePeriod) !== 'number'"
+                  class="date-select date-input"
+                  :type="dateInputType(firePeriod)"
+                  v-model="fireDate"
+                />
+                <input
+                  v-else
+                  class="date-select date-input"
+                  type="number"
+                  :min="yearInputMin"
+                  :max="yearInputMax"
+                  v-model="fireDate"
+                />
               </div>
             </div>
             <div class="gauge-list">
@@ -836,8 +953,23 @@
             <div class="panel-header">
               <span class="panel-title">频报点位次数Top5排名</span>
               <div class="panel-controls">
-                <select class="date-select"><option>月</option></select>
-                <select class="date-select" v-model="fireMonth"><option value="2025-01">2025-01</option></select>
+                <select class="date-select" v-model="firePeriod" @change="syncFireDate">
+                  <option v-for="u in timeUnits" :key="'fire-l-' + u.value" :value="u.value">{{ u.label }}</option>
+                </select>
+                <input
+                  v-if="dateInputType(firePeriod) !== 'number'"
+                  class="date-select date-input"
+                  :type="dateInputType(firePeriod)"
+                  v-model="fireDate"
+                />
+                <input
+                  v-else
+                  class="date-select date-input"
+                  type="number"
+                  :min="yearInputMin"
+                  :max="yearInputMax"
+                  v-model="fireDate"
+                />
               </div>
             </div>
             <div class="panel-controls panel-controls-inner">
@@ -946,7 +1078,23 @@
             <div class="panel-header">
               <span class="panel-title">按物业分类统计</span>
               <div class="panel-controls">
-                <select class="date-select" v-model="propertyMonth"><option value="2025-01">2025-01</option></select>
+                <select class="date-select" v-model="propertyPeriod" @change="syncPropertyDate">
+                  <option v-for="u in timeUnits" :key="'property-' + u.value" :value="u.value">{{ u.label }}</option>
+                </select>
+                <input
+                  v-if="dateInputType(propertyPeriod) !== 'number'"
+                  class="date-select date-input"
+                  :type="dateInputType(propertyPeriod)"
+                  v-model="propertyDate"
+                />
+                <input
+                  v-else
+                  class="date-select date-input"
+                  type="number"
+                  :min="yearInputMin"
+                  :max="yearInputMax"
+                  v-model="propertyDate"
+                />
               </div>
             </div>
             <div id="propertyCategoryChart" class="chart-box"></div>
