@@ -214,6 +214,13 @@ const DASHBOARD_DATA = {
     食堂管理: {
       c3: { line1: '3号食堂', line2: '3层' },
     },
+    消防管理: {
+      fb1: { line1: '1号楼', line2: '事件处理率 70%' },
+      fb2: { line1: '2号楼', line2: '事件处理率 68%' },
+      fb3: { line1: '3号楼', line2: '事件处理率 65%' },
+      fb4: { line1: '4号楼', line2: '事件处理率 62%' },
+      fb5: { line1: '5号楼', line2: '事件处理率 60%' },
+    },
   },
 
   /** 园区模式 KPI（延安东路300号，参考设计图） */
@@ -232,14 +239,14 @@ const DASHBOARD_DATA = {
     ],
     能源管理: {
       electricity: [
-        { label: '总电表数', value: '700', unit: '个', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>' },
-        { label: '在线设备数', value: '600', unit: '个', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' },
-        { label: '离线设备数', value: '67', unit: '个', color: '#ff9500', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>' },
+        { label: '总电表数', value: '700', unit: '↑', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>' },
+        { label: '当年总用电量', value: '11,215', unit: 'kwh', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>' },
+        { label: '接入迄今累计用电量', value: '11,215', unit: 'kwh', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>' },
       ],
       water: [
-        { label: '总水表数', value: '700', unit: '个', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>' },
-        { label: '在线设备数', value: '600', unit: '个', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' },
-        { label: '离线设备数', value: '67', unit: '个', color: '#ff9500', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>' },
+        { label: '总水表数', value: '700', unit: '↑', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>' },
+        { label: '当年总用水量', value: '11,215', unit: 'm³', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>' },
+        { label: '接入迄今累计用水量', value: '11,215', unit: 'm³', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>' },
       ],
     },
     环境管理: [
@@ -253,6 +260,12 @@ const DASHBOARD_DATA = {
       { label: '食堂库存总数', value: '1,948', unit: '', color: '#ff9500', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>' },
       { label: '客饭预定数', value: '72', unit: '', color: '#ff9500', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>' },
       { label: '线上预定数', value: '386', unit: '', color: '#ff9500', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>' },
+    ],
+    消防管理: [
+      { label: '消防设备总数', value: '248', unit: '个', color: '#ffffff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>' },
+      { label: '消防设备在线数', value: '200', unit: '个', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' },
+      { label: '消防设备离线数', value: '48', unit: '个', color: '#ff9500', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>' },
+      { label: '事件未处理数', value: '5', unit: '条', color: '#ff4757', alert: true, icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' },
     ],
   },
 
@@ -670,15 +683,15 @@ const DASHBOARD_DATA = {
 
   /** 能源管理 */
   energyKpiData: [
-    { label: '总电表数', value: '700', unit: '个', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>' },
-    { label: '在线设备数', value: '600', unit: '个', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' },
-    { label: '离线设备数', value: '67', unit: '个', color: '#ff9500', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>' },
+    { label: '总电表数', value: '700', unit: '↑', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>' },
+    { label: '当年总用电量', value: '11,215', unit: 'kwh', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>' },
+    { label: '接入迄今累计用电量', value: '11,215', unit: 'kwh', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>' },
   ],
 
   waterKpiData: [
-    { label: '总水表数', value: '700', unit: '个', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>' },
-    { label: '在线设备数', value: '600', unit: '个', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' },
-    { label: '离线设备数', value: '67', unit: '个', color: '#ff9500', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>' },
+    { label: '总水表数', value: '700', unit: '↑', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>' },
+    { label: '当年总用水量', value: '11,215', unit: 'm³', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>' },
+    { label: '接入迄今累计用水量', value: '11,215', unit: 'm³', color: '#00e5ff', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>' },
   ],
 
   energyDailyStat: { value: '1,215', unit: 'kwh', diff: '100', diffUnit: 'kwh', percent: '10' },
@@ -696,6 +709,13 @@ const DASHBOARD_DATA = {
     hours: ['0时', '2时', '4时', '6时', '8时', '10时', '12时', '14时', '16时', '18时', '20时', '22时', '24时'],
     today: [25, 20, 15, 30, 70, 110, 140, 170, 190, 180, 150, 90, 50],
     yesterday: [22, 18, 14, 28, 65, 105, 135, 165, 185, 175, 145, 85, 48],
+  },
+
+  energyDailyMonthly: {
+    legend: ['当月', '上月'],
+    labels: Array.from({ length: 31 }, (_, i) => `${i + 1}日`),
+    current: [80, 95, 110, 125, 140, 155, 170, 185, 200, 210, 205, 195, 180, 165, 150, 140, 155, 170, 190, 205, 220, 215, 200, 185, 170, 160, 175, 190, 200, 185, 170],
+    previous: [75, 88, 102, 118, 132, 145, 160, 175, 188, 198, 192, 182, 168, 155, 142, 132, 145, 160, 178, 192, 205, 200, 185, 172, 158, 148, 162, 175, 185, 172, 160],
   },
 
   energyMonthly: {
@@ -861,11 +881,11 @@ const DASHBOARD_DATA = {
 
   fireLocationRank: {
     alarm: [
-      { name: '1号楼1F弱电间', value: 34 },
-      { name: '2号楼机房', value: 20 },
-      { name: '3号楼3F3001办公室', value: 15 },
-      { name: '4号楼公共区域', value: 10 },
-      { name: '5号楼公共区域', value: 7 },
+      { name: '1号楼1F 储物间', value: 34 },
+      { name: '2号楼 机房', value: 20 },
+      { name: '3号楼 3F-3001 办公室', value: 15 },
+      { name: '4号楼 公共区域', value: 10 },
+      { name: '5号楼 公共区域', value: 7 },
     ],
     fault: [
       { name: '2号楼机房', value: 28 },
@@ -886,13 +906,31 @@ const DASHBOARD_DATA = {
   fireProjects: [
     { id: 'all', name: '全部项目', units: 10, expanded: true, children: [] },
     {
-      id: 'p1', name: '延安东路300号', units: 4, expanded: true,
+      id: 'p1', name: '延安东路300号', units: 7, expanded: true,
       children: [
         { id: 'p1-1', name: '1号楼', checked: true },
         { id: 'p1-2', name: '2号楼', checked: true },
         { id: 'p1-3', name: '3号楼', checked: false },
         { id: 'p1-4', name: '4号楼', checked: false },
+        { id: 'p1-5', name: '5号楼', checked: false },
+        { id: 'p1-6', name: '6号楼', checked: false },
+        { id: 'p1-7', name: '7号楼', checked: false },
       ],
+    },
+    {
+      id: 'p3', name: '重庆南路139号', units: 3, expanded: false,
+      children: [
+        { id: 'p3-1', name: '1号楼', checked: true },
+        { id: 'p3-2', name: '2号楼', checked: false },
+      ],
+    },
+    {
+      id: 'p4', name: '重庆南路100号', units: 2, expanded: false,
+      children: [{ id: 'p4-1', name: '1号楼', checked: true }],
+    },
+    {
+      id: 'p2', name: '河南南路288号', units: 1, expanded: false,
+      children: [{ id: 'p2-1', name: '1号楼', checked: true }],
     },
   ],
 };

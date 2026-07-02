@@ -111,17 +111,6 @@ const MIDDLE_PLATFORM_DATA = {
     },
   ],
 
-  yearlyComparison: {
-    years: [2025, 2026],
-    availableYears: [2022, 2023, 2024, 2025, 2026, 2027],
-    rows: [
-      { name: '总使用面积', icon: 'area', y2025: 568.5, y2026: 579.42, change: 1.92, trend: 'up' },
-      { name: '总建筑面积', icon: 'building', y2025: 5180, y2026: 5279.42, change: 1.92, trend: 'up' },
-      { name: '楼栋数量', icon: 'building', y2025: 49, y2026: 51, change: 4.08, trend: 'up' },
-      { name: '房间数', icon: 'room', y2025: 720, y2026: 746, change: 3.61, trend: 'up' },
-    ],
-  },
-
   officeAreaChart: {
     /** 默认层级：前三名单位（按占比） */
     top3: [
@@ -166,6 +155,7 @@ const MIDDLE_PLATFORM_DATA = {
   unitList: [
     {
       name: '区建设管理委',
+      location: '1号楼 3层',
       area: 1337.11,
       proportion: 2.54,
       changes: [
@@ -175,6 +165,7 @@ const MIDDLE_PLATFORM_DATA = {
     },
     {
       name: '区商务委',
+      location: '1号楼 5层',
       area: 967.33,
       proportion: 1.84,
       changes: [
@@ -184,6 +175,7 @@ const MIDDLE_PLATFORM_DATA = {
     },
     {
       name: '人武部',
+      location: '2号楼 2层',
       area: 602.95,
       proportion: 1.15,
       changes: [
@@ -193,6 +185,7 @@ const MIDDLE_PLATFORM_DATA = {
     },
     {
       name: '区金融办',
+      location: '2号楼 4层',
       area: 626.7,
       proportion: 1.19,
       changes: [
@@ -201,6 +194,7 @@ const MIDDLE_PLATFORM_DATA = {
     },
     {
       name: '区人社局',
+      location: '3号楼 1层',
       area: 200.03,
       proportion: 0.38,
       changes: [
@@ -210,6 +204,7 @@ const MIDDLE_PLATFORM_DATA = {
     },
     {
       name: '区机关党工委',
+      location: '3号楼 3层',
       area: 181.11,
       proportion: 0.35,
       changes: [
@@ -218,6 +213,7 @@ const MIDDLE_PLATFORM_DATA = {
     },
     {
       name: '区退役军人局',
+      location: '3号楼 5层',
       area: 241.56,
       proportion: 0.46,
       changes: [
@@ -226,6 +222,7 @@ const MIDDLE_PLATFORM_DATA = {
     },
     {
       name: '保密办',
+      location: '4号楼 2层',
       area: 40.8,
       proportion: 0.08,
       changes: [
@@ -235,6 +232,7 @@ const MIDDLE_PLATFORM_DATA = {
     },
     {
       name: '区人武部',
+      location: '4号楼 4层',
       area: 34,
       proportion: 0.07,
       changes: [
@@ -243,6 +241,7 @@ const MIDDLE_PLATFORM_DATA = {
     },
     {
       name: '人大领导',
+      location: '5号楼 1层',
       area: 40,
       proportion: 0.08,
       changes: [
@@ -251,6 +250,7 @@ const MIDDLE_PLATFORM_DATA = {
     },
     {
       name: '审改办',
+      location: '5号楼 3层',
       area: 9.9,
       proportion: 0.02,
       changes: [
@@ -262,8 +262,8 @@ const MIDDLE_PLATFORM_DATA = {
   /** 公物仓 — 双仓库数据 */
   publicWarehouse: {
     warehouses: [
-      { id: 'w1', name: '黄埔仓（通岸家园）', shortName: '黄埔仓', color: '#1890ff' },
-      { id: 'w2', name: '闵行仓（崇海阁）', shortName: '闵行仓', color: '#69c0ff' },
+      { id: 'w1', name: '黄浦仓（国货路371号）', shortName: '黄浦仓', color: '#1890ff' },
+      { id: 'w2', name: '闵行仓（立跃路1758号）', shortName: '闵行仓', color: '#69c0ff' },
     ],
     /** 自该年度起提供季度明细 */
     quarterlyStartYear: 2026,

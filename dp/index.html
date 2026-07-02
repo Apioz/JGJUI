@@ -246,13 +246,42 @@
               </div>
             </div>
           </div>
+          <template v-if="isFireMapWithPopup">
+            <div class="panel glass-panel transparent-panel overview-left-panel fire-safety-panel">
+              <div class="panel-header">
+                <span class="panel-title">消防安全等级</span>
+                <div class="panel-controls">
+                  <select class="date-select"><option>月</option></select>
+                  <select class="date-select" v-model="fireMonth"><option value="2025-01">2025-01</option></select>
+                </div>
+              </div>
+              <div class="fire-grade-box">
+                <span class="fire-grade-char">{{ fireSafetyLevel.grade }}</span>
+                <span class="fire-grade-label">安全等级</span>
+              </div>
+              <div id="fireRadarChart" class="chart-box fire-radar-chart"></div>
+              <div class="fire-system-status">
+                <button class="fire-sys-nav" @click="prevFireSafetySystem">‹</button>
+                <div class="fire-sys-card">
+                  <span class="fire-sys-icon">🔥</span>
+                  <div class="fire-sys-text">
+                    <span>状态：{{ currentFireSafetySystem.grade }}</span>
+                    <strong>{{ currentFireSafetySystem.name }}</strong>
+                  </div>
+                </div>
+                <button class="fire-sys-nav" @click="nextFireSafetySystem">›</button>
+              </div>
+              <div class="fire-sys-page">{{ fireSafetySystemIdx + 1 }}/{{ fireSafetyLevel.systems.length }}</div>
+            </div>
+          </template>
         </template>
         <!-- 五模块园区 3D 模式 -->
         <template v-else-if="isModuleParkMode">
           <div class="panel glass-panel transparent-panel">
             <div class="panel-header">
               <span class="panel-title">{{ leftSidebarTitle }}</span>
-              <button class="park-back-link" @click="exitPark">返回地图</button>
+              <button v-if="isFireFloorMode" class="park-back-link" @click="exitFireFloor">返回园区</button>
+              <button v-else class="park-back-link" @click="exitPark">返回地图</button>
             </div>
             <div class="search-box">
               <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -358,6 +387,55 @@
               </div>
               <div class="env-device-list">
                 <div v-for="name in envDeviceList.items" :key="name" class="env-device-item">{{ name }}</div>
+              </div>
+            </div>
+          </template>
+
+          <template v-if="activeTab === '消防管理'">
+            <div v-if="showFireSafetyPanel && !showFireDevicePanel" class="panel glass-panel transparent-panel overview-left-panel fire-safety-panel">
+              <div class="panel-header">
+                <span class="panel-title">消防安全等级</span>
+                <div class="panel-controls">
+                  <select class="date-select"><option>月</option></select>
+                  <select class="date-select" v-model="fireMonth"><option value="2025-01">2025-01</option></select>
+                </div>
+              </div>
+              <div class="fire-grade-box">
+                <span class="fire-grade-char">{{ fireSafetyLevel.grade }}</span>
+                <span class="fire-grade-label">安全等级</span>
+              </div>
+              <div id="fireRadarChart" class="chart-box fire-radar-chart"></div>
+              <div class="fire-system-status">
+                <button class="fire-sys-nav" @click="prevFireSafetySystem">‹</button>
+                <div class="fire-sys-card">
+                  <span class="fire-sys-icon">🔥</span>
+                  <div class="fire-sys-text">
+                    <span>状态：{{ currentFireSafetySystem.grade }}</span>
+                    <strong>{{ currentFireSafetySystem.name }}</strong>
+                  </div>
+                </div>
+                <button class="fire-sys-nav" @click="nextFireSafetySystem">›</button>
+              </div>
+              <div class="fire-sys-page">{{ fireSafetySystemIdx + 1 }}/{{ fireSafetyLevel.systems.length }}</div>
+            </div>
+            <div v-if="showFireDevicePanel" class="panel glass-panel transparent-panel overview-left-panel">
+              <div class="panel-header"><span class="panel-title">设备列表</span></div>
+              <div class="search-box env-search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input v-model="fireDeviceSearch" type="text" placeholder="搜索设备名称..." />
+              </div>
+              <div class="env-device-status">
+                <span class="env-online">在线 {{ currentFireDeviceList.online }}</span>
+                <span class="env-offline">离线 {{ currentFireDeviceList.offline }}</span>
+              </div>
+              <div class="env-device-list">
+                <div
+                  v-for="name in currentFireDeviceList.items"
+                  :key="name"
+                  class="env-device-item"
+                  :class="{ selected: fireSelectedDevice === name }"
+                  @click="fireSelectedDevice = name"
+                >{{ name }}</div>
               </div>
             </div>
           </template>
@@ -613,23 +691,121 @@
 
       <!-- 消防管理 -->
       <template v-else-if="activeTab === '消防管理'">
-        <section class="center-area">
+        <section class="center-area" :class="{ 'center-area-fire': isFireParkMode || isFireFloorMode }">
           <div class="kpi-row">
-            <div v-for="kpi in fireKpiData" :key="kpi.label" class="kpi-card glass-panel">
-              <div class="kpi-icon" :style="{ color: kpi.color }"><span v-html="kpi.icon"></span></div>
+            <div v-for="kpi in currentKpiData" :key="kpi.label" class="kpi-card glass-panel">
+              <div class="kpi-icon" v-if="kpi.icon" :style="{ color: kpi.color }"><span v-html="kpi.icon"></span></div>
               <div class="kpi-info">
-                <div class="kpi-value" :class="{ 'kpi-alert': kpi.alert }">{{ kpi.value }}<span class="kpi-unit">{{ kpi.unit }}</span></div>
+                <div class="kpi-value" :class="{ 'kpi-alert': kpi.alert }" :style="kpi.icon ? {} : { color: kpi.color }">{{ kpi.value }}<span class="kpi-unit">{{ kpi.unit }}</span></div>
                 <div class="kpi-label">{{ kpi.label }}</div>
               </div>
             </div>
           </div>
-          <div class="map-spacer"></div>
-          <div class="bottom-chart glass-panel transparent-panel">
+
+          <!-- 楼层平面图 -->
+          <div v-if="isFireFloorMode" class="map-spacer fire-floor-spacer">
+            <button class="park-back-link fire-floor-back" @click="exitFireFloor">返回园区</button>
+            <div class="fire-floor-layout glass-panel">
+              <div class="fire-floor-sidebar">
+                <label v-for="f in fireFloors" :key="f" class="fire-floor-check">
+                  <input type="checkbox" :checked="fireSelectedFloor === f" @change="selectFireFloor(f)" />
+                  <span>{{ f }}</span>
+                </label>
+              </div>
+              <div class="fire-floor-map">
+                <div class="fire-floor-grid"></div>
+                <div
+                  v-for="d in currentFloorDevices"
+                  :key="d.id"
+                  class="fire-floor-device"
+                  :style="{ left: d.x + '%', top: d.y + '%', color: d.color }"
+                  :title="d.name"
+                >
+                  <span class="fire-device-dot" :style="{ background: d.color }"></span>
+                </div>
+              </div>
+              <div class="fire-floor-alert-badge">10+</div>
+            </div>
+          </div>
+
+          <!-- 3D 园区 -->
+          <div v-else class="map-spacer">
+            <div
+              v-if="isParkInteractiveVisible"
+              class="park-scene-interactive"
+              :class="{ orbiting: parkOrbiting, 'has-building': selectedParkBuilding }"
+              @mousedown="startParkOrbit"
+            >
+              <div
+                v-for="b in activeParkBuildings"
+                :key="b.id"
+                class="park-building-hit"
+                :class="{ active: selectedParkBuilding === b.id || fireBuildingPopupId === b.id }"
+                :style="parkBuildingStyle(b)"
+                @mousedown.stop="selectFireBuilding(b, $event)"
+              >
+                <span class="park-building-label">{{ b.name }}</span>
+              </div>
+              <div
+                v-for="b in activeParkBuildings"
+                :key="'mk-' + b.id"
+                v-show="getParkBuildingMarker(b.id)"
+                class="park-scene-marker"
+                :style="parkMarkerStyle(b)"
+              >
+                <div class="park-marker-card">
+                  <strong>{{ getParkBuildingMarker(b.id)?.line1 }}</strong>
+                  <span>{{ getParkBuildingMarker(b.id)?.line2 }}</span>
+                </div>
+              </div>
+              <div v-if="isFireEventMode" class="fire-scene-icons">
+                <span v-for="n in 4" :key="n" class="fire-scene-icon alarm" :style="{ left: (20 + n * 15) + '%', top: (55 + (n % 2) * 8) + '%' }">🔥</span>
+              </div>
+              <div class="fire-scene-alert-badge" v-if="isFireParkMode">10+</div>
+              <div class="park-orbit-hint">{{ selectedParkBuilding ? '拖动查看不同角度' : '点击楼栋查看基本信息' }}</div>
+            </div>
+          </div>
+
+          <!-- 楼栋信息弹窗 -->
+          <div v-if="fireBuildingPopup" class="fire-building-popup glass-panel">
+            <button class="popup-close" @click="closeFireBuildingPopup" aria-label="关闭">×</button>
+            <div class="fire-building-popup-head">
+              <strong>{{ fireBuildingPopup.name }}</strong>
+              <span>事件处理率 {{ fireBuildingPopup.eventRate }}%</span>
+            </div>
+            <div class="fire-building-popup-stats">
+              <div><span>累计事件数</span><strong>{{ fireBuildingPopup.totalEvents }}</strong></div>
+              <div><span>设备总数</span><strong>{{ fireBuildingPopup.totalDevices }}个</strong></div>
+              <div><span>已处理事件数</span><strong>{{ fireBuildingPopup.processed }}</strong></div>
+              <div><span>待处理事件数</span><strong>{{ fireBuildingPopup.pending }}</strong></div>
+              <div><span>处理中事件数</span><strong>{{ fireBuildingPopup.inProgress }}</strong></div>
+            </div>
+            <button class="popup-enter-btn" @click="enterFireBuilding">进入单体</button>
+          </div>
+
+          <!-- 底部子系统导航 -->
+          <div v-if="isFireParkMode || isFireFloorMode" class="fire-sub-nav glass-panel">
+            <button
+              v-for="sys in fireSubSystems"
+              :key="sys.id"
+              class="fire-sub-nav-btn"
+              :class="{ active: fireSubSystem === sys.id }"
+              @click="switchFireSubSystem(sys.id)"
+            >
+              <span class="fire-sub-icon">{{ sys.id === 'event' ? '🏢' : sys.id === 'alarm' ? '🔔' : sys.id === 'smoke' ? '💨' : sys.id === 'sprinkler' ? '💧' : '🧯' }}</span>
+              <span>{{ sys.label }}({{ sys.count }})</span>
+            </button>
+          </div>
+
+          <!-- 地图模式底部趋势图 -->
+          <div v-if="isFireMapMode && !isFireFloorMode" class="bottom-chart glass-panel transparent-panel">
             <div class="panel-header"><span class="panel-title">12个月内报警情况分析</span></div>
             <div id="fireAlarmTrendChart" class="chart-box"></div>
           </div>
         </section>
-        <aside class="sidebar right-sidebar">
+
+        <!-- 右侧：事件中心 / 地图模式 -->
+        <aside v-if="!isFireSystemMode" class="sidebar right-sidebar">
           <div class="panel glass-panel transparent-panel rank-panel">
             <div class="panel-header">
               <span class="panel-title">事件处理完成率</span>
@@ -658,7 +834,7 @@
           </div>
           <div class="panel glass-panel transparent-panel rank-panel">
             <div class="panel-header">
-              <span class="panel-title">策报点位次数Top5排名</span>
+              <span class="panel-title">频报点位次数Top5排名</span>
               <div class="panel-controls">
                 <select class="date-select"><option>月</option></select>
                 <select class="date-select" v-model="fireMonth"><option value="2025-01">2025-01</option></select>
@@ -686,6 +862,53 @@
               </div>
             </div>
           </div>
+        </aside>
+
+        <!-- 右侧：子系统模式 -->
+        <aside v-else class="sidebar right-sidebar">
+          <div class="panel glass-panel transparent-panel fire-system-grade-panel">
+            <div class="panel-header"><span class="panel-title">消防安全等级</span></div>
+            <div class="fire-system-grade-badge">
+              <span class="fire-system-grade-char">{{ currentFireSystemPanel?.grade || '优' }}</span>
+              <span>状态：{{ currentFireSystemPanel?.grade || '优' }}</span>
+              <strong>{{ currentFireSystemPanel?.safetyLabel }}</strong>
+            </div>
+          </div>
+
+          <template v-if="fireSubSystem === 'alarm'">
+            <div class="panel glass-panel transparent-panel">
+              <div class="panel-header"><span class="panel-title">传输装置与报警主机连接情况</span></div>
+              <div class="fire-connection-diagram">
+                <div class="fire-conn-node">传输装置</div>
+                <div class="fire-conn-link">🔗</div>
+                <div class="fire-conn-node">报警主机</div>
+              </div>
+            </div>
+            <div class="panel glass-panel transparent-panel">
+              <div class="panel-header">
+                <span class="panel-title">设备状态统计</span>
+                <span class="fire-device-total">设备总数: {{ currentFireSystemPanel?.deviceTotal }}</span>
+              </div>
+              <div id="fireDeviceStatusPie" class="chart-box asset-donut-chart"></div>
+              <div class="fire-sys-nav-row">
+                <button class="fire-sys-nav" @click="prevFireSafetySystem">‹</button>
+                <span>{{ currentFireSafetySystem.name }}</span>
+                <button class="fire-sys-nav" @click="nextFireSafetySystem">›</button>
+              </div>
+            </div>
+          </template>
+
+          <template v-else>
+            <div class="panel glass-panel transparent-panel">
+              <div class="panel-header"><span class="panel-title">设备状态占比分析</span></div>
+              <div id="fireAbnormalDonut" class="chart-box asset-donut-chart"></div>
+              <div id="fireOfflineDonut" class="chart-box asset-donut-chart"></div>
+            </div>
+            <div class="panel glass-panel transparent-panel">
+              <div class="panel-header"><span class="panel-title">设备月度报警及故障次数统计</span></div>
+              <div id="fireMonthlyTrend" class="chart-box"></div>
+            </div>
+          </template>
         </aside>
       </template>
 
@@ -809,12 +1032,6 @@
           <div class="panel glass-panel transparent-panel rank-panel">
             <div class="panel-header">
               <span class="panel-title">{{ energyPeriodTitle }}</span>
-              <div class="panel-controls" v-if="energyTypeTab === 'electricity'">
-                <div class="toggle-group">
-                  <button :class="{ active: energyPeriodTab === 'year' }" @click="switchEnergyPeriod('year')">年度</button>
-                  <button :class="{ active: energyPeriodTab === 'month' }" @click="switchEnergyPeriod('month')">月度</button>
-                </div>
-              </div>
             </div>
             <div class="stat-summary">
               <div class="stat-main">{{ energyPeriodLabel }} <strong>{{ energyPeriodStat.value }}</strong> {{ energyPeriodStat.unit }}</div>
@@ -968,8 +1185,10 @@
   <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/fire-data.js"></script>
   <script src="js/middle-platform-data.js"></script>
   <script src="js/module-charts.js"></script>
+  <script src="js/fire-charts.js"></script>
   <script src="js/map.js"></script>
   <script src="js/dashboard.js"></script>
 </body>

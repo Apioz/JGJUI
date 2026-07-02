@@ -228,7 +228,7 @@ const MOCK = {
     w1: 484,
     w2: 338,
     warehouses: [
-      { shortName: '黄埔仓', color: '#1890ff' },
+      { shortName: '黄浦仓', color: '#1890ff' },
       { shortName: '闵行仓', color: '#69c0ff' },
     ],
   },

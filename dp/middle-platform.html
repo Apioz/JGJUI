@@ -123,73 +123,6 @@
             </div>
           </div>
 
-          <!-- 历年数据对比（紧凑） -->
-          <div class="mp-card mp-compare-card mp-compare-compact">
-            <div class="mp-card-header">
-              <span class="mp-card-title">历年数据对比</span>
-              <div class="mp-compare-year-box">
-                <div class="mp-compare-year-field">
-                  <label>基准年</label>
-                  <select class="mp-compare-year-input" v-model.number="compareYearStart" @change="onCompareYearStartChange">
-                    <option v-for="y in compareYearStartOptions" :key="'s-' + y" :value="y">{{ y }}</option>
-                  </select>
-                </div>
-                <div class="mp-compare-year-arrow" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12h14M13 6l6 6-6 6"/>
-                  </svg>
-                </div>
-                <div class="mp-compare-year-field">
-                  <label>对比年</label>
-                  <select class="mp-compare-year-input" v-model.number="compareYearEnd" @change="onCompareYearEndChange">
-                    <option v-for="y in compareYearEndOptions" :key="'e-' + y" :value="y">{{ y }}</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="mp-compare-list">
-              <div
-                v-for="(row, idx) in yearlyComparison.rows"
-                :key="row.name"
-                class="mp-compare-item"
-                :style="{ animationDelay: idx * 0.06 + 's' }"
-              >
-                <div class="mp-compare-item-left">
-                  <div class="mp-compare-metric-icon" :class="'icon-' + row.icon">
-                    <span v-html="getMetricIcon(row.icon)"></span>
-                  </div>
-                  <span class="mp-compare-metric-name">{{ row.name }}</span>
-                </div>
-
-                <div class="mp-compare-item-center">
-                  <div class="mp-compare-value-block is-base">
-                    <span class="mp-compare-value-label">{{ compareYearStart }}年</span>
-                    <span class="mp-compare-value-num">{{ getYearValue(row, compareYearStart) }}</span>
-                    <div class="mp-compare-value-bar">
-                      <div class="mp-compare-value-bar-fill base" :style="{ width: getCompareBarWidth(row, compareYearStart) + '%' }"></div>
-                    </div>
-                  </div>
-                  <div class="mp-compare-value-divider"></div>
-                  <div class="mp-compare-value-block is-target">
-                    <span class="mp-compare-value-label">{{ compareYearEnd }}年</span>
-                    <span class="mp-compare-value-num">{{ getYearValue(row, compareYearEnd) }}</span>
-                    <div class="mp-compare-value-bar">
-                      <div class="mp-compare-value-bar-fill target" :style="{ width: getCompareBarWidth(row, compareYearEnd) + '%' }"></div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mp-compare-item-right">
-                  <div class="mp-compare-trend" :class="trendClass(row)">
-                    <span class="mp-compare-trend-icon" v-html="getTrendIcon(row)"></span>
-                    <span class="mp-compare-trend-text">{{ formatTrend(row) }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <!-- 办公用房使用面积占比 + 单位列表 -->
           <div class="mp-card mp-area-section">
             <div class="mp-card-header">
@@ -235,6 +168,7 @@
                   <thead>
                     <tr>
                       <th>单位名称</th>
+                      <th>位置</th>
                       <th>面积 (m²)</th>
                       <th>占比 (%)</th>
                       <th>变更明细</th>
@@ -242,10 +176,11 @@
                   </thead>
                   <tbody>
                     <tr v-if="filteredUnitList.length === 0">
-                      <td colspan="4" class="mp-table-empty">该时段内暂无单位变更记录</td>
+                      <td colspan="5" class="mp-table-empty">该时段内暂无单位变更记录</td>
                     </tr>
                     <tr v-for="unit in filteredUnitList" :key="unit.name">
                       <td class="mp-unit-name">{{ unit.name }}</td>
+                      <td class="mp-unit-location">{{ unit.location || '—' }}</td>
                       <td>{{ unit.area }}</td>
                       <td>{{ unit.proportion }}</td>
                       <td class="mp-change-detail-cell">
@@ -430,11 +365,11 @@
             </div>
 
             <div class="gw-kpi-block">
-              <div class="gw-kpi-block-label">累计存放（本季度）</div>
+              <div class="gw-kpi-block-label">截至目前存放（本季度）</div>
               <div class="gw-kpi-row cols-3 compact">
                 <div class="gw-kpi-card mini highlight">
                   <div class="gw-kpi-top">
-                    <span class="gw-kpi-name">累计存放物资数量</span>
+                    <span class="gw-kpi-name">截至目前存放物资数量</span>
                     <span class="gw-kpi-freq quarterly">本季度</span>
                   </div>
                   <div class="gw-kpi-value">{{ gwData.cumulative.currentQuarter.total }}<span class="unit">件</span></div>

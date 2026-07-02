@@ -452,6 +452,13 @@ createApp({
     const platformMenuOpen = ref(false);
     const fireRankTab = ref('alarm');
     const fireMonth = ref('2025-01');
+    const fireSubSystem = ref('event');
+    const fireFloorMode = ref(false);
+    const fireSelectedFloor = ref('1F');
+    const fireBuildingPopupId = ref(null);
+    const fireSafetySystemIdx = ref(0);
+    const fireDeviceSearch = ref('');
+    const fireSelectedDevice = ref(null);
     const overviewViewMode = ref('map');
     const mapPopupProjectId = ref(null);
     const mapPopupPos = ref({ x: 0, y: 0 });
@@ -468,7 +475,7 @@ createApp({
 
     const charts = {};
     const MODULE_TABS = ['资产管理', '物业管理', '能源管理', '环境管理', '食堂管理', '消防管理'];
-    const MODULE_PARK_TABS = ['资产管理', '物业管理', '能源管理', '环境管理', '食堂管理'];
+    const MODULE_PARK_TABS = ['资产管理', '物业管理', '能源管理', '环境管理', '食堂管理', '消防管理'];
 
     const isOverviewTab = computed(() => activeTab.value === '综合态势');
     const isModuleSandboxTab = computed(() => MODULE_PARK_TABS.includes(activeTab.value));
@@ -478,9 +485,20 @@ createApp({
     const isModuleParkMode = computed(() => isModuleSandboxTab.value && overviewViewMode.value === 'park');
     const isSandboxMapMode = computed(() => isOverviewMapMode.value || isModuleMapMode.value);
     const isSandboxParkMode = computed(() => isOverviewParkMode.value || isModuleParkMode.value);
-    const isParkSceneVisible = computed(() => isSandboxParkMode.value);
-    const isParkInteractiveVisible = computed(() => isSandboxParkMode.value);
+    const isParkSceneVisible = computed(() => isSandboxParkMode.value && !isFireFloorMode.value);
+    const isParkInteractiveVisible = computed(() => isSandboxParkMode.value && !isFireFloorMode.value);
     const isAssetTab = computed(() => activeTab.value === '资产管理');
+    const isFireTab = computed(() => activeTab.value === '消防管理');
+    const isFireFloorMode = computed(() => isFireTab.value && fireFloorMode.value);
+    const isFireParkMode = computed(() => isFireTab.value && isModuleParkMode.value && !fireFloorMode.value);
+    const isFireMapMode = computed(() => isFireTab.value && isModuleMapMode.value);
+    const isFireMapWithPopup = computed(() => isFireMapMode.value && !!mapPopupProjectId.value);
+    const isFireEventMode = computed(() => isFireParkMode.value && fireSubSystem.value === 'event');
+    const isFireSystemMode = computed(() => isFireParkMode.value && fireSubSystem.value !== 'event');
+    const showFireSafetyPanel = computed(() => (
+      isFireTab.value && (isFireMapWithPopup.value || isFireParkMode.value || isFireFloorMode.value)
+    ));
+    const showFireDevicePanel = computed(() => isFireSystemMode.value);
 
     const isAssetParkScope = computed(() => {
       if (!isAssetTab.value) return false;
@@ -556,6 +574,7 @@ createApp({
 
     const activeParkBuildings = computed(() => {
       const tab = activeTab.value;
+      if (tab === '消防管理') return FIRE_DATA.parkBuildings;
       if (tab === '食堂管理') {
         return DASHBOARD_DATA.parkBuildings.filter((b) => b.id === 'c3');
       }
@@ -564,6 +583,12 @@ createApp({
 
     function getParkBuildingMarker(buildingId) {
       const tab = activeTab.value;
+      if (tab === '消防管理') {
+        const markers = FIRE_DATA.sceneMarkers[fireSubSystem.value];
+        if (!markers) return null;
+        const hit = markers.find((m) => m.buildingId === buildingId);
+        return hit ? { line1: hit.line1, line2: hit.line2 } : null;
+      }
       const markers = DASHBOARD_DATA.moduleParkMarkers[tab];
       if (!markers) return null;
       if (tab === '能源管理') {
@@ -602,6 +627,7 @@ createApp({
 
     const leftSidebarTitle = computed(() => {
       if (activeTab.value === '物业管理') return '办公用房列表';
+      if (activeTab.value === '消防管理' && showFireDevicePanel.value) return '设备列表';
       return '项目筛选';
     });
 
@@ -679,6 +705,12 @@ createApp({
     });
 
     const currentKpiData = computed(() => {
+      if (isFireTab.value) {
+        if (isFireSystemMode.value) {
+          return FIRE_DATA.systemKpis[fireSubSystem.value] || FIRE_DATA.eventKpi;
+        }
+        return FIRE_DATA.eventKpi;
+      }
       if (isModuleParkMode.value && moduleParkKpiData.value) {
         return moduleParkKpiData.value;
       }
@@ -687,6 +719,7 @@ createApp({
         资产管理: DASHBOARD_DATA.assetKpiData,
         物业管理: DASHBOARD_DATA.propertyKpiData,
         食堂管理: DASHBOARD_DATA.canteenKpiData,
+        消防管理: DASHBOARD_DATA.fireKpiData,
       };
       return map[activeTab.value] || DASHBOARD_DATA.kpiData;
     });
@@ -745,22 +778,16 @@ createApp({
       energyTypeTab.value === 'water' ? DASHBOARD_DATA.waterDailyStat : DASHBOARD_DATA.energyDailyStat
     ));
     const energyPeriodTitle = computed(() => (
-      energyTypeTab.value === 'water' ? '用水月环比分析' : '用电月/年同比分析'
+      energyTypeTab.value === 'water' ? '用水月环比分析' : '用电月环比分析'
     ));
     const energyPeriodStat = computed(() => (
       energyTypeTab.value === 'water' ? DASHBOARD_DATA.waterMonthlyStat : DASHBOARD_DATA.energyPeriodStat
     ));
-    const energyPeriodLabel = computed(() => {
-      if (energyTypeTab.value === 'water') return '当月截止当前用水';
-      return energyPeriodTab.value === 'year' ? '当年截止当前用电' : '当年截止当前用电';
-    });
-    const energyPeriodCompareLabel = computed(() => {
-      if (energyTypeTab.value === 'water') return '较上月';
-      return energyPeriodTab.value === 'year' ? '较上年' : '较上年';
-    });
-    const energyPeriodChartTitle = computed(() => (
-      energyTypeTab.value === 'water' ? '逐日用水趋势' : (energyPeriodTab.value === 'year' ? '逐年用电趋势' : '逐月用电趋势')
+    const energyPeriodLabel = computed(() => (
+      energyTypeTab.value === 'water' ? '当月截止当前用水' : '当月截止当前用电'
     ));
+    const energyPeriodCompareLabel = computed(() => '较上月');
+    const energyPeriodChartTitle = computed(() => '逐日' + energyTypeLabel.value + '趋势');
 
     const canteenStatus = DASHBOARD_DATA.canteenStatus;
     const canteenGuest = DASHBOARD_DATA.canteenGuest;
@@ -773,6 +800,99 @@ createApp({
       const key = fireRankTab.value === 'fault' ? 'fault' : fireRankTab.value === 'danger' ? 'danger' : 'alarm';
       return buildRankList(DASHBOARD_DATA.fireLocationRank[key], '次');
     });
+
+    const fireSubSystems = FIRE_DATA.subSystems;
+    const fireSafetyLevel = FIRE_DATA.safetyLevel;
+    const fireFloors = FIRE_DATA.floors;
+    const currentFireSafetySystem = computed(() => (
+      fireSafetyLevel.systems[fireSafetySystemIdx.value] || fireSafetyLevel.systems[0]
+    ));
+    const currentFireDeviceList = computed(() => {
+      const list = FIRE_DATA.deviceLists[fireSubSystem.value];
+      if (!list) return { online: 0, offline: 0, items: [] };
+      const q = fireDeviceSearch.value.trim().toLowerCase();
+      if (!q) return list;
+      return { ...list, items: list.items.filter((n) => n.toLowerCase().includes(q)) };
+    });
+    const currentFireSystemPanel = computed(() => (
+      FIRE_DATA.systemPanels[fireSubSystem.value] || null
+    ));
+    const currentFloorDevices = computed(() => (
+      FIRE_DATA.floorDevices[fireSelectedFloor.value] || []
+    ));
+    const fireBuildingPopup = computed(() => {
+      if (!fireBuildingPopupId.value) return null;
+      const building = FIRE_DATA.parkBuildings.find((b) => b.id === fireBuildingPopupId.value);
+      const detail = FIRE_DATA.buildingDetails[fireBuildingPopupId.value];
+      if (!building || !detail) return null;
+      return { ...building, ...detail };
+    });
+
+    function resolveFireBuildingId(id) {
+      return FIRE_DATA.buildingIdMap[id] || id;
+    }
+
+    function selectFireBuilding(building, e) {
+      if (isFireEventMode.value) {
+        fireBuildingPopupId.value = building.id;
+        return;
+      }
+      selectParkBuilding(building, e);
+    }
+
+    function closeFireBuildingPopup() {
+      fireBuildingPopupId.value = null;
+    }
+
+    function enterFireBuilding() {
+      if (!fireBuildingPopupId.value) return;
+      const childId = Object.entries(FIRE_DATA.buildingIdMap).find(([, v]) => v === fireBuildingPopupId.value)?.[0];
+      if (childId) selectedProject.value = childId;
+      fireFloorMode.value = true;
+      fireBuildingPopupId.value = null;
+      fireSelectedFloor.value = '1F';
+      resetParkView();
+      nextTick(() => initChartsForTab());
+    }
+
+    function exitFireFloor() {
+      fireFloorMode.value = false;
+      fireSelectedFloor.value = '1F';
+      nextTick(() => initChartsForTab());
+    }
+
+    function switchFireSubSystem(id) {
+      fireSubSystem.value = id;
+      fireBuildingPopupId.value = null;
+      fireSelectedDevice.value = null;
+      fireFloorMode.value = false;
+      nextTick(() => initChartsForTab());
+    }
+
+    function selectFireFloor(floor) {
+      fireSelectedFloor.value = floor;
+    }
+
+    function prevFireSafetySystem() {
+      fireSafetySystemIdx.value = (fireSafetySystemIdx.value - 1 + fireSafetyLevel.systems.length) % fireSafetyLevel.systems.length;
+    }
+
+    function nextFireSafetySystem() {
+      fireSafetySystemIdx.value = (fireSafetySystemIdx.value + 1) % fireSafetyLevel.systems.length;
+    }
+
+    function selectFireProjectChild(id) {
+      selectedProject.value = id;
+      const buildingId = resolveFireBuildingId(id);
+      if (isFireEventMode.value && buildingId.startsWith('fb')) {
+        fireBuildingPopupId.value = buildingId;
+      } else if (isFireFloorMode.value || (id.includes('-') && isFireParkMode.value)) {
+        fireFloorMode.value = true;
+        fireBuildingPopupId.value = null;
+        fireSelectedFloor.value = '1F';
+      }
+      resetParkView();
+    }
 
     function getChart(id) {
       const el = document.getElementById(id);
@@ -824,6 +944,9 @@ createApp({
         selectedProject.value = mapPopupProjectId.value;
       }
       resetParkView();
+      fireFloorMode.value = false;
+      fireSubSystem.value = 'event';
+      fireBuildingPopupId.value = null;
       overviewViewMode.value = 'park';
       mapPopupProjectId.value = null;
       syncMapVisibility();
@@ -833,6 +956,9 @@ createApp({
     function exitPark() {
       stopParkOrbit();
       resetParkView();
+      fireFloorMode.value = false;
+      fireBuildingPopupId.value = null;
+      fireSubSystem.value = 'event';
       overviewViewMode.value = 'map';
       syncMapVisibility();
       nextTick(() => {
@@ -894,9 +1020,8 @@ createApp({
 
     function initEnergyCharts() {
       const type = energyTypeTab.value;
-      const period = energyTypeTab.value === 'water' ? 'month' : energyPeriodTab.value;
       getChart('energyHourlyChart')?.setOption(buildEnergyHourlyOption(type));
-      getChart('energyPeriodChart')?.setOption(buildEnergyPeriodOption(type, period));
+      getChart('energyPeriodChart')?.setOption(buildEnergyPeriodOption(type, 'month'));
       if (isModuleParkMode.value) {
         const donutData = DASHBOARD_DATA.energyTypeDonut[type];
         getChart('energyTypeDonutChart')?.setOption(buildSimpleDonutOption(donutData.items));
@@ -920,10 +1045,32 @@ createApp({
     }
 
     function initFireCharts() {
-      getChart('fireAlarmTrendChart')?.setOption(buildFireAlarmTrendOption());
-      DASHBOARD_DATA.fireCompletionGauges.forEach((g) => {
-        getChart(`fireGauge${g.id}`)?.setOption(buildFireGaugeOption(g));
-      });
+      if (showFireSafetyPanel.value) {
+        getChart('fireRadarChart')?.setOption(buildFireRadarOption(fireSafetyLevel.radar));
+      }
+      if (isFireMapMode.value || isFireEventMode.value || isFireFloorMode.value) {
+        getChart('fireAlarmTrendChart')?.setOption(buildFireAlarmTrendOption());
+        DASHBOARD_DATA.fireCompletionGauges.forEach((g) => {
+          getChart(`fireGauge${g.id}`)?.setOption(buildFireGaugeOption(g));
+        });
+      }
+      if (isFireSystemMode.value) {
+        const panel = currentFireSystemPanel.value;
+        if (!panel) return;
+        if (fireSubSystem.value === 'alarm') {
+          getChart('fireDeviceStatusPie')?.setOption(
+            buildFireDeviceStatusPieOption(panel.deviceNormal, panel.deviceAbnormal), true
+          );
+        } else {
+          getChart('fireAbnormalDonut')?.setOption(
+            buildFireRateDonutOption(panel.abnormalRate, '异常率', '正常', panel.abnormalNormal, '异常', panel.abnormalCount, '#00e5ff'), true
+          );
+          getChart('fireOfflineDonut')?.setOption(
+            buildFireRateDonutOption(panel.offlineRate, '离线率', '在线', panel.offlineOnline, '离线', panel.offlineCount, '#ffd60a'), true
+          );
+          getChart('fireMonthlyTrend')?.setOption(buildFireMonthlyTrendOption(FIRE_DATA.monthlyAlarmFault), true);
+        }
+      }
     }
 
     function initChartsForTab() {
@@ -954,20 +1101,23 @@ createApp({
 
     function switchEnergyType(type) {
       energyTypeTab.value = type;
-      if (type === 'water') energyPeriodTab.value = 'month';
       nextTick(() => initEnergyCharts());
     }
 
     function switchEnergyPeriod(period) {
       energyPeriodTab.value = period;
       charts.energyPeriodChart?.setOption(
-        buildEnergyPeriodOption('electricity', period), true
+        buildEnergyPeriodOption(energyTypeTab.value, 'month'), true
       );
     }
 
     function toggleProject(project) {
       project.expanded = !project.expanded;
       selectedProject.value = project.id;
+      if (isFireTab.value && isModuleParkMode.value && project.id.includes('-')) {
+        selectFireProjectChild(project.id);
+        return;
+      }
       if (isSandboxMapMode.value) {
         MapManager.setActive(project.id);
         openMapPopup(project.id);
@@ -978,6 +1128,10 @@ createApp({
 
     function selectProject(id) {
       selectedProject.value = id;
+      if (isFireTab.value && (isModuleParkMode.value || isFireFloorMode.value) && id.includes('-')) {
+        selectFireProjectChild(id);
+        return;
+      }
       const projectId = resolveProjectRootId(id);
       if (isSandboxMapMode.value) {
         MapManager.setActive(projectId);
@@ -1022,8 +1176,19 @@ createApp({
     }
 
     function selectSecuritySub(sub) {
+      if (sub !== activeTab.value) {
+        fireFloorMode.value = false;
+        fireSubSystem.value = 'event';
+        fireBuildingPopupId.value = null;
+        overviewViewMode.value = 'map';
+        mapPopupProjectId.value = null;
+      }
       activeTab.value = sub;
       securityMenuOpen.value = false;
+      nextTick(() => {
+        syncMapVisibility();
+        initChartsForTab();
+      });
     }
 
     function switchTab(tab) {
@@ -1031,6 +1196,9 @@ createApp({
       platformMenuOpen.value = false;
       stopParkOrbit();
       resetParkView();
+      fireFloorMode.value = false;
+      fireSubSystem.value = 'event';
+      fireBuildingPopupId.value = null;
       overviewViewMode.value = 'map';
       mapPopupProjectId.value = null;
       activeTab.value = tab;
@@ -1069,6 +1237,12 @@ createApp({
     watch([isAssetParkScope, mapPopupProjectId, activeModuleProjectId], () => {
       if (activeTab.value === '资产管理') {
         nextTick(() => updateAssetSecondPanelChart());
+      }
+    });
+
+    watch([fireSubSystem, fireFloorMode, fireSelectedFloor, mapPopupProjectId], () => {
+      if (activeTab.value === '消防管理') {
+        nextTick(() => initChartsForTab());
       }
     });
 
@@ -1117,6 +1291,15 @@ createApp({
       overviewEnergyTab, overviewChartDate,
       securityKpiData, fireKpiData, publicVehicle,
       fireRankTab, fireMonth, fireCompletionGauges, fireRankList,
+      isFireTab, isFireFloorMode, isFireParkMode, isFireMapMode, isFireMapWithPopup,
+      isFireEventMode, isFireSystemMode, showFireSafetyPanel, showFireDevicePanel,
+      fireSubSystem, fireSubSystems, switchFireSubSystem,
+      fireSafetyLevel, fireSafetySystemIdx, currentFireSafetySystem,
+      prevFireSafetySystem, nextFireSafetySystem,
+      fireFloors, fireSelectedFloor, selectFireFloor, currentFloorDevices,
+      fireDeviceSearch, fireSelectedDevice, currentFireDeviceList, currentFireSystemPanel,
+      fireBuildingPopup, closeFireBuildingPopup, enterFireBuilding, exitFireFloor,
+      selectFireBuilding, selectFireProjectChild,
       toggleProject, selectProject, toggleFullscreen, switchTab,
       toggleSecurityMenu, selectSecuritySub,
       closeMapPopup, enterPark, exitPark, switchOverviewEnergy, selectMapProject,

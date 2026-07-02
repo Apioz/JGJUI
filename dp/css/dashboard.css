@@ -1055,6 +1055,321 @@ html, body {
 
 .asset-donut-chart { min-height: 120px; }
 
+/* 消防管理 */
+.fire-safety-panel { flex: 1.2; }
+
+.fire-grade-box {
+  margin: 8px 14px;
+  padding: 16px;
+  text-align: center;
+  background: rgba(0, 191, 255, 0.08);
+  border: 1px solid rgba(0, 191, 255, 0.25);
+  border-radius: 6px;
+}
+
+.fire-grade-char {
+  display: block;
+  font-size: 42px;
+  font-weight: 700;
+  color: #00e5ff;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.5);
+  line-height: 1;
+}
+
+.fire-grade-label {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.fire-radar-chart { min-height: 140px; }
+
+.fire-system-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px 4px;
+}
+
+.fire-sys-nav {
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(0, 191, 255, 0.3);
+  background: rgba(0, 191, 255, 0.1);
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.fire-sys-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(10, 30, 60, 0.5);
+  border: 1px solid rgba(0, 191, 255, 0.15);
+  border-radius: 6px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.fire-sys-card strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #fff;
+}
+
+.fire-sys-icon { font-size: 18px; }
+
+.fire-sys-page {
+  text-align: center;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  padding-bottom: 8px;
+}
+
+.center-area-fire { position: relative; }
+.center-area-fire .map-spacer { flex: 1.2; }
+
+.fire-sub-nav {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  pointer-events: auto;
+  overflow-x: auto;
+}
+
+.fire-sub-nav-btn {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid rgba(0, 191, 255, 0.2);
+  background: rgba(10, 30, 60, 0.45);
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 10px;
+  transition: all 0.2s;
+}
+
+.fire-sub-nav-btn.active {
+  background: rgba(0, 191, 255, 0.25);
+  border-color: rgba(0, 229, 255, 0.6);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+}
+
+.fire-sub-icon { font-size: 16px; }
+
+.fire-building-popup {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  width: 280px;
+  padding: 14px;
+  pointer-events: auto;
+  z-index: 30;
+}
+
+.fire-building-popup-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.fire-building-popup-head strong { color: #00e5ff; }
+
+.fire-building-popup-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 11px;
+}
+
+.fire-building-popup-stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  background: rgba(0, 191, 255, 0.06);
+  border-radius: 4px;
+}
+
+.fire-building-popup-stats span { color: rgba(255, 255, 255, 0.65); }
+.fire-building-popup-stats strong { color: #fff; font-size: 14px; }
+
+.fire-scene-icons { position: absolute; inset: 0; pointer-events: none; }
+.fire-scene-icon {
+  position: absolute;
+  font-size: 16px;
+  filter: drop-shadow(0 0 4px rgba(255, 71, 87, 0.8));
+}
+
+.fire-scene-alert-badge,
+.fire-floor-alert-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ff4757;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(255, 71, 87, 0.6);
+  pointer-events: none;
+}
+
+.fire-floor-spacer { position: relative; }
+
+.fire-floor-back {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 5;
+}
+
+.fire-floor-layout {
+  display: flex;
+  height: 100%;
+  min-height: 320px;
+  position: relative;
+  overflow: hidden;
+}
+
+.fire-floor-sidebar {
+  width: 56px;
+  padding: 12px 8px;
+  border-right: 1px solid rgba(0, 191, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fire-floor-check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+}
+
+.fire-floor-map {
+  flex: 1;
+  position: relative;
+  margin: 12px;
+  background: rgba(10, 30, 60, 0.35);
+  border: 1px solid rgba(0, 191, 255, 0.15);
+  border-radius: 4px;
+}
+
+.fire-floor-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 191, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 191, 255, 0.08) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.fire-floor-device {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+.fire-device-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.fire-system-grade-panel { text-align: center; }
+
+.fire-system-grade-badge {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.fire-system-grade-char {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(123, 104, 238, 0.3);
+  border: 2px solid #7b68ee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.fire-connection-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px 14px;
+}
+
+.fire-conn-node {
+  padding: 12px 16px;
+  background: rgba(0, 191, 255, 0.1);
+  border: 1px solid rgba(0, 191, 255, 0.25);
+  border-radius: 6px;
+  font-size: 11px;
+  color: #fff;
+}
+
+.fire-conn-link { font-size: 20px; }
+
+.fire-device-total {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.fire-sys-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.env-device-item.selected {
+  background: rgba(0, 191, 255, 0.2);
+  border-color: rgba(0, 229, 255, 0.4);
+}
+
 .asset-area-rank { gap: 10px; }
 
 .rank-badge.first .rank-crown {

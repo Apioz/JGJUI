@@ -720,6 +720,11 @@ html, body {
   white-space: nowrap;
 }
 
+.mp-unit-table .mp-unit-location {
+  color: var(--mp-text-secondary, #595959);
+  white-space: nowrap;
+}
+
 .mp-change-detail-cell {
   text-align: center;
   width: 88px;

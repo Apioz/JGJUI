@@ -94,8 +94,6 @@ createApp({
     const selectedLocation = ref(MIDDLE_PLATFORM_DATA.locations[0]);
     const locationOpen = ref(false);
     const platformOpen = ref(false);
-    const compareYearStart = ref(MIDDLE_PLATFORM_DATA.yearlyComparison.years[0]);
-    const compareYearEnd = ref(MIDDLE_PLATFORM_DATA.yearlyComparison.years[1]);
     const areaChartLevel = ref('summary');
     const unitChangeStart = ref('');
     const unitChangeEnd = ref('');
@@ -117,22 +115,9 @@ createApp({
     let clockTimer = null;
 
     const summaryCards = MIDDLE_PLATFORM_DATA.summaryCards;
-    const yearlyComparison = MIDDLE_PLATFORM_DATA.yearlyComparison;
     const officeAreaChart = MIDDLE_PLATFORM_DATA.officeAreaChart;
     const unitList = MIDDLE_PLATFORM_DATA.unitList;
     const locations = MIDDLE_PLATFORM_DATA.locations;
-
-    const availableYears = yearlyComparison.availableYears;
-
-    /** 可作为起始年的年份（存在下一年） */
-    const compareYearStartOptions = computed(() =>
-      availableYears.filter((y) => availableYears.includes(y + 1))
-    );
-
-    /** 可作为结束年的年份（存在上一年） */
-    const compareYearEndOptions = computed(() =>
-      availableYears.filter((y) => availableYears.includes(y - 1))
-    );
 
     const pageTitle = computed(() => {
       if (currentView.value === 'office') return '办公用房';
@@ -521,42 +506,8 @@ createApp({
       platformOpen.value = false;
     }
 
-    function onCompareYearStartChange() {
-      const nextYear = compareYearStart.value + 1;
-      if (availableYears.includes(nextYear)) {
-        compareYearEnd.value = nextYear;
-      }
-    }
-
-    function onCompareYearEndChange() {
-      const prevYear = compareYearEnd.value - 1;
-      if (availableYears.includes(prevYear)) {
-        compareYearStart.value = prevYear;
-      }
-    }
-
-    function getYearValue(row, year) {
-      if (year === 2025) return row.y2025;
-      if (year === 2026) return row.y2026;
-      return row.y2025;
-    }
-
-    function getCompareBarWidth(row, year) {
-      const base = getYearValue(row, compareYearStart.value);
-      const target = getYearValue(row, compareYearEnd.value);
-      const val = getYearValue(row, year);
-      const max = Math.max(base, target, 1);
-      return Math.round((val / max) * 100);
-    }
-
     function getMetricIcon(icon) {
       return MP_ICONS[icon] || MP_ICONS.inventory;
-    }
-
-    function getTrendIcon(row) {
-      if (row.trend === 'up') return MP_ICONS.trendUp;
-      if (row.trend === 'down') return MP_ICONS.trendDown;
-      return MP_ICONS.trendFlat;
     }
 
     function renderAreaChart() {
@@ -628,18 +579,6 @@ createApp({
       });
     }
 
-    function formatTrend(row) {
-      if (row.trend === 'none') return '-';
-      const arrow = row.trend === 'up' ? '↑' : '↓';
-      return `${arrow} ${row.change}%`;
-    }
-
-    function trendClass(row) {
-      if (row.trend === 'up') return 'trend-up';
-      if (row.trend === 'down') return 'trend-down';
-      return 'trend-none';
-    }
-
     onMounted(() => {
       updateClock();
       clockTimer = setInterval(updateClock, 1000);
@@ -661,9 +600,8 @@ createApp({
       menuItems, sidebarCollapsed, activeMenuId, activeSubId,
       currentView, pageTitle, showOffice, showWarehouse,
       selectedLocation, locationOpen, platformOpen,
-      compareYearStart, compareYearEnd, compareYearStartOptions, compareYearEndOptions,
       areaChartLevel, unitChangeStart, unitChangeEnd, unitChangeModal, filteredUnitList, currentTime,
-      summaryCards, yearlyComparison, unitList, locations,
+      summaryCards, unitList, locations,
       gwData, gwWarehouses, gwCumulativeMode,
       gwCumulativeHistoryYear, gwCumulativeHistoryQuarter,
       gwCumulativeHistoryYears, gwCumulativeHistoryQuarters,
@@ -676,11 +614,11 @@ createApp({
       toggleSidebar, toggleMenu, selectSubMenu,
       isMenuActive, isSubActive,
       toggleLocation, selectLocation, togglePlatform, closeDropdowns,
-      toggleFullscreen, formatTrend, trendClass, navigateToPlatform,
-      onCompareYearStartChange, onCompareYearEndChange, getYearValue, backAreaChart,
+      toggleFullscreen, navigateToPlatform,
+      backAreaChart,
       resetUnitChangeFilter, formatChangeDate, formatChangeDelta, changeDeltaClass,
       openUnitChangeModal, closeUnitChangeModal,
-      getCompareBarWidth, getMetricIcon, getTrendIcon,
+      getMetricIcon,
       switchGwCumulativeMode,
       switchGwInboundTrendMode, switchGwOutboundTrendMode,
       switchGwInboundMetric, switchGwOutboundMetric,

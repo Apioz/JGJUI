@@ -90,8 +90,9 @@ function buildEnergyPeriodOption(type, period) {
   if (type === 'water') {
     d = DASHBOARD_DATA.waterMonthly;
   } else {
-    d = period === 'month' ? DASHBOARD_DATA.energyMonthly : DASHBOARD_DATA.energyYearlyChart;
+    d = period === 'month' ? DASHBOARD_DATA.energyDailyMonthly : DASHBOARD_DATA.energyYearlyChart;
   }
+  const isDailyMonth = period === 'month';
   return {
     grid: { top: 28, right: 12, bottom: 22, left: 36 },
     legend: {
@@ -104,10 +105,10 @@ function buildEnergyPeriodOption(type, period) {
       type: 'category', data: d.labels,
       axisLine: { lineStyle: { color: CHART_THEME.axisLine } },
       axisTick: { show: false },
-      axisLabel: { color: CHART_THEME.textColor, fontSize: 8, interval: period === 'month' ? 4 : 0 },
+      axisLabel: { color: CHART_THEME.textColor, fontSize: 8, interval: isDailyMonth ? 1 : 0 },
     },
     yAxis: {
-      type: 'value', max: period === 'month' ? 250 : 3000,
+      type: 'value', max: isDailyMonth ? 250 : 3000,
       axisLine: { show: false }, axisTick: { show: false },
       axisLabel: { color: CHART_THEME.textColor, fontSize: 9 },
       splitLine: { lineStyle: { color: CHART_THEME.splitLine } },
@@ -335,7 +336,7 @@ function buildFireAlarmTrendOption() {
       top: 4, right: 20,
       textStyle: { color: CHART_THEME.textColor, fontSize: 11 },
       itemWidth: 12, itemHeight: 8,
-      data: ['报警总数', '报警已完成数'],
+      data: ['报警数', '报警已完成数'],
     },
     xAxis: {
       type: 'category', data: d.months,
@@ -350,7 +351,7 @@ function buildFireAlarmTrendOption() {
       splitLine: { lineStyle: { color: CHART_THEME.splitLine } },
     },
     series: [
-      { name: '报警总数', type: 'line', smooth: true, symbol: 'circle', symbolSize: 5, data: d.total, lineStyle: { color: CHART_THEME.cyan, width: 2 }, itemStyle: { color: CHART_THEME.cyan } },
+      { name: '报警数', type: 'line', smooth: true, symbol: 'circle', symbolSize: 5, data: d.total, lineStyle: { color: CHART_THEME.cyan, width: 2 }, itemStyle: { color: CHART_THEME.cyan } },
       { name: '报警已完成数', type: 'line', smooth: true, symbol: 'circle', symbolSize: 5, data: d.completed, lineStyle: { color: CHART_THEME.orange, width: 2 }, itemStyle: { color: CHART_THEME.orange } },
     ],
     tooltip: { trigger: 'axis', backgroundColor: 'rgba(10,30,60,0.88)', borderColor: 'rgba(0,191,255,0.3)', textStyle: { color: '#fff', fontSize: 12 } },
