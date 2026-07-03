@@ -523,7 +523,7 @@ const DASHBOARD_DATA = {
     ],
   },
 
-  /** 园区办公用房总使用面积占比（沙盘选中/进入园区时展示） */
+  /** 园区办公用房总使用面积占比（进入项目园区时第三面板展示） */
   parkOfficeAreaChart: {
     default: {
       totalArea: 1213,

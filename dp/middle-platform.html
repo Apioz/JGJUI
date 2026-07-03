@@ -36,6 +36,7 @@
             <a href="index.html" class="mp-platform-item" @click="navigateToPlatform('index.html')">大屏</a>
             <button class="mp-platform-item active">中台</button>
             <a href="../prototype/index.html" class="mp-platform-item" @click="navigateToPlatform('../prototype/index.html')">小程序</a>
+            <a href="foundation-platform.html" class="mp-platform-item" @click="navigateToPlatform('foundation-platform.html')">底座</a>
             <button class="mp-platform-item" disabled style="opacity:0.5;cursor:not-allowed">资产</button>
             <button class="mp-platform-item" disabled style="opacity:0.5;cursor:not-allowed">
               其他业务系统 <span class="sub-arrow">›</span>
@@ -634,6 +635,7 @@
                         <th>合计</th>
                         <th>{{ gwWarehouses[0].shortName }}</th>
                         <th>{{ gwWarehouses[1].shortName }}</th>
+                        <th title="出库次数 ÷ 年初年末在库数平均值">周转率</th>
                         <th>环比</th>
                       </tr>
                     </thead>
@@ -643,6 +645,7 @@
                         <td><strong>{{ row.total }}</strong></td>
                         <td>{{ row.w1 }}</td>
                         <td>{{ row.w2 }}</td>
+                        <td>{{ formatGwTurnoverRate(row.turnoverRate) }}</td>
                         <td :class="row.change >= 0 ? 'gw-change-up' : 'gw-change-down'">{{ row.change >= 0 ? '+' : '' }}{{ row.change }}%</td>
                       </tr>
                     </tbody>

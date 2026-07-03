@@ -90,6 +90,7 @@
             <button class="platform-dropdown-item active">大屏</button>
             <a href="middle-platform.html" class="platform-dropdown-item" @click="navigateToPlatform('middle-platform.html')">中台</a>
             <a href="../prototype/index.html" class="platform-dropdown-item" @click="navigateToPlatform('../prototype/index.html')">小程序</a>
+            <a href="foundation-platform.html" class="platform-dropdown-item" @click="navigateToPlatform('foundation-platform.html')">底座</a>
             <button class="platform-dropdown-item disabled" disabled>资产</button>
             <button class="platform-dropdown-item disabled" disabled>其他业务系统 <span class="platform-sub-arrow">›</span></button>
           </div>
@@ -743,15 +744,15 @@
 
           <div class="panel glass-panel transparent-panel">
             <div class="panel-header">
-              <span class="panel-title">累计存放历史变化趋势</span>
-              <div class="panel-controls">
+              <span class="panel-title">{{ assetThirdPanelTitle }}</span>
+              <div class="panel-controls" v-if="!isAssetParkScope">
                 <div class="toggle-group">
                   <button :class="{ active: gwCumulativeMode === 'quarter' }" @click="switchGwCumulativeMode('quarter')">按季度</button>
                   <button :class="{ active: gwCumulativeMode === 'year' }" @click="switchGwCumulativeMode('year')">按年度</button>
                 </div>
               </div>
             </div>
-            <div id="gwCumulativeTrendChart" class="chart-box"></div>
+            <div id="gwCumulativeTrendChart" class="chart-box" :class="{ 'asset-donut-chart': isAssetParkScope }"></div>
           </div>
         </aside>
       </template>

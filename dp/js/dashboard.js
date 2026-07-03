@@ -540,14 +540,16 @@ createApp({
       return false;
     });
 
-    const assetSecondPanelTitle = computed(() => (
-      isAssetParkScope.value ? '办公用房总使用面积占比' : '本季在仓物资分仓占比'
+    const assetSecondPanelTitle = '本季在仓物资分仓占比';
+
+    const assetThirdPanelTitle = computed(() => (
+      isAssetParkScope.value ? '办公用房总使用面积占比' : '累计存放历史变化趋势'
     ));
 
     function getActiveOfficeAreaChart() {
       const pid = isModuleParkMode.value
         ? activeModuleProjectId.value
-        : mapPopupProjectId.value;
+        : resolveProjectRootId(mapPopupProjectId.value);
       const charts = DASHBOARD_DATA.parkOfficeAreaChart;
       return charts.byProject?.[pid] || charts.default;
     }
@@ -1063,12 +1065,19 @@ createApp({
     }
 
     function updateAssetSecondPanelChart() {
-      const chart = getChart('gwStockPieChart');
+      getChart('gwStockPieChart')?.setOption(
+        buildGwStockPieOption(gwData.currentStock, gwWarehouses),
+        true
+      );
+    }
+
+    function updateAssetThirdPanelChart() {
+      const chart = getChart('gwCumulativeTrendChart');
       if (!chart) return;
       if (isAssetParkScope.value) {
         chart.setOption(buildOfficeAreaPieOption(getActiveOfficeAreaChart()), true);
       } else {
-        chart.setOption(buildGwStockPieOption(gwData.currentStock, gwWarehouses), true);
+        updateGwCumulativeChart();
       }
     }
 
@@ -1077,7 +1086,7 @@ createApp({
         assetTypeTab.value === 'space' ? DASHBOARD_DATA.assetTypeSpace : DASHBOARD_DATA.assetTypeEquipment
       ));
       updateAssetSecondPanelChart();
-      updateGwCumulativeChart();
+      updateAssetThirdPanelChart();
       getChart('assetTrendChart')?.setOption(buildAssetTrendOption());
     }
 
@@ -1104,6 +1113,7 @@ createApp({
     }
 
     function switchGwCumulativeMode(mode) {
+      if (isAssetParkScope.value) return;
       gwCumulativeMode.value = mode;
       updateGwCumulativeChart();
     }
@@ -1329,9 +1339,9 @@ createApp({
       initChartsForTab();
     });
 
-    watch([isAssetParkScope, mapPopupProjectId, activeModuleProjectId], () => {
+    watch([isAssetParkScope, activeModuleProjectId, mapPopupProjectId], () => {
       if (activeTab.value === '资产管理') {
-        nextTick(() => updateAssetSecondPanelChart());
+        nextTick(() => updateAssetThirdPanelChart());
       }
     });
 
@@ -1365,7 +1375,7 @@ createApp({
       filteredProjects, rankTab1, rankTab2, rankDate1, rankDate2, workOrderMonth,
       rankList1, rankList2, assetTypeTab, assetTypeSummary,
       gwCumulativeMode, switchGwCumulativeMode,
-      isAssetParkScope, assetSecondPanelTitle,
+      isAssetParkScope, assetSecondPanelTitle, assetThirdPanelTitle,
       propertyOmTab, propertyPeriod, propertyDate, propertyOmRankList,
       energyTypeTab, energyPeriodTab, energyCurrentKpi, energyTypeLabel,
       energyDailyTitle, energyDailyStat, energyPeriodTitle, energyPeriodStat,

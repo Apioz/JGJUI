@@ -55,7 +55,7 @@
               </div>
               <div class="mp-env-chart-toolbar">
                 <div class="mp-toggle-group sm">
-                  <button v-for="b in pageData.buildings" :key="b" :class="{ active: envBuilding === b }" @click="envBuilding = b">{{ b }}</button>
+                  <button v-for="b in pageData.buildings" :key="b" type="button" :class="{ active: envBuilding === b }" @click="setEnvBuilding(b)">{{ b }}</button>
                 </div>
                 <input type="text" class="mp-input" value="2023-03-31 ~ 2023-04-01" readonly />
               </div>
@@ -136,7 +136,7 @@
             <div class="mp-risk-dash-header">
               <div><h3 class="mp-risk-title">风险看板</h3><p class="mp-risk-sub">实时监测风险态势与热点 · 最近刷新 {{ pageData.refreshTime }}</p></div>
               <div class="mp-risk-filters">
-                <div class="mp-toggle-group sm"><button :class="{ active: riskPeriod === 'today' }" @click="riskPeriod = 'today'">今日</button><button :class="{ active: riskPeriod === 'week' }" @click="riskPeriod = 'week'">本周</button><button :class="{ active: riskPeriod === 'month' }" @click="riskPeriod = 'month'">本月</button><button :class="{ active: riskPeriod === 'custom' }" @click="riskPeriod = 'custom'">自定义</button></div>
+                <div class="mp-toggle-group sm"><button type="button" :class="{ active: riskPeriod === 'today' }" @click="setRiskPeriod('today')">今日</button><button type="button" :class="{ active: riskPeriod === 'week' }" @click="setRiskPeriod('week')">本周</button><button type="button" :class="{ active: riskPeriod === 'month' }" @click="setRiskPeriod('month')">本月</button><button type="button" :class="{ active: riskPeriod === 'custom' }" @click="setRiskPeriod('custom')">自定义</button></div>
                 <select class="mp-input sm"><option>全部板块</option></select>
                 <select class="mp-input sm"><option>全部等级</option></select>
               </div>

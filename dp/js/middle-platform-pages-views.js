@@ -11,7 +11,7 @@
           <div class="mp-module-page">
             <div class="mp-fire-stats-row">
               <div class="mp-card"><div class="mp-card-header"><span class="mp-card-title">{{ pageData.statsLabel }}情况</span></div>
-                <div class="mp-fire-circles"><div class="mp-fire-circle pending"><strong>{{ pageData.pending }}</strong><span>待处理</span></div><div class="mp-fire-circle done"><strong>{{ pageData.processed }}</strong><span>已处理</span></div></div>
+                <div class="mp-fire-circles"><div class="mp-fire-circle pending clickable" @click="drillDownHazardList('situation', 'pending')"><strong>{{ pageData.pending }}</strong><span>待处理</span></div><div class="mp-fire-circle done clickable" @click="drillDownHazardList('situation', 'processed')"><strong>{{ pageData.processed }}</strong><span>已处理</span></div></div>
               </div>
               <div class="mp-card"><div class="mp-card-header"><span class="mp-card-title">{{ pageData.statsLabel }}等级占比</span></div><div id="hazardLevelChart" class="mp-dash-chart-md"></div></div>
               <div class="mp-card"><div class="mp-card-header"><span class="mp-card-title">处理类型统计</span></div><div id="hazardProcessChart" class="mp-dash-chart-md"></div></div>
@@ -45,7 +45,8 @@
                 <button class="mp-btn primary" @click="applyHazardListFilter">查询</button><button class="mp-btn" @click="resetHazardListFilter">清空</button>
               </div>
               <div class="mp-table-wrap mp-table-scroll"><table class="mp-table mp-table-compact"><thead><tr><th v-for="h in pageData.table.columns" :key="h">{{ h }}</th></tr></thead>
-              <tbody><tr v-for="(row,i) in pageData.table.rows" :key="i"><td>{{ row.index }}</td><td>{{ row.deviceName }}</td><td>{{ row.deviceType }}</td><td>{{ row.system }}</td><td>{{ row.location }}</td><td>{{ row.level }}</td><td>{{ row.description }}</td><td>{{ row.type }}</td><td>{{ row.status }}</td><td>{{ row.note }}</td><td>{{ row.startTime }}</td><td>{{ row.endTime }}</td></tr></tbody></table></div>
+              <tbody><tr v-for="(row,i) in filteredHazardListRows" :key="i"><td>{{ row.index }}</td><td>{{ row.deviceName }}</td><td>{{ row.deviceType }}</td><td>{{ row.system }}</td><td>{{ row.location }}</td><td>{{ row.level }}</td><td>{{ row.description }}</td><td>{{ row.type }}</td><td>{{ row.status }}</td><td>{{ row.note }}</td><td>{{ row.startTime }}</td><td>{{ row.endTime }}</td></tr></tbody></table></div>
+              <div class="mp-pagination"><span>共 {{ filteredHazardListRows.length }} 条</span></div>
             </div>
           </div>
         </template>
@@ -106,23 +107,23 @@
             <div class="mp-dash-row mp-dash-row-2">
               <div class="mp-card">
                 <div class="mp-card-header"><span class="mp-card-title"><span class="mp-title-icon" v-html="getMetricIcon('personnel')"></span>人员总数统计</span>
-                  <div class="mp-toggle-group sm"><button :class="{ active: personnelPieTab === 'dept' }" @click="setPersonnelPieTab('dept')">单位人员</button><button :class="{ active: personnelPieTab === 'nature' }" @click="setPersonnelPieTab('nature')">人员性质</button><button :class="{ active: personnelPieTab === 'cert' }" @click="setPersonnelPieTab('cert')">证件类型</button></div>
-                  <select class="mp-input sm" v-model="personnelPieQuarter"><option v-for="q in personnelQuarterOptions" :key="q.value" :value="q.value">{{ q.label }}</option></select>
+                  <div class="mp-toggle-group sm"><button type="button" :class="{ active: personnelPieTab === 'dept' }" @click="setPersonnelPieTab('dept')">单位人员</button><button type="button" :class="{ active: personnelPieTab === 'nature' }" @click="setPersonnelPieTab('nature')">人员性质</button><button type="button" :class="{ active: personnelPieTab === 'cert' }" @click="setPersonnelPieTab('cert')">证件类型</button></div>
+                  <select class="mp-input sm" v-model="personnelPieQuarter" @change="setPersonnelPieQuarter(personnelPieQuarter)"><option v-for="q in personnelQuarterOptions" :key="q.value" :value="q.value">{{ q.label }}</option></select>
                 </div>
                 <div id="personnelDeptPie" class="mp-dash-chart-md"></div>
               </div>
               <div class="mp-card">
                 <div class="mp-card-header"><span class="mp-card-title"><span class="mp-title-icon" v-html="getMetricIcon('personnel')"></span>人员变化趋势统计</span>
-                  <div class="mp-toggle-group sm"><button :class="{ active: personnelTrendTab === 'dept' }" @click="setPersonnelTrendTab('dept')">单位人员</button><button :class="{ active: personnelTrendTab === 'nature' }" @click="setPersonnelTrendTab('nature')">人员性质</button><button :class="{ active: personnelTrendTab === 'cert' }" @click="setPersonnelTrendTab('cert')">证件类型</button></div>
-                  <select class="mp-input sm" v-model="personnelTrendQuarter"><option v-for="q in personnelQuarterOptions" :key="q.value" :value="q.value">{{ q.label }}</option></select>
+                  <div class="mp-toggle-group sm"><button type="button" :class="{ active: personnelTrendTab === 'dept' }" @click="setPersonnelTrendTab('dept')">单位人员</button><button type="button" :class="{ active: personnelTrendTab === 'nature' }" @click="setPersonnelTrendTab('nature')">人员性质</button><button type="button" :class="{ active: personnelTrendTab === 'cert' }" @click="setPersonnelTrendTab('cert')">证件类型</button></div>
+                  <select class="mp-input sm" v-model="personnelTrendQuarter" @change="setPersonnelTrendQuarter(personnelTrendQuarter)"><option v-for="q in personnelQuarterOptions" :key="q.value" :value="q.value">{{ q.label }}</option></select>
                 </div>
                 <div id="personnelTrendChart" class="mp-dash-chart-lg"></div>
               </div>
             </div>
             <div class="mp-card">
               <div class="mp-card-header"><span class="mp-card-title"><span class="mp-title-icon" v-html="getMetricIcon('personnel')"></span>办证列表统计</span>
-                <span class="mp-inline-stat"><span class="mp-title-icon sm" v-html="getMetricIcon('personnel')"></span>办证人员总数 <strong>{{ pageData.certTotal }}</strong></span>
-                <div class="mp-toggle-group sm"><button :class="{ active: certPeriod === 'month' }" @click="setCertPeriod('month')">本月</button><button :class="{ active: certPeriod === 'quarter' }" @click="setCertPeriod('quarter')">本季</button><button :class="{ active: certPeriod === 'year' }" @click="setCertPeriod('year')">本年</button></div>
+                <span class="mp-inline-stat"><span class="mp-title-icon sm" v-html="getMetricIcon('personnel')"></span>办证人员总数 <strong>{{ certDisplayTotal }}</strong></span>
+                <div class="mp-toggle-group sm"><button type="button" :class="{ active: certPeriod === 'month' }" @click="setCertPeriod('month')">本月</button><button type="button" :class="{ active: certPeriod === 'quarter' }" @click="setCertPeriod('quarter')">本季</button><button type="button" :class="{ active: certPeriod === 'year' }" @click="setCertPeriod('year')">本年</button></div>
               </div>
               <div class="mp-dash-row mp-dash-row-2">
                 <div><div class="mp-subchart-title">办证人员单位统计</div><div id="certDeptPie" class="mp-dash-chart-md"></div></div>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>黄浦区机关事务信息管理平台--底座</title>
+  <link rel="stylesheet" href="css/middle-platform.css" />
+  <link rel="stylesheet" href="css/foundation-platform.css" />
+</head>
+<body>
+  <div id="fp-app" class="mp-app">
+    <div v-if="platformOpen" class="mp-overlay" @click="closeDropdowns"></div>
+
+    <header class="mp-header">
+      <div class="mp-header-left">
+        <div class="mp-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
+          </svg>
+        </div>
+        <h1 class="mp-title">黄浦区机关事务信息管理平台--底座</h1>
+      </div>
+      <div class="mp-header-right">
+        <div class="mp-platform-wrap" @click.stop>
+          <button class="mp-header-btn" title="切换平台" @click="togglePlatform">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </button>
+          <div v-show="platformOpen" class="mp-platform-dropdown">
+            <a href="index.html" class="mp-platform-item" @click="navigateToPlatform('index.html')">大屏</a>
+            <a href="middle-platform.html" class="mp-platform-item" @click="navigateToPlatform('middle-platform.html')">中台</a>
+            <a href="../prototype/index.html" class="mp-platform-item" @click="navigateToPlatform('../prototype/index.html')">小程序</a>
+            <button class="mp-platform-item active">底座</button>
+          </div>
+        </div>
+        <button class="mp-header-btn" title="全屏" @click="toggleFullscreen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+          </svg>
+        </button>
+        <span class="mp-datetime">{{ currentTime }}</span>
+        <button class="mp-header-btn" title="菜单" @click="toggleSidebar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="mp-body">
+      <aside class="mp-sidebar" :class="{ collapsed: sidebarCollapsed }">
+        <nav class="mp-nav">
+          <div v-for="item in menuItems" :key="item.id" class="mp-nav-item">
+            <button
+              class="mp-nav-link"
+              :class="{ active: item.path ? (isSubActive(item.id + '-tab') || currentView === item.path) : false }"
+              @click="toggleMenu(item)"
+            >
+              <span class="mp-nav-icon" v-html="getMenuIcon(item.icon)"></span>
+              <span class="mp-nav-label">{{ item.label }}</span>
+              <span v-if="item.children" class="mp-nav-arrow" :class="{ open: item.expanded }">▾</span>
+            </button>
+            <div v-if="item.children && item.expanded" class="mp-nav-children">
+              <template v-for="child in item.children" :key="child.id">
+                <button
+                  v-if="child.path"
+                  class="mp-nav-child"
+                  :class="{ active: isSubActive(child.id + '-tab') || currentView === child.path }"
+                  @click="selectMenuLeaf(item, child)"
+                >{{ child.label }}</button>
+                <div v-else class="mp-nav-group">
+                  <button class="mp-nav-child mp-nav-group-head" :class="{ open: child.expanded }" @click="toggleNavGroup(child)">
+                    {{ child.label }}
+                    <span class="mp-nav-arrow sm" :class="{ open: child.expanded }">▾</span>
+                  </button>
+                  <div v-if="child.expanded" class="mp-nav-children level-2">
+                    <template v-for="sub in child.children" :key="sub.id">
+                      <button
+                        v-if="sub.path"
+                        class="mp-nav-child"
+                        :class="{ active: isSubActive(sub.id + '-tab') || currentView === sub.path }"
+                        @click="selectMenuLeaf(item, sub)"
+                      >{{ sub.label }}</button>
+                      <div v-else class="mp-nav-group">
+                        <button class="mp-nav-child mp-nav-group-head" :class="{ open: sub.expanded }" @click="toggleNavGroup(sub)">
+                          {{ sub.label }}
+                          <span class="mp-nav-arrow sm" :class="{ open: sub.expanded }">▾</span>
+                        </button>
+                        <div v-if="sub.expanded" class="mp-nav-children level-3">
+                          <button
+                            v-for="leaf in sub.children"
+                            :key="leaf.id"
+                            class="mp-nav-child"
+                            :class="{ active: isSubActive(leaf.id + '-tab') || currentView === leaf.path }"
+                            @click="selectMenuLeaf(item, leaf)"
+                          >{{ leaf.label }}</button>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </nav>
+      </aside>
+
+      <main class="mp-main fp-main">
+        <div class="fp-tabs">
+          <button
+            v-for="tab in openTabs"
+            :key="tab.id"
+            class="fp-tab"
+            :class="{ active: activeSubId === tab.id }"
+            @click="switchTab(tab)"
+          >
+            {{ tab.label }}
+            <span v-if="!tab.pinned" class="fp-tab-close" @click.stop="closeTab(tab)">×</span>
+          </button>
+        </div>
+        <div class="fp-main-inner">
+          <div id="fp-views-mount"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
+  <script src="js/foundation-platform-data.js"></script>
+  <script src="js/foundation-platform-views.js"></script>
+  <script src="js/foundation-platform.js"></script>
+</body>
+</html>

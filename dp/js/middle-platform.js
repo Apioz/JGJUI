@@ -238,7 +238,13 @@ createApp({
     const monitorTree = ref(JSON.parse(JSON.stringify(mod.monitorResourceView.tree)));
 
     const fireTrendPeriod = ref('today');
-    const fireListFilter = ref({ status: '', level: '', start: '', end: '' });
+    const fireListFilter = ref({
+      status: '', level: '',
+      reportStart: '', reportEnd: '',
+      processStart: '', processEnd: '',
+      situation: '',
+    });
+    const fireListTimeApplied = ref(false);
 
     const pageConfig = computed(() => MP_PAGE_REGISTRY[currentView.value] || null);
     const pageData = computed(() => {
@@ -319,7 +325,7 @@ createApp({
     });
 
     const extTrendPeriod = ref('today');
-    const hazardListFilter = ref({ status: '', level: '一级隐患', start: '', end: '' });
+    const hazardListFilter = ref({ status: '', level: '', start: '', end: '', situation: '' });
     const bindFilter = ref({ status: '' });
     const filteredBindRows = ref([]);
     const personnelPieTab = ref('dept');
@@ -327,7 +333,7 @@ createApp({
     const personnelQuarterOptions = buildRecentQuarterOptions(3);
     const personnelPieQuarter = ref(personnelQuarterOptions[0]?.value || '');
     const personnelTrendQuarter = ref(personnelQuarterOptions[0]?.value || '');
-    const certPeriod = ref('quarter');
+    const certPeriod = ref('month');
     const energyReportType = ref('electric');
     const energyReportTree = ref(JSON.parse(JSON.stringify(MP_PAGE_DATA.energyReport.tree)));
 
@@ -417,6 +423,25 @@ createApp({
     const dashMaintSnapshot = computed(() => getDashTaskSnapshot('maintenanceTask', dashMaintPeriod.value));
     const dashInspectSnapshot = computed(() => getDashTaskSnapshot('inspectionTask', dashInspectPeriod.value));
 
+    const certDisplayTotal = computed(() => {
+      const d = pageData.value;
+      if (!d?.certByPeriod) return d?.certTotal ?? 0;
+      return d.certByPeriod[certPeriod.value]?.total ?? d.certTotal ?? 0;
+    });
+
+    function getQuarterScale(quarterValue) {
+      const idx = personnelQuarterOptions.findIndex((q) => q.value === quarterValue);
+      return idx >= 0 ? 0.78 + idx * 0.04 : 1;
+    }
+
+    function scaleDonutItems(items, factor) {
+      return items.map((i) => ({ ...i, count: Math.max(1, Math.round(i.count * factor)) }));
+    }
+
+    function scaleTrendSeries(series, factor) {
+      return series.map((s) => ({ ...s, data: s.data.map((v) => Math.max(1, Math.round(v * factor))) }));
+    }
+
     const devicePageData = computed(() => {
       if (currentView.value === 'parking-gate-device') return mod.parkingGateDevices;
       if (currentView.value === 'access-device') return mod.accessDevices;
@@ -503,6 +528,118 @@ createApp({
     const fireListLevelOptions = computed(() => {
       const f = fireListData.value.filters;
       return f.alarmLevel?.options || f.faultLevel?.options || [];
+    });
+
+    const fireListLevelLabel = computed(() => {
+      const f = fireListData.value?.filters;
+      return f.alarmLevel?.label || f.faultLevel?.label || '等级';
+    });
+
+    function todayYmd() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function rowDateYmd(dateStr) {
+      if (!dateStr || dateStr === '—') return '';
+      const normalized = dateStr.trim().replace(/\//g, '-');
+      const m = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (!m) return '';
+      return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+    }
+
+    function isRowDateToday(dateStr) {
+      return rowDateYmd(dateStr) === todayYmd();
+    }
+
+    function patchFireAlarmListDemoDates() {
+      const today = todayYmd();
+      const times = ['15:48:39', '15:48:39', '15:48:39', '14:30:00', '13:15:00', '12:00:00', '11:00:00', '09:30:00'];
+      mod.fireAlarmList.table.rows.forEach((row, i) => {
+        if (i < 8) {
+          row.startTime = `${today} ${times[i]}`;
+          if (row.processStatus === '未处理') {
+            row.endTime = '—';
+          } else if (i === 7) {
+            row.endTime = `${today} 09:45:00`;
+          } else {
+            row.endTime = `${today} ${times[i]}`;
+          }
+        } else if (row.processStatus === '未处理') {
+          row.endTime = '—';
+        }
+      });
+    }
+    patchFireAlarmListDemoDates();
+
+    const FIRE_PENDING_STATUS = {
+      alarm: ['未处理'],
+      fault: ['未处理'],
+      hazard: ['未处理', '整改中'],
+    };
+
+    function isPendingStatus(kind, status) {
+      return (FIRE_PENDING_STATUS[kind] || []).includes(status);
+    }
+
+    function matchFireRow(row, filter, kind, timeApplied) {
+      const levelKey = kind === 'fault' ? 'faultLevel' : 'alarmLevel';
+      const status = row.processStatus;
+      const reportTime = row.startTime;
+      const processTime = row.endTime;
+
+      if (filter.situation === 'pending' && !isPendingStatus(kind, status)) return false;
+      if (filter.situation === 'processed' && isPendingStatus(kind, status)) return false;
+      if (filter.status && status !== filter.status) return false;
+      if (filter.level && row[levelKey] !== filter.level) return false;
+
+      const useTodayDefault = !timeApplied
+        && !filter.situation
+        && !filter.status
+        && !filter.level;
+
+      if (useTodayDefault) {
+        return isRowDateToday(reportTime);
+      }
+
+      if (filter.reportStart && rowDateYmd(reportTime) < filter.reportStart) return false;
+      if (filter.reportEnd && rowDateYmd(reportTime) > filter.reportEnd) return false;
+
+      if (filter.processStart || filter.processEnd) {
+        if (!processTime || processTime === '—') return false;
+        const procYmd = rowDateYmd(processTime);
+        if (filter.processStart && procYmd < filter.processStart) return false;
+        if (filter.processEnd && procYmd > filter.processEnd) return false;
+      }
+
+      return true;
+    }
+
+    function formatFireEndTime(row, kind) {
+      if (isPendingStatus(kind, row.processStatus)) return '—';
+      const t = row.endTime;
+      return !t || t === '—' ? '—' : t;
+    }
+
+    function matchHazardRow(row, filter) {
+      if (filter.situation === 'pending' && !isPendingStatus('hazard', row.status)) return false;
+      if (filter.situation === 'processed' && isPendingStatus('hazard', row.status)) return false;
+      if (filter.status && row.status !== filter.status) return false;
+      if (filter.level && row.level !== filter.level) return false;
+      if (filter.start && row.startTime < filter.start) return false;
+      if (filter.end && row.startTime > filter.end) return false;
+      return true;
+    }
+
+    const filteredFireListRows = computed(() => {
+      const data = fireListData.value?.table?.rows || [];
+      const kind = currentView.value === 'fire-fault-list' ? 'fault' : 'alarm';
+      return data.filter((row) => matchFireRow(row, fireListFilter.value, kind, fireListTimeApplied.value));
+    });
+
+    const filteredHazardListRows = computed(() => {
+      const data = pageData.value?.table?.rows || [];
+      return data.filter((row) => matchHazardRow(row, hazardListFilter.value));
     });
 
     function isChangeInRange(change) {
@@ -647,6 +784,17 @@ createApp({
       gwData.outbound.metrics.find((m) => m.key === gwOutboundMetric.value)?.label || ''
     );
 
+    function calcGwTurnoverRate(outboundCount, beginStock, endStock) {
+      const avg = (beginStock + endStock) / 2;
+      if (!avg || outboundCount == null) return null;
+      return +(outboundCount / avg).toFixed(2);
+    }
+
+    function formatGwTurnoverRate(rate) {
+      if (rate == null || Number.isNaN(rate)) return '—';
+      return rate.toFixed(2);
+    }
+
     function buildGwYearlyFlowHistory(section, metricKey) {
       const yt = section.yearlyTotal[metricKey];
       return yt.labels.map((label, i) => ({
@@ -660,12 +808,32 @@ createApp({
       })).reverse();
     }
 
+    function enrichGwOutboundHistoryWithTurnover(rows) {
+      const inv = gwData.yearlyInventory;
+      const outCount = gwData.outbound.yearlyTotal.count;
+      if (!inv || !outCount) return rows;
+      return rows.map((row) => {
+        const year = row.period.replace('年', '');
+        const i = inv.labels.indexOf(year);
+        if (i < 0) return { ...row, turnoverRate: null };
+        const beginStock = inv.w1Begin[i] + inv.w2Begin[i];
+        const endStock = inv.w1End[i] + inv.w2End[i];
+        const outbound = outCount.total[i];
+        return {
+          ...row,
+          turnoverRate: calcGwTurnoverRate(outbound, beginStock, endStock),
+        };
+      });
+    }
+
     const gwInboundHistory = computed(() =>
       buildGwYearlyFlowHistory(gwData.inbound, gwInboundMetric.value)
     );
 
     const gwOutboundHistory = computed(() =>
-      buildGwYearlyFlowHistory(gwData.outbound, gwOutboundMetric.value)
+      enrichGwOutboundHistoryWithTurnover(
+        buildGwYearlyFlowHistory(gwData.outbound, gwOutboundMetric.value)
+      )
     );
 
     function getGwFlowTrendData(section, metricKey, mode) {
@@ -980,24 +1148,39 @@ createApp({
       if (!data) return;
       getOrInitChart('hazardLevelChart')?.setOption(buildMpDonutOption(data.levelDonut.items), true);
       getOrInitChart('hazardProcessChart')?.setOption(buildMpDonutOption(data.processDonut.items), true);
+      bindChartPieClick('hazardLevelChart', (name) => drillDownHazardList('level', name));
+      bindChartPieClick('hazardProcessChart', (name) => drillDownHazardList('process', name));
       updateExtTrendChart();
+    }
+
+    function updateCertCharts() {
+      const d = pageData.value;
+      if (!d) return;
+      const cert = d.certByPeriod?.[certPeriod.value] || d;
+      getOrInitChart('certDeptPie')?.setOption(buildMpDonutOption(cert.certDeptPie), true);
+      getOrInitChart('certTypePie')?.setOption(buildMpDonutOption(cert.certTypePie), true);
     }
 
     function updatePersonnelCharts() {
       const d = pageData.value;
       if (!d?.tabs) return;
+      const pieFactor = getQuarterScale(personnelPieQuarter.value);
+      const trendFactor = getQuarterScale(personnelTrendQuarter.value);
       const pieTab = d.tabs[personnelPieTab.value] || d.tabs.dept;
       const trendTab = d.tabs[personnelTrendTab.value] || d.tabs.dept;
       getOrInitChart('personnelDeptPie')?.setOption(
-        buildMpDonutOption(pieTab.donut, { centerLabel: '人员总数', centerValue: d.totalPersonnel, compact: true }),
+        buildMpDonutOption(scaleDonutItems(pieTab.donut, pieFactor), {
+          centerLabel: '人员总数',
+          centerValue: Math.round(d.totalPersonnel * pieFactor),
+          compact: true,
+        }),
         true
       );
       getOrInitChart('personnelTrendChart')?.setOption(
-        buildMpMultiLineOption(d.trendMonths, trendTab.trendSeries, { yMax: trendTab.trendYMax }),
+        buildMpMultiLineOption(d.trendMonths, scaleTrendSeries(trendTab.trendSeries, trendFactor), { yMax: trendTab.trendYMax }),
         true
       );
-      getOrInitChart('certDeptPie')?.setOption(buildMpDonutOption(d.certDeptPie), true);
-      getOrInitChart('certTypePie')?.setOption(buildMpDonutOption(d.certTypePie), true);
+      updateCertCharts();
     }
 
     function setPersonnelPieTab(tab) {
@@ -1005,9 +1188,14 @@ createApp({
       nextTick(() => {
         const d = pageData.value;
         if (!d?.tabs) return;
+        const pieFactor = getQuarterScale(personnelPieQuarter.value);
         const pieTab = d.tabs[tab] || d.tabs.dept;
         getOrInitChart('personnelDeptPie')?.setOption(
-          buildMpDonutOption(pieTab.donut, { centerLabel: '人员总数', centerValue: d.totalPersonnel, compact: true }),
+          buildMpDonutOption(scaleDonutItems(pieTab.donut, pieFactor), {
+            centerLabel: '人员总数',
+            centerValue: Math.round(d.totalPersonnel * pieFactor),
+            compact: true,
+          }),
           true
         );
       });
@@ -1018,9 +1206,10 @@ createApp({
       nextTick(() => {
         const d = pageData.value;
         if (!d?.tabs) return;
+        const trendFactor = getQuarterScale(personnelTrendQuarter.value);
         const trendTab = d.tabs[tab] || d.tabs.dept;
         getOrInitChart('personnelTrendChart')?.setOption(
-          buildMpMultiLineOption(d.trendMonths, trendTab.trendSeries, { yMax: trendTab.trendYMax }),
+          buildMpMultiLineOption(d.trendMonths, scaleTrendSeries(trendTab.trendSeries, trendFactor), { yMax: trendTab.trendYMax }),
           true
         );
       });
@@ -1028,7 +1217,27 @@ createApp({
 
     function setCertPeriod(period) {
       certPeriod.value = period;
-      nextTick(() => updatePersonnelCharts());
+      nextTick(updateCertCharts);
+    }
+
+    function setPersonnelPieQuarter(quarter) {
+      personnelPieQuarter.value = quarter;
+      nextTick(() => setPersonnelPieTab(personnelPieTab.value));
+    }
+
+    function setPersonnelTrendQuarter(quarter) {
+      personnelTrendQuarter.value = quarter;
+      nextTick(() => setPersonnelTrendTab(personnelTrendTab.value));
+    }
+
+    function setEnvBuilding(building) {
+      envBuilding.value = building;
+      nextTick(updateEnvOperationCharts);
+    }
+
+    function setRiskPeriod(period) {
+      riskPeriod.value = period;
+      nextTick(updateRiskDashboardCharts);
     }
 
     function setCanteenTrendMode(mode) {
@@ -1095,7 +1304,12 @@ createApp({
       const d = pageData.value;
       if (!d?.chartSeries) return;
       const labels = d.chartLabels;
-      const series = d.chartSeries;
+      const buildingIdx = Math.max(0, (d.buildings || []).indexOf(envBuilding.value));
+      const factor = 0.85 + buildingIdx * 0.08;
+      const series = d.chartSeries.map((s) => ({
+        ...s,
+        data: s.data.map((v) => Math.round(v * factor)),
+      }));
       const charts = [
         ['envChartTemp', '温度'],
         ['envChartHumidity', '湿度'],
@@ -1110,8 +1324,15 @@ createApp({
     function updateRiskDashboardCharts() {
       const d = pageData.value;
       if (!d) return;
+      const periodMap = {
+        today: { labels: ['8:00', '10:00', '12:00', '14:00', '16:00', '18:00'], data: [2, 3, 4, 5, 4, 3], peak: 5 },
+        week: d.trend7,
+        month: { labels: ['4/1', '4/8', '4/15', '4/22', '4/29'], data: [42, 48, 45, 52, 46], peak: 52 },
+        custom: { labels: ['3/1', '3/15', '4/1', '4/15'], data: [38, 44, 50, 47], peak: 50 },
+      };
+      const trend = periodMap[riskPeriod.value] || d.trend7;
       getOrInitChart('riskTrendChart')?.setOption(
-        buildMpLineOption(d.trend7.labels, d.trend7.data, { name: '风险数', color: '#722ed1', area: true }),
+        buildMpLineOption(trend.labels, trend.data, { name: '风险数', color: '#722ed1', area: true }),
         true
       );
       getOrInitChart('riskLevelPie')?.setOption(buildMpDonutOption(d.levelDonut), true);
@@ -1172,9 +1393,79 @@ createApp({
       resetBindFilterList();
     }
 
-    function applyHazardListFilter() { /* demo */ }
+    function applyHazardListFilter() {
+      hazardListFilter.value = { ...hazardListFilter.value, situation: '' };
+    }
+
     function resetHazardListFilter() {
-      hazardListFilter.value = { status: '', level: '一级隐患', start: '', end: '' };
+      hazardListFilter.value = { status: '', level: '', start: '', end: '', situation: '' };
+    }
+
+    function applyFireListFilter() {
+      const f = fireListFilter.value;
+      fireListFilter.value = { ...f, situation: '' };
+      fireListTimeApplied.value = !!(f.reportStart || f.reportEnd || f.processStart || f.processEnd);
+    }
+
+    function resetFireListFilter() {
+      fireListFilter.value = {
+        status: '', level: '',
+        reportStart: '', reportEnd: '',
+        processStart: '', processEnd: '',
+        situation: '',
+      };
+      fireListTimeApplied.value = false;
+    }
+
+    const FIRE_STATS_NAV = {
+      'fire-alarm-stats': { listPath: 'fire-alarm-list', listId: 'fire-alarm-list', kind: 'alarm' },
+      'fire-fault-stats': { listPath: 'fire-fault-list', listId: 'fire-fault-list', kind: 'fault' },
+      'fire-hazard-stats': { listPath: 'fire-hazard-list', listId: 'fire-hazard-list', kind: 'hazard' },
+    };
+
+    function setFireListDrillFilter(kind, filterType, value) {
+      const base = {
+        status: '', level: '',
+        reportStart: '', reportEnd: '',
+        processStart: '', processEnd: '',
+        situation: '',
+      };
+      if (filterType === 'situation') {
+        base.situation = value;
+      } else if (filterType === 'level') {
+        base.level = value;
+      } else if (filterType === 'process') {
+        base.status = value;
+      }
+      if (kind === 'hazard') {
+        hazardListFilter.value = base;
+      } else {
+        fireListFilter.value = base;
+        fireListTimeApplied.value = false;
+      }
+    }
+
+    function drillDownFireList(filterType, value) {
+      const nav = FIRE_STATS_NAV[currentView.value];
+      if (!nav || nav.kind === 'hazard') return;
+      setFireListDrillFilter(nav.kind, filterType, value);
+      navigateToView(nav.listPath, nav.listId, 'security');
+    }
+
+    function drillDownHazardList(filterType, value) {
+      setFireListDrillFilter('hazard', filterType, value);
+      navigateToView('fire-hazard-list', 'fire-hazard-list', 'security');
+    }
+
+    function bindChartPieClick(chartId, handler) {
+      const chart = getOrInitChart(chartId);
+      if (!chart || !handler) return;
+      chart.off('click');
+      chart.on('click', (params) => {
+        if (params.componentType === 'series' && params.seriesType === 'pie' && params.name) {
+          handler(params.name);
+        }
+      });
     }
 
     function filterParkingHistory() {
@@ -1184,11 +1475,6 @@ createApp({
     function resetParkingFilter() {
       parkingDateStart.value = '';
       parkingDateEnd.value = '';
-    }
-
-    function applyFireListFilter() { /* 筛选演示 */ }
-    function resetFireListFilter() {
-      fireListFilter.value = { status: '', level: '', start: '', end: '' };
     }
 
     function updateDashDevicePie() {
@@ -1331,6 +1617,8 @@ createApp({
         buildMpDonutOption(data.processDonut.items),
         true
       );
+      bindChartPieClick(fireLevelChartId.value, (name) => drillDownFireList('level', name));
+      bindChartPieClick(fireProcessChartId.value, (name) => drillDownFireList('process', name));
       updateFireTrendChart();
     }
 
@@ -1562,10 +1850,12 @@ createApp({
       monitorSearch, selectedCamera, monitorTree,
       fireTrendPeriod, fireTrendPeriods, fireStatsLabel, fireStatsData,
       fireLevelChartId, fireProcessChartId, fireTrendChartId,
-      fireListData, fireListFilter, fireListStatusOptions, fireListLevelOptions,
+      fireListData, fireListFilter, fireListStatusOptions, fireListLevelOptions, fireListLevelLabel,
+      filteredFireListRows, filteredHazardListRows, formatFireEndTime,
       pageConfig, pageData, extTrendPeriod, hazardListFilter,
       bindFilter, filteredBindRows,
-      personnelPieTab, personnelTrendTab, personnelQuarterOptions, personnelPieQuarter, personnelTrendQuarter, certPeriod,
+      personnelPieTab, personnelTrendTab, personnelQuarterOptions, personnelPieQuarter, personnelTrendQuarter,
+      certPeriod, certDisplayTotal,
       canteenTrendMode, canteenTrendPeriod, menuWeekLabel, menuWeekOffset,
       repairStep, repairForm, scheduleMonth, scheduleCalendarCells,
       maintCalMonth, maintCalYear, maintCalMonthNum, maintCalCells,
@@ -1594,14 +1884,16 @@ createApp({
       switchGwCumulativeMode,
       switchGwInboundTrendMode, switchGwOutboundTrendMode,
       switchGwInboundMetric, switchGwOutboundMetric,
-      gwStockRatio, gwCumulativeRatio, formatGwChange, gwTrendClass,
+      gwStockRatio, gwCumulativeRatio, formatGwChange, formatGwTurnoverRate, gwTrendClass,
       setDashRepairTrend, setParkingTrend, setFireTrend, setExtTrend,
       filterParkingHistory, resetParkingFilter,
       applyDeviceFilter, resetDeviceFilter, applyMonitorFilter, resetMonitorFilter,
-      applyFireListFilter, resetFireListFilter,
+      applyFireListFilter, resetFireListFilter, drillDownFireList, drillDownHazardList,
       applyBindFilter, resetBindFilter,
       applyHazardListFilter, resetHazardListFilter,
-      setPersonnelPieTab, setPersonnelTrendTab, setCertPeriod, setCanteenTrendMode, updateCanteenCardCharts,
+      setPersonnelPieTab, setPersonnelTrendTab, setCertPeriod,
+      setPersonnelPieQuarter, setPersonnelTrendQuarter, setEnvBuilding, setRiskPeriod,
+      setCanteenTrendMode, updateCanteenCardCharts,
       setDashMaintPeriod, setDashInspectPeriod, shiftMenuWeek, goRepairNextStep, goRepairBack,
       shiftMaintCalMonth, resetMaintCalToday, riskLevelClass,
     };

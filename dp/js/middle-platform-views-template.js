@@ -383,7 +383,7 @@
           <div class="mp-module-page">
             <div class="mp-fire-stats-row">
               <div class="mp-card"><div class="mp-card-header"><span class="mp-card-title">{{ fireStatsLabel }}情况</span></div>
-                <div class="mp-fire-circles"><div class="mp-fire-circle pending"><strong>{{ fireStatsData.pending }}</strong><span>待处理</span></div><div class="mp-fire-circle done"><strong>{{ fireStatsData.processed }}</strong><span>已处理</span></div></div>
+                <div class="mp-fire-circles"><div class="mp-fire-circle pending clickable" @click="drillDownFireList('situation', 'pending')"><strong>{{ fireStatsData.pending }}</strong><span>待处理</span></div><div class="mp-fire-circle done clickable" @click="drillDownFireList('situation', 'processed')"><strong>{{ fireStatsData.processed }}</strong><span>已处理</span></div></div>
               </div>
               <div class="mp-card"><div class="mp-card-header"><span class="mp-card-title">{{ fireStatsLabel }}等级占比</span></div><div :id="fireLevelChartId" class="mp-dash-chart-md"></div></div>
               <div class="mp-card"><div class="mp-card-header"><span class="mp-card-title">流程状态统计</span></div><div :id="fireProcessChartId" class="mp-dash-chart-md"></div></div>
@@ -411,13 +411,29 @@
             </div>
             <div class="mp-card"><div class="mp-card-header"><span class="mp-card-title">筛选条件</span></div>
               <div class="mp-filter-bar wrap">
-                <select class="mp-input" v-model="fireListFilter.status"><option value="">流程状态</option><option v-for="s in fireListStatusOptions" :key="s" :value="s">{{ s }}</option></select>
-                <select class="mp-input" v-model="fireListFilter.level"><option value="">报警等级</option><option v-for="l in fireListLevelOptions" :key="l" :value="l">{{ l }}</option></select>
-                <input type="datetime-local" class="mp-input" v-model="fireListFilter.start" /><input type="datetime-local" class="mp-input" v-model="fireListFilter.end" />
-                <button class="mp-btn primary" @click="applyFireListFilter">查询</button><button class="mp-btn" @click="resetFireListFilter">清空</button>
+                <label class="mp-filter-label">流程状态</label>
+                <select class="mp-input" v-model="fireListFilter.status"><option value="">请选择</option><option v-for="s in fireListStatusOptions" :key="s" :value="s">{{ s }}</option></select>
+                <label class="mp-filter-label">{{ fireListLevelLabel }}</label>
+                <select class="mp-input" v-model="fireListFilter.level"><option value="">请选择</option><option v-for="l in fireListLevelOptions" :key="l" :value="l">{{ l }}</option></select>
+                <label class="mp-filter-label">开始时间</label>
+                <div class="mp-date-range">
+                  <input type="date" class="mp-input sm" v-model="fireListFilter.reportStart" title="开始日期" />
+                  <span>—</span>
+                  <input type="date" class="mp-input sm" v-model="fireListFilter.reportEnd" title="结束日期" />
+                </div>
+                <label class="mp-filter-label">结束时间</label>
+                <div class="mp-date-range">
+                  <input type="date" class="mp-input sm" v-model="fireListFilter.processStart" title="开始日期" />
+                  <span>—</span>
+                  <input type="date" class="mp-input sm" v-model="fireListFilter.processEnd" title="结束日期" />
+                </div>
+                <button class="mp-btn primary" @click="applyFireListFilter">查询</button>
+                <button class="mp-btn" @click="resetFireListFilter">清空</button>
               </div>
+              <p class="mp-list-tip" v-if="currentView === 'fire-alarm-list'">列表默认仅显示当天数据，更多历史数据可通过时间筛选查找</p>
               <div class="mp-table-wrap mp-table-scroll"><table class="mp-table mp-table-compact"><thead><tr><th v-for="h in fireListData.table.columns" :key="h">{{ h }}</th></tr></thead>
-              <tbody><tr v-for="(row,i) in fireListData.table.rows" :key="i"><td>{{ row.index }}</td><td>{{ row.deviceName }}</td><td>{{ row.deviceType }}</td><td>{{ row.system }}</td><td>{{ row.location }}</td><td>{{ row.alarmLevel || row.faultLevel }}</td><td>{{ row.alarmDesc || row.faultDesc }}</td><td>{{ row.alarmType || row.faultType }}</td><td>{{ row.processStatus }}</td><td>{{ row.processNote }}</td><td>{{ row.startTime }}</td><td>{{ row.endTime }}</td></tr></tbody></table></div>
+              <tbody><tr v-for="(row,i) in filteredFireListRows" :key="i"><td>{{ row.index }}</td><td>{{ row.deviceName }}</td><td>{{ row.deviceType }}</td><td>{{ row.system }}</td><td>{{ row.location }}</td><td>{{ row.alarmLevel || row.faultLevel }}</td><td>{{ row.alarmDesc || row.faultDesc }}</td><td>{{ row.alarmType || row.faultType }}</td><td>{{ row.processStatus }}</td><td>{{ row.processNote }}</td><td>{{ row.startTime }}</td><td>{{ formatFireEndTime(row, currentView === 'fire-fault-list' ? 'fault' : 'alarm') }}</td></tr></tbody></table></div>
+              <div class="mp-pagination"><span>共 {{ filteredFireListRows.length }} 条</span></div>
             </div>
           </div>
         </template>

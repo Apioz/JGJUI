@@ -27,6 +27,7 @@ function buildMpDonutOption(items, { centerLabel, centerValue, compact = false }
     label: { show: false },
     emphasis: { scale: true, label: { show: false } },
     labelLine: { show: false },
+    cursor: 'pointer',
     data: pieData,
   }];
 
