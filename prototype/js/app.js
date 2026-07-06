@@ -210,28 +210,6 @@ const MOCK = {
     { label: '建筑面积', value: '74620.44', unit: '㎡', color: '#13C2C2', icon: 'area' },
     { label: '总使用面积', value: '52739.42', unit: '㎡', color: '#9254DE', icon: 'office-building' }
   ],
-  publicWarehouse: {
-    summary: { total: 822, inbound: 249, outbound: 573, temp: 0 },
-    warehouses: [
-      { name: '中仓（莲岸家园）', count: 184, color: '#52C41A' },
-      { name: '外仓（尚海湾）', count: 226, color: '#4A90E2' },
-      { name: '近仓（1号楼B2）', count: 163, color: '#FAAD14' }
-    ],
-    categories: [
-      { name: '会务用品', value: 230, percent: '28%', color: '#FF6B35' },
-      { name: '办公家具', value: 534, percent: '65%', color: '#FAAD14' },
-      { name: '装饰品', value: 58, percent: '8%', color: '#4A90E2' }
-    ]
-  },
-  warehouseStock: {
-    total: 822,
-    w1: 484,
-    w2: 338,
-    warehouses: [
-      { shortName: '黄浦仓', color: '#1890ff' },
-      { shortName: '闵行仓', color: '#69c0ff' },
-    ],
-  },
   smartCard: {
     periods: {
       today: {
@@ -466,6 +444,8 @@ const state = {
   canteenMarketingType: 'people',
   menuMealType: 'breakfast',
   assetTypeTab: 'space',
+  gwInboundMetric: 'count',
+  gwOutboundMetric: 'count',
   energyTab: 'electric',
   dataEnergyTypeTab: 'electric',
   energyTimeFilter: 'today',
@@ -772,6 +752,58 @@ function renderOfficeSpaceSection() {
     </div>`
 }
 
+function gwData() { return PUBLIC_WAREHOUSE_DATA }
+
+function formatGwChange(item) {
+  if (!item || item.change == null) return '—'
+  const arrow = item.trend === 'up' ? '↑' : '↓'
+  return `${arrow} ${item.change}%`
+}
+
+function gwTrendClass(item) {
+  if (!item) return ''
+  return item.trend === 'up' ? 'up' : 'down'
+}
+
+function calcGwTurnoverRate(outboundCount, beginStock, endStock) {
+  const avg = (beginStock + endStock) / 2
+  if (!avg || outboundCount == null) return null
+  return +(outboundCount / avg).toFixed(2)
+}
+
+function formatGwTurnoverRate(rate) {
+  if (rate == null || Number.isNaN(rate)) return '—'
+  return rate.toFixed(2)
+}
+
+function buildGwYearlyFlowHistory(section, metricKey) {
+  const yt = section.yearlyTotal[metricKey]
+  return yt.labels.map((label, i) => ({
+    period: `${label}年`,
+    total: yt.total[i],
+    w1: yt.w1[i],
+    w2: yt.w2[i],
+    change: i > 0
+      ? +(((yt.total[i] - yt.total[i - 1]) / yt.total[i - 1]) * 100).toFixed(1)
+      : 0,
+  })).reverse()
+}
+
+function enrichGwOutboundHistoryWithTurnover(rows) {
+  const inv = gwData().yearlyInventory
+  const outCount = gwData().outbound.yearlyTotal.count
+  if (!inv || !outCount) return rows
+  return rows.map((row) => {
+    const year = row.period.replace('年', '')
+    const i = inv.labels.indexOf(year)
+    if (i < 0) return { ...row, turnoverRate: null }
+    const beginStock = inv.w1Begin[i] + inv.w2Begin[i]
+    const endStock = inv.w1End[i] + inv.w2End[i]
+    const outbound = outCount.total[i]
+    return { ...row, turnoverRate: calcGwTurnoverRate(outbound, beginStock, endStock) }
+  })
+}
+
 function renderWarehouseStackedBar(warehouses) {
   const total = warehouses.reduce((s, w) => s + w.count, 0)
   return `
@@ -784,46 +816,147 @@ function renderWarehouseStackedBar(warehouses) {
         <div class="warehouse-bar-item">
           <span class="warehouse-bar-dot" style="background:${w.color}"></span>
           <span class="warehouse-bar-name">${w.name}</span>
-          <span class="warehouse-bar-count">${w.count} 件</span>
+          <span class="warehouse-bar-count">${w.count} 件 · ${(w.count / total * 100).toFixed(1)}%</span>
         </div>`).join('')}
     </div>`
 }
 
 function renderWarehouseStockPieSection() {
-  const stock = MOCK.warehouseStock
-  const items = [
-    { name: stock.warehouses[0].shortName, count: stock.w1, color: stock.warehouses[0].color },
-    { name: stock.warehouses[1].shortName, count: stock.w2, color: stock.warehouses[1].color },
-  ]
+  const d = gwData()
+  const stock = d.currentStock
+  const items = d.warehouses.map(w => ({
+    name: w.shortName,
+    count: stock[w.id],
+    color: w.color,
+  }))
   return `
     <div class="pie-wrap">${renderPieChart(items, stock.total)}<div class="pie-center">本季总数<strong>${stock.total}</strong></div></div>
     <div class="chart-legend-wrap">${items.map(t => `<span class="legend-tag"><span style="color:${t.color}">●</span>${t.name} ${t.count}件</span>`).join('')}</div>`
 }
 
-function renderPublicWarehouseSection() {
-  const w = MOCK.publicWarehouse
-  const cats = w.categories
-  const colors = cats.map(c => c.color)
+function renderGwMetricTabs(section, activeMetric, setter) {
   return `
-    <div class="warehouse-summary-row">
-      <div class="warehouse-summary-item"><div class="warehouse-summary-val cyan">${w.summary.total}</div><div class="warehouse-summary-label">物品总数</div></div>
-      <div class="warehouse-summary-item"><div class="warehouse-summary-val cyan">${w.summary.inbound}</div><div class="warehouse-summary-label">入仓数</div></div>
-      <div class="warehouse-summary-item"><div class="warehouse-summary-val cyan">${w.summary.outbound}</div><div class="warehouse-summary-label">出仓数</div></div>
-      <div class="warehouse-summary-item"><div class="warehouse-summary-val">${w.summary.temp}</div><div class="warehouse-summary-label">暂存数</div></div>
-    </div>
-    <div class="asset-sub-title"><span class="asset-sub-dot"></span>各仓库物品情况</div>
-    ${renderWarehouseStackedBar(w.warehouses)}
-    <div class="asset-sub-title" style="margin-top:16px"><span class="asset-sub-dot"></span>物品分类情况</div>
-    <div class="warehouse-category-row">
-      ${renderTypeDonutChart(cats, colors)}
-      <div class="warehouse-category-legend">
-        ${cats.map(c => `
-          <div class="warehouse-category-item">
-            <span class="warehouse-bar-dot" style="background:${c.color}"></span>
-            <span class="warehouse-category-name">${c.name}</span>
-            <span class="warehouse-category-pct">${c.percent}</span>
-          </div>`).join('')}
+    <div class="gw-metric-tabs">
+      ${section.metrics.map(m => `
+        <button class="gw-metric-tab ${activeMetric === m.key ? 'active' : ''}" onclick="App.${setter}('${m.key}')">${m.label}</button>`).join('')}
+    </div>`
+}
+
+function renderGwFlowKpi(section, metricKey, warehouses) {
+  const metric = section.metrics.find(m => m.key === metricKey)
+  const raw = section.currentQuarter[metricKey]
+  return `
+    <div class="gw-kpi-grid">
+      <div class="gw-kpi-card highlight">
+        <div class="gw-kpi-label">${metric.label}</div>
+        <div class="gw-kpi-val">${raw.total}<span class="gw-kpi-unit">${metric.unit}</span></div>
+        <div class="gw-kpi-change ${gwTrendClass(raw)}">环比 ${formatGwChange(raw)}</div>
       </div>
+      ${warehouses.map(w => `
+        <div class="gw-kpi-card">
+          <div class="gw-kpi-label">${w.shortName}</div>
+          <div class="gw-kpi-val" style="color:${w.color}">${raw[w.id]}<span class="gw-kpi-unit">${metric.unit}</span></div>
+          <div class="gw-kpi-sub">${w.name}</div>
+        </div>`).join('')}
+    </div>`
+}
+
+function renderGwHistoryTable(rows, warehouses, showTurnover) {
+  const w1 = warehouses[0].shortName
+  const w2 = warehouses[1].shortName
+  return `
+    <div class="gw-table-wrap">
+      <table class="data-table gw-history-table">
+        <tr>
+          <th>周期</th><th>合计</th><th>${w1}</th><th>${w2}</th>
+          ${showTurnover ? '<th>周转率</th>' : ''}
+          <th>环比</th>
+        </tr>
+        ${rows.slice(0, 4).map(row => `
+          <tr>
+            <td>${row.period}</td>
+            <td><strong>${row.total}</strong></td>
+            <td>${row.w1}</td>
+            <td>${row.w2}</td>
+            ${showTurnover ? `<td>${formatGwTurnoverRate(row.turnoverRate)}</td>` : ''}
+            <td class="${row.change >= 0 ? 'gw-change-up' : 'gw-change-down'}">${row.change >= 0 ? '+' : ''}${row.change}%</td>
+          </tr>`).join('')}
+      </table>
+    </div>`
+}
+
+function renderPublicWarehouseSection() {
+  const d = gwData()
+  const stock = d.currentStock
+  const cum = d.cumulative.currentQuarter
+  const stockWarehouses = d.warehouses.map(w => ({
+    name: w.shortName,
+    count: stock[w.id],
+    color: w.color,
+  }))
+  const inboundMetric = state.gwInboundMetric
+  const outboundMetric = state.gwOutboundMetric
+  const inboundHistory = buildGwYearlyFlowHistory(d.inbound, inboundMetric)
+  const outboundHistory = enrichGwOutboundHistoryWithTurnover(
+    buildGwYearlyFlowHistory(d.outbound, outboundMetric)
+  )
+  const showTurnover = outboundMetric === 'count'
+
+  return `
+    <div class="gw-mobile-section">
+      <div class="gw-mobile-section-head">
+        <span class="gw-mobile-section-title">库存物资数</span>
+        <span class="gw-freq-badge">本季度</span>
+      </div>
+      <div class="warehouse-summary-row">
+        <div class="warehouse-summary-item">
+          <div class="warehouse-summary-val cyan">${stock.total}</div>
+          <div class="warehouse-summary-label">在仓物资</div>
+        </div>
+        <div class="warehouse-summary-item">
+          <div class="warehouse-summary-val" style="color:${d.warehouses[0].color}">${stock.w1}</div>
+          <div class="warehouse-summary-label">${d.warehouses[0].shortName}</div>
+        </div>
+        <div class="warehouse-summary-item">
+          <div class="warehouse-summary-val" style="color:${d.warehouses[1].color}">${stock.w2}</div>
+          <div class="warehouse-summary-label">${d.warehouses[1].shortName}</div>
+        </div>
+        <div class="warehouse-summary-item">
+          <div class="warehouse-summary-val cyan">${cum.total}</div>
+          <div class="warehouse-summary-label">累计存放</div>
+        </div>
+      </div>
+      <div class="asset-sub-title"><span class="asset-sub-dot"></span>本季在仓物资分仓占比</div>
+      ${renderWarehouseStockPieSection()}
+      <div class="asset-sub-title" style="margin-top:12px"><span class="asset-sub-dot"></span>各仓库在仓情况</div>
+      ${renderWarehouseStackedBar(stockWarehouses)}
+      <div class="gw-cum-kpi">
+        <span>截至目前存放 <strong>${cum.total}</strong> 件</span>
+        <span class="gw-kpi-change ${gwTrendClass(cum)}">环比 ${formatGwChange(cum)}</span>
+      </div>
+      ${renderGwHistoryTable(d.cumulative.historyList.map(r => ({ ...r, change: r.change })), d.warehouses, false)}
+    </div>
+
+    <div class="gw-mobile-section">
+      <div class="gw-mobile-section-head">
+        <span class="gw-mobile-section-title">入库</span>
+        <span class="gw-freq-badge">本季度</span>
+      </div>
+      ${renderGwMetricTabs(d.inbound, inboundMetric, 'setGwInboundMetric')}
+      ${renderGwFlowKpi(d.inbound, inboundMetric, d.warehouses)}
+      <div class="asset-sub-title" style="margin-top:12px"><span class="asset-sub-dot"></span>入库历史</div>
+      ${renderGwHistoryTable(inboundHistory, d.warehouses, false)}
+    </div>
+
+    <div class="gw-mobile-section">
+      <div class="gw-mobile-section-head">
+        <span class="gw-mobile-section-title">出库</span>
+        <span class="gw-freq-badge">本季度</span>
+      </div>
+      ${renderGwMetricTabs(d.outbound, outboundMetric, 'setGwOutboundMetric')}
+      ${renderGwFlowKpi(d.outbound, outboundMetric, d.warehouses)}
+      <div class="asset-sub-title" style="margin-top:12px"><span class="asset-sub-dot"></span>出库历史${showTurnover ? '（含周转率）' : ''}</div>
+      ${renderGwHistoryTable(outboundHistory, d.warehouses, showTurnover)}
     </div>`
 }
 
@@ -1846,10 +1979,6 @@ function renderAssetData() {
         <div class="pie-wrap">${renderPieChart(types, total)}<div class="pie-center">${isSpace?'总面积':'设备数'}<strong>${isSpace?d.assetManagement.spaceArea:d.assetManagement.equipmentTotal}</strong></div></div>
         <div class="chart-legend-wrap">${types.map(t=>`<span class="legend-tag"><span style="color:${t.color}">●</span>${t.name}</span>`).join('')}</div>
       </div>
-      <div class="chart-card">
-        <div class="chart-card-title" style="margin-bottom:12px">本季在仓物资分仓占比</div>
-        ${renderWarehouseStockPieSection()}
-      </div>
       <div class="chart-card" id="asset-data-office-section">
         <div class="chart-card-title" style="margin-bottom:12px">办公用房</div>
         ${renderOfficeSpaceSection()}
@@ -2670,6 +2799,8 @@ const App = {
   setCanteenMarketingType(t) { state.canteenMarketingType = t; render() },
   setMenuMealType(t) { state.menuMealType = t; render() },
   setAssetTypeTab(t) { state.assetTypeTab = t; render() },
+  setGwInboundMetric(k) { state.gwInboundMetric = k; render() },
+  setGwOutboundMetric(k) { state.gwOutboundMetric = k; render() },
   setDataEnergyTypeTab(t) { state.dataEnergyTypeTab = t; render() },
   setEnergyTab(t) { state.energyTab = t; render() },
   setEnergyFilter(f) { state.energyTimeFilter = f; render() },

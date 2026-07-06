@@ -1453,3 +1453,149 @@
   color: #333;
   font-weight: 600;
 }
+
+/* 公物仓 — 与中台数据同步 */
+.gw-mobile-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.gw-mobile-section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.gw-mobile-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.gw-mobile-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.gw-freq-badge {
+  font-size: 10px;
+  color: #1890ff;
+  background: #e6f7ff;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.gw-metric-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.gw-metric-tab {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 4px;
+  font-size: 10px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  background: #fafafa;
+  color: #666;
+  cursor: pointer;
+}
+
+.gw-metric-tab.active {
+  background: #e6f7ff;
+  border-color: #91d5ff;
+  color: #1890ff;
+  font-weight: 600;
+}
+
+.gw-kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.gw-kpi-card {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.gw-kpi-card.highlight {
+  grid-column: 1 / -1;
+  background: #f0f9ff;
+}
+
+.gw-kpi-label {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.gw-kpi-val {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.gw-kpi-unit {
+  font-size: 11px;
+  font-weight: 400;
+  color: #999;
+  margin-left: 2px;
+}
+
+.gw-kpi-sub {
+  font-size: 10px;
+  color: #bbb;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gw-kpi-change {
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.gw-kpi-change.up { color: #52c41a; }
+.gw-kpi-change.down { color: #ff4d4f; }
+
+.gw-cum-kpi {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #666;
+  margin: 12px 0 8px;
+}
+
+.gw-cum-kpi strong {
+  color: #13c2c2;
+  font-size: 16px;
+}
+
+.gw-table-wrap {
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+.gw-history-table {
+  font-size: 11px;
+}
+
+.gw-history-table th,
+.gw-history-table td {
+  padding: 6px 4px;
+  white-space: nowrap;
+}
+
+.gw-change-up { color: #52c41a; }
+.gw-change-down { color: #ff4d4f; }
