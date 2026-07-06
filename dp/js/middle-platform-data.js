@@ -347,13 +347,38 @@ const MIDDLE_PLATFORM_DATA = {
   ],
 
   officeAreaChart: {
-    /** 默认层级：前三名单位（按占比） */
+    totalArea: 52739.42,
+    /** 全部单位（按占比降序，前 5 为饼图主扇区，其余归入「其他」下钻） */
+    allUnits: [
+      { name: '区级统筹', proportion: 58, color: '#1d39c4' },
+      { name: '区府办', proportion: 6, color: '#2f54eb' },
+      { name: '区发展改革委', proportion: 4, color: '#1890ff' },
+      { name: '区委组织部', proportion: 4, color: '#096dd9' },
+      { name: '区人力资源社会保障局', proportion: 4, color: '#0050b3' },
+      { name: '区国资委', proportion: 3, color: '#69c0ff' },
+      { name: '区级统筹闲置办公室', proportion: 3, color: '#91d5ff' },
+      { name: '机管局', proportion: 2, color: '#597ef7' },
+      { name: '区建设管理委', proportion: 2, color: '#85a5ff' },
+      { name: '大数据中心', proportion: 1, color: '#bae7ff' },
+      { name: '城运中心', proportion: 1, color: '#adc6ff' },
+      { name: '区地区办', proportion: 1, color: '#597ef7' },
+      { name: '区商务委', proportion: 1.84, color: '#85a5ff' },
+      { name: '区金融办', proportion: 1.19, color: '#597ef7' },
+      { name: '人武部', proportion: 1.15, color: '#2f54eb' },
+      { name: '区退役军人局', proportion: 0.46, color: '#0050b3' },
+      { name: '区人社局', proportion: 0.38, color: '#1890ff' },
+      { name: '区机关党工委', proportion: 0.35, color: '#096dd9' },
+      { name: '保密办', proportion: 0.08, color: '#69c0ff' },
+      { name: '人大领导', proportion: 0.08, color: '#91d5ff' },
+      { name: '区人武部', proportion: 0.07, color: '#adc6ff' },
+      { name: '审改办', proportion: 0.02, color: '#bae7ff' },
+    ],
+    /** @deprecated 兼容旧结构 */
     top3: [
       { name: '区级统筹', proportion: 58, color: '#1d39c4' },
       { name: '机管局', proportion: 2, color: '#597ef7' },
       { name: '区建设管理委', proportion: 2, color: '#85a5ff' },
     ],
-    /** 点击「其他」后展示的单位（除前三名外） */
     otherUnits: [
       { name: '区府办', proportion: 6, color: '#2f54eb' },
       { name: '区发展改革委', proportion: 4, color: '#1890ff' },
@@ -368,14 +393,13 @@ const MIDDLE_PLATFORM_DATA = {
       { name: '区金融办', proportion: 1.19, color: '#597ef7' },
       { name: '人武部', proportion: 1.15, color: '#2f54eb' },
       { name: '区人社局', proportion: 0.38, color: '#1890ff' },
-      { name: '区退役军人局', proportion: 0.46, color: '#096dd9' },
-      { name: '区机关党工委', proportion: 0.35, color: '#0050b3' },
+      { name: '区退役军人局', proportion: 0.46, color: '#0050b3' },
+      { name: '区机关党工委', proportion: 0.35, color: '#096dd9' },
       { name: '保密办', proportion: 0.08, color: '#69c0ff' },
       { name: '人大领导', proportion: 0.08, color: '#91d5ff' },
       { name: '审改办', proportion: 0.02, color: '#bae7ff' },
       { name: '区人武部', proportion: 0.07, color: '#adc6ff' },
     ],
-    /** 「其他」汇总占比 */
     otherTotal: 38,
   },
 

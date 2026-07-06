@@ -69,8 +69,8 @@ def build_body():
     parts = []
 
     parts.append(h1("智慧园区数字化管理平台 — 小程序产品需求说明（PRD）"))
-    parts.append(p("文档版本：V1.0"))
-    parts.append(p("编写依据：prototype/ 交互原型源码（index.html、js/app.js、css/*）"))
+    parts.append(p("文档版本：V1.1"))
+    parts.append(p("编写依据：prototype/ 交互原型源码（index.html、js/app.js、css/*）及 dp/js/public-warehouse-data.js"))
     parts.append(p("产品名称：BLM Digital 小程序"))
     parts.append(p("适用范围：智慧园区数字化管理平台移动端小程序"))
     parts.append(p("说明：本文档严格依据当前原型代码梳理，未在代码中实现的能力标注为「原型占位」或「未接入」。"))
@@ -82,7 +82,8 @@ def build_body():
     parts.append(h3("1.2 技术实现说明（原型阶段）"))
     parts.append(bullet("纯前端 HTML/CSS/JavaScript 单页应用，无后端 API 与持久化存储（页面刷新后除运行时通讯录修改外均重置）。"))
     parts.append(bullet("核心逻辑集中在 prototype/js/app.js；图标库为 prototype/js/icons.js。"))
-    parts.append(bullet("样式文件：style.css（主布局）、auth.css（认证及数据子页）、xiaoyu.css（小禹模块）、icons.css。"))
+    parts.append(bullet("公物仓统计数据引用 dp/js/public-warehouse-data.js（PUBLIC_WAREHOUSE_DATA），与中台、大屏共享同一数据源。"))
+    parts.append(bullet("样式文件：style.css（主布局）、auth.css（认证及数据子页，含公物仓 gw-* 样式）、xiaoyu.css（小禹模块）、icons.css。"))
     parts.append(bullet("原型外壳 index.html 含侧边栏调试快捷入口及跨系统链接（大屏、中台、小程序、底座）。"))
 
     parts.append(h3("1.3 信息架构总览"))
@@ -258,8 +259,29 @@ def build_body():
     parts.append(h3("7.1 资产管理"))
     parts.append(bullet("资产类型分布：空间/设备 Toggle（assetTypeTab）+ 饼图 + 图例；中心显示总面积或设备总数"))
     parts.append(bullet("设施故障统计：12 月折线图（MOCK.facilityFailures）"))
-    parts.append(bullet("办公用房：5 项横向卡片（楼栋总数、房间总数、楼层数量、建筑面积、总使用面积）"))
-    parts.append(bullet("公物仓：汇总 KPI（物品总数/入仓数/出仓数/暂存数）+ 各仓库堆叠条 + 分类 donut"))
+    parts.append(bullet("办公用房：5 项横向卡片（楼栋总数 4、房间总数 1373、楼层数量 51、建筑面积 74620.44㎡、总使用面积 52739.42㎡）"))
+    parts.append(bullet("公物仓：renderPublicWarehouseSection()，数据来自 PUBLIC_WAREHOUSE_DATA，与中台公物仓统计口径一致，分三大区块："))
+    parts.append(bullet("  ① 库存物资数：在仓 822 件（黄浦 484 / 闵行 338）、累计存放 1320 件（环比 ↑5.6%）、分仓 pie、堆叠条、累计历史表"))
+    parts.append(bullet("  ② 入库：指标 Tab（次数/物资数量/固定资产价值，state.gwInboundMetric）+ 本季 KPI + 年度历史表（最近 4 年）"))
+    parts.append(bullet("  ③ 出库：指标 Tab（次数/物资数量/节约资金，state.gwOutboundMetric）+ 本季 KPI + 年度历史表；出库次数指标含周转率列"))
+
+    parts.append(h3("7.1.1 公物仓模块交互细节"))
+    parts.append(p("函数 renderPublicWarehouseSection() 在数据 Tab 与资产数据总览子页复用。"))
+    parts.append(table(
+        ["区块", "UI 元素", "交互"],
+        [
+            ["库存物资数", "4 项 KPI 摘要行", "只读展示在仓/分仓/累计"],
+            ["库存物资数", "本季在仓物资分仓占比 pie", "Donut 图，中心「本季总数 822」"],
+            ["库存物资数", "各仓库在仓情况堆叠条", "黄浦/闵行占比条 + 图例（件数+百分比）"],
+            ["库存物资数", "累计存放历史表", "列：周期/合计/黄浦/闵行/环比"],
+            ["入库", "指标 Tab ×3", "setGwInboundMetric → re-render"],
+            ["入库", "本季 KPI 卡片", "合计 + 环比 + 分仓明细"],
+            ["入库", "入库历史表", "年度数据最近 4 行，含环比"],
+            ["出库", "指标 Tab ×3", "setGwOutboundMetric → re-render"],
+            ["出库", "本季 KPI 卡片", "合计 + 环比 + 分仓明细"],
+            ["出库", "出库历史表", "count 指标显示周转率列；quantity/savedFunds 显示「—」"],
+        ]
+    ))
 
     parts.append(h3("7.2 物业管理"))
     parts.append(p("本月工单完成率：报修/巡检/维保 三个环形进度条（propertyCompletionRates）。"))
@@ -376,11 +398,11 @@ def build_body():
 
     parts.append(h3("12.3 资产数据总览（assetData）"))
     parts.append(p("入口：首页资产管理各入口及「查看更多」。"))
-    parts.append(p("按资产类型统计：空间/设备 Toggle + 饼图 + 总面积/设备数标签。"))
-    parts.append(p("本季在仓物资分仓占比：黄浦仓/闵行仓 pie（warehouseStock）。"))
-    parts.append(p("办公用房卡片（officeSpace 5 项）。"))
-    parts.append(p("公物仓完整区块（publicWarehouse）。"))
+    parts.append(p("按资产类型统计：空间/设备 Toggle + 饼图 + 总面积/设备数标签（数据随当前项目 PROJECT_DATA.assetManagement 变化）。"))
+    parts.append(p("办公用房卡片（MOCK.officeSpace 5 项 KPI）。"))
+    parts.append(p("公物仓卡片：与数据 Tab 内嵌区块相同，调用 renderPublicWarehouseSection()，展示库存/入库/出库完整统计（PUBLIC_WAREHOUSE_DATA）。"))
     parts.append(p("Deep link 滚动锚点：asset-data-type-section、asset-data-office-section、asset-data-warehouse-section。"))
+    parts.append(p("说明：资产数据总览页不再单独展示「本季在仓物资分仓占比」卡片，分仓 pie 已并入公物仓区块的「库存物资数」部分。"))
 
     parts.append(h3("12.4 智慧卡数据总览（smartCardData）"))
     parts.append(p("入口：首页食堂管理 → 智慧卡。"))
@@ -427,8 +449,8 @@ def build_body():
     parts.append(p("消息：用户/助手气泡（助手带小禹头像）；Enter 发送；600ms 模拟延迟回复。"))
     parts.append(p("输入框 Placeholder 按智能体不同（XIAOYU_AGENT_PLACEHOLDERS）。"))
 
-    parts.append(h3("13.5 回复逻辑（getXiaoyuReply）"))
-    parts.append(p("基于当前 xiaoyuActiveAgentId 路由至三类回复函数，结合关键词匹配 + 当前项目 PROJECT_DATA + MOCK 数据。"))
+    parts.append(h3("13.5 回复逻辑"))
+    parts.append(p("getXiaoyuReply(text, agentId) 按 agentId 路由至 getXiaoyuParkReply / getXiaoyuOrderReply / getXiaoyuReportReply，结合关键词匹配 + 当前项目 PROJECT_DATA + MOCK 数据。"))
     parts.append(p("智慧问答：园区介绍、食堂、公告、设施服务；跨域问题提示切换智能工单/智能报表。"))
     parts.append(p("智能工单：待处理列表、我的工单、报修/维保巡检分类、系统工单统计；跨域提示切换。"))
     parts.append(p("智能报表：能耗、资产、食堂运营、物业完成率、趋势、数据总览；跨域提示切换。"))
@@ -495,6 +517,8 @@ def build_body():
             ["carouselIndex", "轮播当前索引"],
             ["canteenTab", "dashboard / menu"],
             ["assetTypeTab", "space / equipment"],
+            ["gwInboundMetric", "count / quantity / assetValue（公物仓入库指标 Tab）"],
+            ["gwOutboundMetric", "count / quantity / savedFunds（公物仓出库指标 Tab）"],
             ["energyTab / dataEnergyTypeTab", "electric / water"],
             ["energyTimeFilter", "today / month / year"],
             ["smartCardPeriod", "today / week / month / year"],
@@ -527,10 +551,45 @@ def build_body():
     parts.append(p("办公用电、空调用电、车间用电、泵房用电、冰箱间用电、餐厅用电，含用量与占比。"))
     parts.append(h3("17.4 用水类型（waterTypes）"))
     parts.append(p("生活用水、绿化用水、消防用水，含用量与占比。"))
-    parts.append(h3("17.5 公物仓（publicWarehouse）"))
-    parts.append(p("汇总：物品总数 822、入仓 249、出仓 573、暂存 0。"))
-    parts.append(p("仓库：中仓（莲岸家园）184 件、外仓（尚海湾）226 件、近仓（1号楼B2）163 件。"))
-    parts.append(p("分类：会务用品 28%、办公家具 65%、装饰品 8%。"))
+    parts.append(h3("17.5 公物仓（PUBLIC_WAREHOUSE_DATA）"))
+    parts.append(p("数据源：dp/js/public-warehouse-data.js，与中台 MIDDLE_PLATFORM_DATA.publicWarehouse、大屏右栏公物仓图表共用。"))
+    parts.append(p("双仓定义："))
+    parts.append(table(
+        ["ID", "简称", "全称", "颜色"],
+        [
+            ["w1", "黄浦仓", "黄浦仓（国货路371号）", "#1890ff"],
+            ["w2", "闵行仓", "闵行仓（立跃路1758号）", "#69c0ff"],
+        ]
+    ))
+    parts.append(p("库存物资数（本季度）："))
+    parts.append(table(
+        ["指标", "合计", "黄浦仓", "闵行仓", "备注"],
+        [
+            ["在仓物资", "822 件", "484", "338", "currentStock"],
+            ["累计存放", "1320 件", "758", "562", "环比 ↑5.6%"],
+        ]
+    ))
+    parts.append(p("入库本季度 KPI（currentQuarter）："))
+    parts.append(table(
+        ["指标", "合计", "黄浦", "闵行", "环比", "趋势"],
+        [
+            ["入库次数", "86 次", "52", "34", "8.2%", "up"],
+            ["入库物资数量", "423 件", "256", "167", "6.5%", "up"],
+            ["入库固定资产价值", "573 万元", "348", "225", "3.1%", "down"],
+        ]
+    ))
+    parts.append(p("出库本季度 KPI："))
+    parts.append(table(
+        ["指标", "合计", "黄浦", "闵行", "环比", "趋势"],
+        [
+            ["出库次数", "79 次", "48", "31", "4.0%", "up"],
+            ["出库物资数量", "423 件", "257", "166", "5.8%", "up"],
+            ["节约资金", "128 万元", "78", "50", "12.3%", "up"],
+        ]
+    ))
+    parts.append(p("周转率公式（出库历史，仅 count 指标）：出库次数 ÷ ((年初在库 + 年末在库) / 2)，数据来自 yearlyInventory。"))
+    parts.append(p("交互：App.setGwInboundMetric(key) / App.setGwOutboundMetric(key) 切换指标 Tab 后 re-render。"))
+    parts.append(p("渲染函数：renderPublicWarehouseSection() → renderWarehouseStockPieSection() + renderWarehouseStackedBar() + renderGwMetricTabs() + renderGwFlowKpi() + renderGwHistoryTable()。"))
     parts.append(h3("17.6 办公用房（officeSpace）"))
     parts.append(p("楼栋总数 4 个、房间总数 1373 间、楼层数量 51 个、建筑面积 74620.44㎡、总使用面积 52739.42㎡。"))
 
@@ -622,6 +681,8 @@ def build_body():
             ["小禹附件/语音等", "功能开发中占位"],
             ["密码/登录", "无真实校验"],
             ["能源时间筛选", "部分数值未联动项目数据"],
+            ["公物仓数据", "与中台共享，不随项目切换变化（原型阶段）"],
+            ["公物仓趋势图", "小程序仅展示 KPI + 历史表，无中台折线趋势图"],
             ["MOCK 未展示", "spaceRanking、propertyChart 未渲染"],
         ]
     ))

@@ -45,7 +45,7 @@
             <div class="mp-card">
               <div class="fp-toolbar" v-if="pageData.toolbar">
                 <div class="fp-toolbar-left">
-                  <button v-for="btn in pageData.toolbar" :key="btn.label" class="mp-btn" :class="btn.class">{{ btn.label }}</button>
+                  <button v-for="btn in pageData.toolbar" :key="btn.label" class="mp-btn" :class="btn.class" @click="handleToolbarClick(btn)">{{ btn.label }}</button>
                 </div>
                 <div class="fp-table-tools">
                   <button class="fp-tool-btn" title="刷新">↻</button>
@@ -66,7 +66,7 @@
                       <td v-if="pageConfig.type === 'list'"><input type="checkbox"/></td>
                       <td v-for="col in pageData.columns" :key="col.key">{{ row[col.key] }}</td>
                       <td v-if="pageData.rowActions" class="mp-actions">
-                        <a v-for="act in pageData.rowActions" :key="act" href="#" :class="{ danger: act.includes('删除') || act === '禁用' }">{{ act }}</a>
+                        <a v-for="act in pageData.rowActions" :key="act" href="#" :class="{ danger: act.includes('删除') || act === '禁用' }" @click.prevent="handleRowAction(act, row)">{{ act }}</a>
                       </td>
                     </tr>
                   </tbody>
@@ -176,7 +176,7 @@
                 <button class="mp-btn sm">清空</button>
               </div>
               <div class="fp-toolbar compact">
-                <div class="fp-toolbar-left"><button v-for="btn in pageData[side].toolbar" :key="btn.label" class="mp-btn" :class="btn.class">{{ btn.label }}</button></div>
+                <div class="fp-toolbar-left"><button v-for="btn in pageData[side].toolbar" :key="btn.label" class="mp-btn" :class="btn.class" @click="handleToolbarClick(btn, side)">{{ btn.label }}</button></div>
                 <div class="fp-table-tools"><button class="fp-tool-btn">▦</button></div>
               </div>
               <div class="mp-table-wrap mp-table-scroll">
@@ -191,14 +191,15 @@
                     <td v-for="col in pageData[side].columns" :key="col.key">{{ row[col.key] }}</td>
                     <td class="mp-actions fp-actions-wrap">
                       <template v-if="side==='right'">
-                        <a href="#">删除</a><a href="#">编辑</a>
-                        <a href="#">{{ row.converted ? '已转换' : '转换' }}</a>
-                        <a href="#">上传台账</a>
-                        <a href="#">{{ row.converted ? '上传db包(已完成)' : '上传db包' }}</a>
-                        <a v-if="row.converted" href="#" class="danger">删除db文件</a>
+                        <a href="#" @click.prevent="handleRowAction('删除', row, 'right')">删除</a>
+                        <a href="#" @click.prevent="handleRowAction('编辑', row, 'right')">编辑</a>
+                        <a href="#" @click.prevent="handleRowAction(row.converted ? '已转换' : '转换', row, 'right')">{{ row.converted ? '已转换' : '转换' }}</a>
+                        <a href="#" @click.prevent="handleRowAction('上传台账', row, 'right')">上传台账</a>
+                        <a href="#" @click.prevent="handleRowAction(row.converted ? '上传db包(已完成)' : '上传db包', row, 'right')">{{ row.converted ? '上传db包(已完成)' : '上传db包' }}</a>
+                        <a v-if="row.converted" href="#" class="danger" @click.prevent="handleRowAction('删除db文件', row, 'right')">删除db文件</a>
                       </template>
                       <template v-else>
-                        <a v-for="act in pageData[side].rowActions" :key="act" href="#" :class="{ danger: act === '删除' }">{{ act }}</a>
+                        <a v-for="act in pageData[side].rowActions" :key="act" href="#" :class="{ danger: act === '删除' }" @click.prevent="handleRowAction(act, row, 'left')">{{ act }}</a>
                       </template>
                     </td>
                   </tr></tbody>

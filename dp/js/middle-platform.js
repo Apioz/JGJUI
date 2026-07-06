@@ -55,6 +55,115 @@ const MP_ICONS = {
   gate: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>',
 };
 
+function getAllOfficeUnits(chartData) {
+  if (chartData.allUnits?.length) {
+    return [...chartData.allUnits].sort((a, b) => b.proportion - a.proportion);
+  }
+  return [...(chartData.top3 || []), ...(chartData.otherUnits || [])]
+    .sort((a, b) => b.proportion - a.proportion);
+}
+
+function buildAreaPieOption(segments, { clickable = false, totalArea = null, title = '总使用面积' } = {}) {
+  const centerX = '36%';
+  const totalText = totalArea != null
+    ? `${Number(totalArea).toLocaleString('zh-CN', { maximumFractionDigits: 2 })}㎡`
+    : `${segments.reduce((s, seg) => s + seg.proportion, 0).toFixed(1)}%`;
+
+  return {
+    tooltip: {
+      trigger: 'item',
+      formatter(params) {
+        const pct = params.value;
+        const share = params.percent.toFixed(1);
+        return `${params.name}<br/>占比：${pct}%（${share}%）`;
+      },
+    },
+    legend: {
+      orient: 'vertical',
+      right: 12,
+      top: 'middle',
+      itemWidth: 10,
+      itemHeight: 10,
+      itemGap: 8,
+      textStyle: { color: '#595959', fontSize: 12 },
+    },
+    graphic: totalArea != null ? [{
+      type: 'group',
+      left: centerX,
+      top: '50%',
+      bounding: 'raw',
+      children: [
+        {
+          type: 'text',
+          style: {
+            text: title,
+            textAlign: 'center',
+            textVerticalAlign: 'middle',
+            fill: '#8c8c8c',
+            fontSize: 12,
+          },
+          top: -12,
+        },
+        {
+          type: 'text',
+          style: {
+            text: totalText,
+            textAlign: 'center',
+            textVerticalAlign: 'middle',
+            fill: '#262626',
+            fontSize: 15,
+            fontWeight: 'bold',
+          },
+          top: 8,
+        },
+      ],
+    }] : [],
+    series: [{
+      type: 'pie',
+      radius: ['44%', '70%'],
+      center: [centerX, '50%'],
+      avoidLabelOverlap: true,
+      minAngle: 2,
+      label: {
+        show: true,
+        formatter: '{b}\n{d}%',
+        fontSize: 11,
+        color: '#595959',
+      },
+      labelLine: { length: 10, length2: 6, smooth: true },
+      emphasis: {
+        scale: true,
+        scaleSize: 6,
+        itemStyle: { shadowBlur: 12, shadowColor: 'rgba(0,0,0,0.12)' },
+      },
+      data: segments.map((seg) => ({
+        name: seg.name,
+        value: seg.proportion,
+        itemStyle: {
+          color: seg.color,
+          cursor: seg.isOther && clickable ? 'pointer' : 'default',
+        },
+      })),
+    }],
+  };
+}
+
+function buildAreaLevel1Segments(chartData) {
+  const all = getAllOfficeUnits(chartData);
+  const top5 = all.slice(0, 5);
+  const others = all.slice(5);
+  const otherTotal = Math.round(others.reduce((s, u) => s + u.proportion, 0) * 100) / 100;
+  return [
+    ...top5,
+    { name: '其他', proportion: otherTotal, color: '#d6e4ff', isOther: true },
+  ];
+}
+
+function buildAreaLevel2Segments(chartData) {
+  return getAllOfficeUnits(chartData).slice(5).map((u) => ({ ...u, isOther: false }));
+}
+
+/** @deprecated 堆叠条形图，已改用饼图 */
 function buildAreaStackOption(segments, { clickable = false } = {}) {
   return {
     tooltip: {
@@ -101,18 +210,6 @@ function buildAreaStackOption(segments, { clickable = false } = {}) {
       itemStyle: { color: seg.color },
     })),
   };
-}
-
-function buildAreaLevel1Segments(chartData) {
-  const { top3, otherTotal } = chartData;
-  return [
-    ...top3.map((u) => ({ ...u, proportion: u.proportion })),
-    { name: '其他', proportion: otherTotal, color: '#d6e4ff', isOther: true },
-  ];
-}
-
-function buildAreaLevel2Segments(otherUnits) {
-  return otherUnits.map((u) => ({ ...u, proportion: u.proportion, isOther: false }));
 }
 
 const MpTreeNode = {
@@ -387,8 +484,6 @@ createApp({
     const gwCumulativeMode = ref('quarter');
     const gwCumulativeHistoryYear = ref('all');
     const gwCumulativeHistoryQuarter = ref('all');
-    const gwInboundTrendMode = ref('quarter');
-    const gwOutboundTrendMode = ref('quarter');
     const gwInboundMetric = ref('count');
     const gwOutboundMetric = ref('count');
 
@@ -836,23 +931,12 @@ createApp({
       )
     );
 
-    function getGwFlowTrendData(section, metricKey, mode) {
-      if (mode === 'year') {
-        const yt = section.yearlyTotal[metricKey];
-        const start = Math.max(0, yt.labels.length - 3);
-        return {
-          labels: yt.labels.slice(start).map((y) => `${y}年`),
-          w1: yt.w1.slice(start),
-          w2: yt.w2.slice(start),
-        };
-      }
-      const cq = section.currentYearQuarterly[metricKey];
-      const year = gwData.currentYear;
-      return {
-        labels: cq.labels.map((q) => `${year} ${q}`),
-        w1: cq.w1,
-        w2: cq.w2,
-      };
+    function switchGwInboundMetric(key) {
+      gwInboundMetric.value = key;
+    }
+
+    function switchGwOutboundMetric(key) {
+      gwOutboundMetric.value = key;
     }
 
     function gwStockRatio(wid) {
@@ -885,45 +969,6 @@ createApp({
       updateGwCumulativeChart();
     }
 
-    function switchGwInboundTrendMode(mode) {
-      gwInboundTrendMode.value = mode;
-      updateGwInboundTrendChart();
-    }
-
-    function switchGwOutboundTrendMode(mode) {
-      gwOutboundTrendMode.value = mode;
-      updateGwOutboundTrendChart();
-    }
-
-    function switchGwInboundMetric(key) {
-      gwInboundMetric.value = key;
-      updateGwInboundTrendChart();
-    }
-
-    function switchGwOutboundMetric(key) {
-      gwOutboundMetric.value = key;
-      updateGwOutboundTrendChart();
-    }
-
-    function updateGwInboundTrendChart() {
-      const data = getGwFlowTrendData(gwData.inbound, gwInboundMetric.value, gwInboundTrendMode.value);
-      getOrInitChart('gwInboundTrend')?.setOption(
-        buildGwDualWarehouseTrendOption(data.labels, data.w1, data.w2, gwWarehouses), true
-      );
-    }
-
-    function updateGwOutboundTrendChart() {
-      const data = getGwFlowTrendData(gwData.outbound, gwOutboundMetric.value, gwOutboundTrendMode.value);
-      getOrInitChart('gwOutboundTrend')?.setOption(
-        buildGwDualWarehouseTrendOption(data.labels, data.w1, data.w2, gwWarehouses), true
-      );
-    }
-
-    function updateGwFlowCharts() {
-      updateGwInboundTrendChart();
-      updateGwOutboundTrendChart();
-    }
-
     function updateGwCumulativeChart() {
       const mode = gwCumulativeMode.value;
       const src = mode === 'year' ? gwData.cumulative.yearlyTrend : gwData.cumulative.quarterlyTrend;
@@ -951,7 +996,6 @@ createApp({
     function updateWarehouseCharts() {
       getOrInitChart('gwStockPie')?.setOption(buildGwStockPieOption(gwData.currentStock, gwWarehouses), true);
       updateGwCumulativeChart();
-      updateGwFlowCharts();
     }
 
     function initWarehouseCharts() {
@@ -959,7 +1003,6 @@ createApp({
       nextTick(() => {
         getChart('gwStockPie')?.setOption(buildGwStockPieOption(gwData.currentStock, gwWarehouses));
         updateGwCumulativeChart();
-        updateGwFlowCharts();
         setTimeout(resizeAllCharts, 80);
       });
     }
@@ -1750,12 +1793,23 @@ createApp({
       const chart = charts.mpAreaStack;
       if (!chart) return;
 
+      const totalArea = officeAreaChart.totalArea
+        || summaryCards.find((c) => c.label === '总使用面积')?.value?.replace(/,/g, '');
+
       if (areaChartLevel.value === 'summary') {
         const segments = buildAreaLevel1Segments(officeAreaChart);
-        chart.setOption(buildAreaStackOption(segments, { clickable: true }), true);
+        chart.setOption(buildAreaPieOption(segments, {
+          clickable: true,
+          totalArea,
+          title: '总使用面积',
+        }), true);
       } else {
-        const segments = buildAreaLevel2Segments(officeAreaChart.otherUnits);
-        chart.setOption(buildAreaStackOption(segments, { clickable: false }), true);
+        const segments = buildAreaLevel2Segments(officeAreaChart);
+        chart.setOption(buildAreaPieOption(segments, {
+          clickable: false,
+          totalArea: null,
+          title: '其他单位',
+        }), true);
       }
     }
 
@@ -1767,7 +1821,7 @@ createApp({
       chart.off('click');
       chart.on('click', (params) => {
         if (areaChartLevel.value !== 'summary') return;
-        if (params.seriesName === '其他') {
+        if (params.name === '其他') {
           areaChartLevel.value = 'detail';
           renderAreaChart();
         }
@@ -1867,7 +1921,6 @@ createApp({
       gwData, gwWarehouses, gwCumulativeMode,
       gwCumulativeHistoryYear, gwCumulativeHistoryQuarter,
       gwCumulativeHistoryYears, gwCumulativeHistoryQuarters,
-      gwInboundTrendMode, gwOutboundTrendMode,
       gwInboundMetric, gwOutboundMetric,
       gwCumulativeHistory, gwInboundDisplay, gwOutboundDisplay,
       gwInboundMetricLabel, gwOutboundMetricLabel,
@@ -1882,7 +1935,6 @@ createApp({
       openUnitChangeModal, closeUnitChangeModal,
       getMetricIcon,
       switchGwCumulativeMode,
-      switchGwInboundTrendMode, switchGwOutboundTrendMode,
       switchGwInboundMetric, switchGwOutboundMetric,
       gwStockRatio, gwCumulativeRatio, formatGwChange, formatGwTurnoverRate, gwTrendClass,
       setDashRepairTrend, setParkingTrend, setFireTrend, setExtTrend,

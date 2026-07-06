@@ -182,10 +182,160 @@ createApp({
     });
     onUnmounted(() => clearInterval(clockTimer));
 
+    const projectTypes = ['公共建筑', '园区', '商业综合体', '租赁房|办公楼|住宅'];
+    const modelTypes = ['土建类型', '机电类型', '安防类型', '精装类型', '总体类型'];
+    const ledgerTabs = ['空间模版', '设备模版', '电力模版', '其他模版'];
+    const panoramaTabs = ['详情', '数据', '管理', '组织'];
+
+    const fpModal = ref(null);
+    const fpForm = ref({});
+    const fpToast = ref('');
+    const fpPanoramaProject = ref(null);
+    const fpPanoramaTab = ref('详情');
+    let fpConfirmCallback = null;
+
+    function showFpToast(msg) {
+      fpToast.value = msg;
+      setTimeout(() => { fpToast.value = ''; }, 2500);
+    }
+
+    function closeFpModal() {
+      fpModal.value = null;
+      fpConfirmCallback = null;
+    }
+
+    function blankProjectForm(row) {
+      return {
+        name: row?.name || '',
+        type: row?.type || '',
+        openDate: row?.openDate === '—' ? '' : (row?.openDate || ''),
+        address: row?.address === '—' ? '' : (row?.address || ''),
+        area: row?.area || '',
+        code: row?.code || '',
+        lng: row?.lng || '121.681000',
+        lat: row?.lat || '31.212010',
+        members: row?.members || '',
+        panoramaPush: row?.panoramaPush || '否',
+        panoramaId: row?.panoramaId === '—' ? '' : (row?.panoramaId || ''),
+        appKey: '',
+        appSecret: '',
+        description: '',
+      };
+    }
+
+    function openConfirm(title, message, onOk) {
+      fpConfirmCallback = onOk;
+      fpModal.value = { type: 'confirm', title, message };
+    }
+
+    function fpConfirmOk() {
+      if (fpConfirmCallback) fpConfirmCallback();
+      closeFpModal();
+    }
+
+    function fpModalSave() {
+      const m = fpModal.value;
+      if (!m) return;
+      const labels = {
+        'project-form': m.mode === 'edit' ? '项目已修改' : '项目已保存',
+        'unit-form': '单体已保存',
+        'upload-model': '模型上传任务已提交',
+        bind: '绑定成功',
+        'edit-model': '模型已更新',
+        'convert-config': '转换任务已提交',
+        'upload-ledger': '台账上传成功',
+        'upload-db': 'db 包上传成功',
+      };
+      showFpToast(labels[m.type] || '操作成功');
+      closeFpModal();
+    }
+
+    function fpPickCoords() {
+      showFpToast('坐标拾取：地图选点功能占位');
+    }
+
+    function fpPushPanorama() {
+      showFpToast('全景推送任务已提交');
+      closeFpModal();
+    }
+
+    function handleToolbarClick(btn, side) {
+      if (currentView.value === 'project-center' && btn.label.includes('新增')) {
+        fpForm.value = blankProjectForm();
+        fpModal.value = { type: 'project-form', mode: 'add', title: '新增', wide: true, saveLabel: '保存' };
+        return;
+      }
+      if (currentView.value === 'model-center' && side === 'left' && btn.label.includes('新增')) {
+        fpForm.value = { unitName: '', facility: '否' };
+        fpModal.value = { type: 'unit-form', mode: 'add', title: '新增', saveLabel: '保存' };
+      }
+    }
+
+    function handleRowAction(action, row, side) {
+      if (currentView.value === 'project-center') {
+        if (action === '查看') {
+          fpForm.value = blankProjectForm(row);
+          fpModal.value = { type: 'project-view', title: '查看', row, wide: true };
+        } else if (action === '编辑') {
+          fpForm.value = blankProjectForm(row);
+          fpModal.value = { type: 'project-form', mode: 'edit', title: '编辑', row, wide: true, saveLabel: '修改' };
+        } else if (action === '全景') {
+          fpPanoramaTab.value = '详情';
+          fpPanoramaProject.value = row;
+        } else if (action === '全景查看') {
+          showFpToast(`打开全景预览：${row.name}`);
+        } else if (action === '同步') {
+          openConfirm('同步', `确定同步项目「${row.name}」的地图/全景数据？`, () => showFpToast('同步任务已提交'));
+        }
+        return;
+      }
+      if (currentView.value === 'model-center' && side === 'left') {
+        if (action === '编辑') {
+          fpForm.value = { unitName: row.name, facility: row.facility };
+          fpModal.value = { type: 'unit-form', mode: 'edit', title: '编辑', row, saveLabel: '保存' };
+        } else if (action === '删除') {
+          openConfirm('删除', `确定删除单体「${row.name}」？`, () => showFpToast('单体已删除'));
+        } else if (action === '上传模型') {
+          fpForm.value = { modelType: '', description: '', unitName: row.name };
+          fpModal.value = { type: 'upload-model', title: '上传模型', row, saveLabel: '确定' };
+        } else if (action === '绑定') {
+          fpForm.value = { modelType: '' };
+          fpModal.value = { type: 'bind', title: '绑定', row, saveLabel: '确定' };
+        }
+        return;
+      }
+      if (currentView.value === 'model-center' && side === 'right') {
+        const act = action.replace('(已完成)', '').replace('上传db包', '上传db包');
+        if (act === '删除') {
+          openConfirm('删除', `确定删除模型「${row.name}」？`, () => showFpToast('模型已删除'));
+        } else if (act === '编辑') {
+          fpForm.value = { unitName: row.unit, modelName: row.name, modelType: row.type, description: '' };
+          fpModal.value = { type: 'edit-model', title: '编辑模型', row, wide: true, saveLabel: '确定' };
+        } else if (act === '转换') {
+          fpForm.value = {};
+          fpModal.value = { type: 'convert-config', title: '文件转换配置', row, wide: true, saveLabel: '确定' };
+        } else if (act === '已转换') {
+          showFpToast('模型已转换完成');
+        } else if (act === '上传台账') {
+          fpForm.value = { ledgerTab: '空间模版' };
+          fpModal.value = { type: 'upload-ledger', title: '上传台账', row, saveLabel: '确定' };
+        } else if (act.startsWith('上传db包')) {
+          fpForm.value = {};
+          fpModal.value = { type: 'upload-db', title: '上传db包', row, saveLabel: '确定' };
+        } else if (act === '删除db文件') {
+          openConfirm('删除db文件', '确定后同步删除 db 文件及关联台账数据且无法恢复，需重新上传！', () => showFpToast('db 文件及关联台账已删除'));
+        }
+      }
+    }
+
     return {
       menuItems, sidebarCollapsed, activeSubId, currentView, platformOpen, currentTime,
       openTabs, pageConfig, pageData, pageTitle, quickLinks,
       scheduleMonth, weekDays, scheduleCalCells,
+      projectTypes, modelTypes, ledgerTabs, panoramaTabs,
+      fpModal, fpForm, fpToast, fpPanoramaProject, fpPanoramaTab,
+      closeFpModal, fpModalSave, fpConfirmOk, fpPickCoords, fpPushPanorama,
+      handleToolbarClick, handleRowAction,
       getMenuIcon, isSubActive, toggleMenu, toggleNavGroup, selectMenuLeaf,
       openPageByPath, switchTab, closeTab,
       togglePlatform, closeDropdowns, navigateToPlatform, toggleSidebar, toggleFullscreen,

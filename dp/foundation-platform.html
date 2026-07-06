@@ -123,9 +123,164 @@
         </div>
         <div class="fp-main-inner">
           <div id="fp-views-mount"></div>
+          <!-- 全景详情子页 -->
+          <div v-if="fpPanoramaProject" class="fp-panorama-page">
+            <div class="fp-panorama-head">
+              <button class="mp-btn sm" @click="fpPanoramaProject = null">返回</button>
+              <div class="fp-panorama-tabs">
+                <button v-for="t in panoramaTabs" :key="t" type="button" class="fp-panorama-tab" :class="{ active: fpPanoramaTab === t }" @click="fpPanoramaTab = t">{{ t }}</button>
+              </div>
+              <span class="fp-panorama-title">{{ fpPanoramaProject.name }}</span>
+            </div>
+            <div v-if="fpPanoramaTab === '详情'" class="fp-panorama-body">
+              <div class="fp-panorama-cover">项目封面</div>
+              <div class="fp-panorama-info">
+                <h4>项目信息</h4>
+                <dl><dt>项目编号</dt><dd>{{ fpPanoramaProject.code }}</dd></dl>
+                <dl><dt>项目名称</dt><dd>{{ fpPanoramaProject.name }}</dd></dl>
+                <dl><dt>详细地址</dt><dd>{{ fpPanoramaProject.address }}</dd></dl>
+                <dl><dt>项目类型</dt><dd>{{ fpPanoramaProject.type }}</dd></dl>
+                <dl><dt>全景 ID</dt><dd>{{ fpPanoramaProject.panoramaId }}</dd></dl>
+              </div>
+            </div>
+            <div v-else class="fp-panorama-placeholder">{{ fpPanoramaTab }} — 功能占位</div>
+          </div>
         </div>
       </main>
     </div>
+
+    <!-- 项目中心 / 模型中心 操作弹窗 -->
+    <div v-if="fpModal" class="mp-modal-overlay" @click.self="closeFpModal">
+      <div class="mp-modal fp-modal" :class="{ wide: fpModal.wide, xl: fpModal.xl }">
+        <div class="mp-modal-header">
+          <h3 class="mp-modal-title">{{ fpModal.title }}</h3>
+          <button class="mp-modal-close" @click="closeFpModal">×</button>
+        </div>
+        <div class="mp-modal-body">
+          <!-- 项目：新增/编辑 -->
+          <div v-if="fpModal.type === 'project-form'" class="fp-form-grid">
+            <label class="req">项目名称</label><input v-model="fpForm.name" class="mp-input" />
+            <label class="req">项目地址</label><input v-model="fpForm.address" class="mp-input" />
+            <label class="req">项目类型</label>
+            <select v-model="fpForm.type" class="mp-input"><option value="">请选择</option><option v-for="t in projectTypes" :key="t">{{ t }}</option></select>
+            <label class="req">总建筑面积 m²</label><input v-model="fpForm.area" class="mp-input" />
+            <label>开业时间</label><input v-model="fpForm.openDate" type="date" class="mp-input" />
+            <label class="req">项目编码</label><input v-model="fpForm.code" class="mp-input" />
+            <label>项目图片</label><div class="fp-upload-box">+ 只能上传一张</div>
+            <label class="req">经度</label><input v-model="fpForm.lng" class="mp-input" />
+            <label class="req">纬度</label><input v-model="fpForm.lat" class="mp-input" />
+            <label>项目成员</label><input v-model="fpForm.members" class="mp-input" placeholder="多选标签" />
+            <label>全景是否激活</label>
+            <div class="fp-radio"><label><input type="radio" v-model="fpForm.panoramaPush" value="是" /> 是</label><label><input type="radio" v-model="fpForm.panoramaPush" value="否" /> 否</label></div>
+            <template v-if="fpModal.mode === 'edit'">
+              <label>Vsleem App Key</label><input v-model="fpForm.appKey" class="mp-input" />
+              <label>Vsleem App Secret</label><input v-model="fpForm.appSecret" class="mp-input" />
+              <label>全景 ID</label><input v-model="fpForm.panoramaId" class="mp-input" />
+            </template>
+            <label class="span2">项目描述</label><textarea v-model="fpForm.description" class="mp-input fp-textarea span2" rows="3"></textarea>
+          </div>
+          <!-- 项目：查看 -->
+          <div v-else-if="fpModal.type === 'project-view'" class="fp-form-grid readonly">
+            <label>项目名称</label><span>{{ fpModal.row.name }}</span>
+            <label>项目地址</label><span>{{ fpModal.row.address }}</span>
+            <label>项目类型</label><span class="fp-tag">{{ fpModal.row.type }}</span>
+            <label>总建筑面积 m²</label><span>{{ fpModal.row.area }}</span>
+            <label>开业时间</label><span>{{ fpModal.row.openDate }}</span>
+            <label>项目编码</label><span>{{ fpModal.row.code }}</span>
+            <label>经度</label><span>{{ fpForm.lng }}</span>
+            <label>纬度</label><span>{{ fpForm.lat }}</span>
+            <label>项目成员</label><span>{{ fpModal.row.members }}</span>
+            <label>全景是否推送</label><span>{{ fpModal.row.panoramaPush }}</span>
+            <label>Vsleem App Key</label><span>{{ fpForm.appKey || '—' }}</span>
+            <label>Vsleem App Secret</label><span>{{ fpForm.appSecret || '—' }}</span>
+            <label>全景 ID</label><span>{{ fpModal.row.panoramaId }}</span>
+            <label class="span2">项目描述</label><span class="span2">{{ fpForm.description || '—' }}</span>
+          </div>
+          <!-- 单体：新增/编辑 -->
+          <div v-else-if="fpModal.type === 'unit-form'" class="fp-form-stack">
+            <label class="req">单体名称</label><input v-model="fpForm.unitName" class="mp-input" placeholder="请输入单体名称" />
+            <label>园区设施设备</label>
+            <div class="fp-switch"><button type="button" :class="{ active: fpForm.facility === '否' }" @click="fpForm.facility = '否'">否</button><button type="button" :class="{ active: fpForm.facility === '是' }" @click="fpForm.facility = '是'">是</button></div>
+          </div>
+          <!-- 上传模型 -->
+          <div v-else-if="fpModal.type === 'upload-model'" class="fp-form-stack">
+            <label class="req">类型</label>
+            <select v-model="fpForm.modelType" class="mp-input"><option value="">请选择类型</option><option v-for="t in modelTypes" :key="t">{{ t }}</option></select>
+            <label class="req">上传文件</label>
+            <div class="fp-upload-zone"><div class="fp-upload-icon">☁</div><p>拖拽文件到此 或点击上传</p><p class="hint">请将 .rvt 文件拖拽此处，或点击上传</p></div>
+            <label>描述</label><textarea v-model="fpForm.description" class="mp-input fp-textarea" rows="2" placeholder="请输入描述"></textarea>
+          </div>
+          <!-- 绑定 -->
+          <div v-else-if="fpModal.type === 'bind'" class="fp-form-stack">
+            <label class="req">类型</label>
+            <select v-model="fpForm.modelType" class="mp-input"><option value="">请选择类型</option><option v-for="t in modelTypes" :key="t">{{ t }}</option></select>
+          </div>
+          <!-- 编辑模型 -->
+          <div v-else-if="fpModal.type === 'edit-model'" class="fp-form-stack">
+            <label class="req">单体名称</label><input v-model="fpForm.unitName" class="mp-input" />
+            <label class="req">模型名称</label><input v-model="fpForm.modelName" class="mp-input" />
+            <label class="req">类型</label>
+            <select v-model="fpForm.modelType" class="mp-input"><option v-for="t in modelTypes" :key="t">{{ t }}</option></select>
+            <label>描述</label><textarea v-model="fpForm.description" class="mp-input fp-textarea" rows="2"></textarea>
+            <label class="req">上传文件</label>
+            <div class="fp-upload-zone sm"><div class="fp-upload-icon">☁</div><p>请将 .rvt 文件拖拽此处，或点击上传</p></div>
+          </div>
+          <!-- 文件转换配置 -->
+          <div v-else-if="fpModal.type === 'convert-config'" class="fp-form-stack">
+            <p class="fp-file-path">已选文件：{{ fpModal.row?.name }}</p>
+            <label>三维视图</label><select class="mp-input"><option>{3D}</option></select>
+            <fieldset class="fp-fieldset"><legend>通用配置</legend>
+              <label class="fp-check"><input type="checkbox" checked /> 导出房间面积</label>
+              <label class="fp-check"><input type="checkbox" /> 导出二维图纸</label>
+              <label class="fp-check"><input type="checkbox" /> 是否启用视图框</label>
+            </fieldset>
+            <div class="fp-form-grid compact">
+              <label>颜色</label><select class="mp-input"><option>真实</option></select>
+              <label>LOD</label><select class="mp-input"><option>中</option></select>
+              <label>导出基准坐标</label><select class="mp-input"><option>基点</option></select>
+              <label>零件可见性</label><select class="mp-input"><option>按零件导出</option></select>
+            </div>
+          </div>
+          <!-- 上传台账 -->
+          <div v-else-if="fpModal.type === 'upload-ledger'" class="fp-form-stack">
+            <div class="fp-ledger-tabs">
+              <button v-for="tab in ledgerTabs" :key="tab" type="button" class="fp-ledger-tab" :class="{ active: fpForm.ledgerTab === tab }" @click="fpForm.ledgerTab = tab">{{ tab }}</button>
+            </div>
+            <div class="fp-template-row"><select class="mp-input"><option>请输入查找</option></select><button class="mp-btn sm">下载模版</button></div>
+            <label class="req">上传文件</label>
+            <div class="fp-upload-zone"><div class="fp-upload-icon">☁</div><p>将文件拖到此处，或点击上传</p><p class="hint">只能上传 excel 文件（最大 10MB）</p></div>
+          </div>
+          <!-- 上传 db 包 -->
+          <div v-else-if="fpModal.type === 'upload-db'" class="fp-form-stack">
+            <p class="fp-hint-block">从 Revit 中提取全量数据，只上传 db 文件</p>
+            <label class="req">上传文件</label>
+            <div class="fp-upload-zone"><div class="fp-upload-icon">☁</div><p>拖拽或点击上传 .db 文件</p></div>
+          </div>
+          <!-- 确认框 -->
+          <div v-else-if="fpModal.type === 'confirm'" class="fp-confirm">
+            <div class="fp-confirm-icon">!</div>
+            <p>{{ fpModal.message }}</p>
+          </div>
+        </div>
+        <div class="fp-modal-footer">
+          <template v-if="fpModal.type === 'project-view'">
+            <button class="mp-btn" @click="closeFpModal">关闭</button>
+            <button class="mp-btn primary" @click="fpPushPanorama">推送</button>
+          </template>
+          <template v-else-if="fpModal.type === 'confirm'">
+            <button class="mp-btn" @click="closeFpModal">取消</button>
+            <button class="mp-btn primary" @click="fpConfirmOk">确定</button>
+          </template>
+          <template v-else>
+            <button v-if="fpModal.type === 'project-form' && fpModal.mode === 'edit'" class="mp-btn ghost" @click="fpPickCoords">坐标拾取</button>
+            <button class="mp-btn" @click="closeFpModal">取消</button>
+            <button class="mp-btn primary" @click="fpModalSave">{{ fpModal.saveLabel || '确定' }}</button>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="fpToast" class="fp-toast">{{ fpToast }}</div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>

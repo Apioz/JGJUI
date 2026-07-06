@@ -176,8 +176,9 @@
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                   返回上一层
                 </button>
-                <span class="mp-card-title">办公用房使用面积占比</span>
+                <span class="mp-card-title">{{ areaChartLevel === 'detail' ? '其他单位使用面积占比' : '办公用房使用面积占比' }}</span>
               </div>
+              <span v-if="areaChartLevel === 'summary'" class="mp-chart-hint">点击「其他」查看剩余单位明细</span>
             </div>
             <div id="mpAreaStack" class="mp-chart-box-lg"></div>
 
@@ -536,43 +537,31 @@
               </div>
             </div>
 
-            <div class="gw-grid-2 chart-table">
-              <div class="mp-card">
-                <div class="mp-card-header">
-                  <span class="mp-card-title">入库趋势</span>
-                  <div class="gw-toggle-group sm">
-                    <button :class="{ active: gwInboundTrendMode === 'quarter' }" @click="switchGwInboundTrendMode('quarter')">按季度</button>
-                    <button :class="{ active: gwInboundTrendMode === 'year' }" @click="switchGwInboundTrendMode('year')">按年度</button>
-                  </div>
-                </div>
-                <div id="gwInboundTrend" class="gw-chart"></div>
+            <div class="mp-card">
+              <div class="mp-card-header">
+                <span class="mp-card-title">入库历史</span>
               </div>
-              <div class="mp-card">
-                <div class="mp-card-header">
-                  <span class="mp-card-title">入库历史</span>
-                </div>
-                <div class="mp-table-wrap gw-table-scroll">
-                  <table class="mp-table gw-table">
-                    <thead>
-                      <tr>
-                        <th>年份</th>
-                        <th>合计</th>
-                        <th>{{ gwWarehouses[0].shortName }}</th>
-                        <th>{{ gwWarehouses[1].shortName }}</th>
-                        <th>环比</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="row in gwInboundHistory" :key="row.period">
-                        <td>{{ row.period }}</td>
-                        <td><strong>{{ row.total }}</strong></td>
-                        <td>{{ row.w1 }}</td>
-                        <td>{{ row.w2 }}</td>
-                        <td :class="row.change >= 0 ? 'gw-change-up' : 'gw-change-down'">{{ row.change >= 0 ? '+' : '' }}{{ row.change }}%</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+              <div class="mp-table-wrap gw-table-scroll">
+                <table class="mp-table gw-table">
+                  <thead>
+                    <tr>
+                      <th>年份</th>
+                      <th>合计</th>
+                      <th>{{ gwWarehouses[0].shortName }}</th>
+                      <th>{{ gwWarehouses[1].shortName }}</th>
+                      <th>环比</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in gwInboundHistory" :key="row.period">
+                      <td>{{ row.period }}</td>
+                      <td><strong>{{ row.total }}</strong></td>
+                      <td>{{ row.w1 }}</td>
+                      <td>{{ row.w2 }}</td>
+                      <td :class="row.change >= 0 ? 'gw-change-up' : 'gw-change-down'">{{ row.change >= 0 ? '+' : '' }}{{ row.change }}%</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -612,45 +601,33 @@
               </div>
             </div>
 
-            <div class="gw-grid-2 chart-table">
-              <div class="mp-card">
-                <div class="mp-card-header">
-                  <span class="mp-card-title">出库趋势</span>
-                  <div class="gw-toggle-group sm">
-                    <button :class="{ active: gwOutboundTrendMode === 'quarter' }" @click="switchGwOutboundTrendMode('quarter')">按季度</button>
-                    <button :class="{ active: gwOutboundTrendMode === 'year' }" @click="switchGwOutboundTrendMode('year')">按年度</button>
-                  </div>
-                </div>
-                <div id="gwOutboundTrend" class="gw-chart"></div>
+            <div class="mp-card">
+              <div class="mp-card-header">
+                <span class="mp-card-title">出库历史</span>
               </div>
-              <div class="mp-card">
-                <div class="mp-card-header">
-                  <span class="mp-card-title">出库历史</span>
-                </div>
-                <div class="mp-table-wrap gw-table-scroll">
-                  <table class="mp-table gw-table">
-                    <thead>
-                      <tr>
-                        <th>年份</th>
-                        <th>合计</th>
-                        <th>{{ gwWarehouses[0].shortName }}</th>
-                        <th>{{ gwWarehouses[1].shortName }}</th>
-                        <th title="出库次数 ÷ 年初年末在库数平均值">周转率</th>
-                        <th>环比</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="row in gwOutboundHistory" :key="row.period">
-                        <td>{{ row.period }}</td>
-                        <td><strong>{{ row.total }}</strong></td>
-                        <td>{{ row.w1 }}</td>
-                        <td>{{ row.w2 }}</td>
-                        <td>{{ formatGwTurnoverRate(row.turnoverRate) }}</td>
-                        <td :class="row.change >= 0 ? 'gw-change-up' : 'gw-change-down'">{{ row.change >= 0 ? '+' : '' }}{{ row.change }}%</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+              <div class="mp-table-wrap gw-table-scroll">
+                <table class="mp-table gw-table">
+                  <thead>
+                    <tr>
+                      <th>年份</th>
+                      <th>合计</th>
+                      <th>{{ gwWarehouses[0].shortName }}</th>
+                      <th>{{ gwWarehouses[1].shortName }}</th>
+                      <th title="出库次数 ÷ 年初年末在库数平均值">周转率</th>
+                      <th>环比</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in gwOutboundHistory" :key="row.period">
+                      <td>{{ row.period }}</td>
+                      <td><strong>{{ row.total }}</strong></td>
+                      <td>{{ row.w1 }}</td>
+                      <td>{{ row.w2 }}</td>
+                      <td>{{ formatGwTurnoverRate(row.turnoverRate) }}</td>
+                      <td :class="row.change >= 0 ? 'gw-change-up' : 'gw-change-down'">{{ row.change >= 0 ? '+' : '' }}{{ row.change }}%</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
