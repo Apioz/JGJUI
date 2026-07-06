@@ -345,17 +345,44 @@ const SUB_TITLES = {
 }
 
 const XIAOYU_FUNCTIONS = [
-  { id: 'park', name: '园区问答', icon: 'building', color: '#4A90E2' },
-  { id: 'repair', name: '报修助手', icon: 'repair', color: '#FA8C16' },
-  { id: 'workorder', name: '工单查询', icon: 'workorder', color: '#9254DE' }
+  { id: 'park', name: '智慧问答', icon: 'building', color: '#4A90E2' },
+  { id: 'repair', name: '智能工单', icon: 'repair', color: '#FA8C16' },
+  { id: 'workorder', name: '智能报表', icon: 'workorder', color: '#9254DE' }
 ]
 
 const XIAOYU_QUICK_ACTIONS = [
-  { text: '今日能耗情况', prompt: '帮我看看今天的能耗情况' },
-  { text: '帮我查工单', prompt: '查询我最近的工单进度' },
-  { text: '食堂今日菜单', prompt: '今天食堂有什么菜？' },
-  { text: '园区最新公告', prompt: '最近有什么园区公告？' }
+  { text: '园区基本情况', prompt: '介绍一下当前园区的基本情况', agentId: 'park' },
+  { text: '待处理工单', prompt: '系统里有哪些待处理的工单？', agentId: 'repair' },
+  { text: '数据总览解读', prompt: '帮我解读一下园区数据总览', agentId: 'workorder' },
+  { text: '园区最新公告', prompt: '最近有什么园区公告？', agentId: 'park' }
 ]
+
+const XIAOYU_AGENT_QUICK_ACTIONS = {
+  park: [
+    { text: '园区介绍', prompt: '介绍一下当前园区的基本情况' },
+    { text: '今日食堂', prompt: '今天食堂有什么推荐？' },
+    { text: '最新公告', prompt: '最近有什么园区公告？' },
+    { text: '园区服务', prompt: '园区有哪些基础服务？' }
+  ],
+  repair: [
+    { text: '待处理工单', prompt: '系统里有哪些待处理的工单？' },
+    { text: '我的工单', prompt: '查询我发起的工单进度' },
+    { text: '报修工单', prompt: '报修工单有哪些，分别什么状态？' },
+    { text: '维保巡检', prompt: '维保和巡检工单情况如何？' }
+  ],
+  workorder: [
+    { text: '数据总览', prompt: '帮我解读一下园区数据总览' },
+    { text: '今日能耗', prompt: '今天的能耗数据怎么样？' },
+    { text: '资产统计', prompt: '园区资产数据汇总' },
+    { text: '运营趋势', prompt: '近期运营数据有什么趋势？' }
+  ]
+}
+
+const XIAOYU_AGENT_PLACEHOLDERS = {
+  park: '问问园区设施、服务、公告等基础问题…',
+  repair: '查询报修、维保、巡检等系统工单…',
+  workorder: '解读能耗、资产、运营等数据汇总…'
+}
 
 const XIAOYU_ATTACH_GRID = [
   { id: 'camera', name: '拍照', icon: 'camera' },
@@ -373,16 +400,16 @@ const XIAOYU_ATTACH_EXTRA = [
 
 const XIAOYU_AGENTS = [
   {
-    id: 'park', name: '园区问答', tag: '通用智能体', version: '1.0.0', status: '可用',
+    id: 'park', name: '智慧问答', tag: '问答智能体', version: '1.0.0', status: '可用',
     desc: '解答园区概况、设施与服务相关问题', taskAbility: '不支持定时任务', chatCount: 12, color: '#4A90E2', icon: 'building'
   },
   {
-    id: 'repair', name: '报修助手', tag: '通用智能体', version: '1.0.0', status: '可用',
-    desc: '协助提交报修、查询报修进度与处理状态', taskAbility: '不支持定时任务', chatCount: 8, color: '#FA8C16', icon: 'repair'
+    id: 'repair', name: '智能工单', tag: '工单智能体', version: '1.0.0', status: '可用',
+    desc: '解答系统内全部工单，含报修、维保、巡检、安全、施工与整改等类型及进度状态', taskAbility: '不支持定时任务', chatCount: 8, color: '#FA8C16', icon: 'repair'
   },
   {
-    id: 'workorder', name: '工单查询', tag: '通用智能体', version: '1.0.0', status: '可用',
-    desc: '查询维保、巡检及报修工单进度', taskAbility: '不支持定时任务', chatCount: 15, color: '#9254DE', icon: 'workorder'
+    id: 'workorder', name: '智能报表', tag: '报表智能体', version: '1.0.0', status: '可用',
+    desc: '解读园区内资产、能源、物业、食堂等模块的数据汇总与运营报表', taskAbility: '不支持定时任务', chatCount: 15, color: '#9254DE', icon: 'workorder'
   }
 ]
 
@@ -469,9 +496,9 @@ const state = {
   xiaoyuNotifyTab: 'all',
   xiaoyuNotifySelected: [],
   xiaoyuSessions: [
-    { id: 's1', agentId: 'workorder', title: '能耗查询', time: '今天 10:30', preview: '今日用电 1,280 kWh...' },
-    { id: 's2', agentId: 'park', title: '报修进度', time: '昨天 16:20', preview: '您的报修工单 WO-2024...' },
-    { id: 's3', agentId: 'repair', title: '食堂推荐', time: '6月20日', preview: '推荐今日特色：红烧排骨...' }
+    { id: 's1', agentId: 'workorder', title: '数据总览解读', time: '今天 10:30', preview: '建筑面积 12.6万㎡，待处理工单 8 条...' },
+    { id: 's2', agentId: 'repair', title: '待处理工单', time: '昨天 16:20', preview: '系统内共 9 条工单，待处理 6 条...' },
+    { id: 's3', agentId: 'park', title: '园区服务咨询', time: '6月20日', preview: '园区提供物业报修、访客通行...' }
   ],
   xiaoyuTasks: [],
   xiaoyuActiveSessionId: null
@@ -1136,27 +1163,124 @@ function xiaoyuAvatarHtml(size) {
   return `<div class="xiaoyu-avatar-slot" style="width:${size}px;height:${size}px">${xiaoyuAvatarSvg(size)}</div>`
 }
 
-function getXiaoyuReply(text) {
+function xiaoyuRedirectHint(targetName) {
+  return `这类问题更适合由「${targetName}」来解答，您可以在首页切换对应智能体，或从工作台重新选择。`
+}
+
+function xiaoyuWorkOrderStats() {
+  const list = MOCK.workOrderList
+  const pending = list.filter(w => !['已完结', '已关单', '已取消'].includes(w.status))
+  const byType = MOCK.workOrderCategories.map(c => {
+    const count = list.filter(w => w.category === c.key || w.type === c.name).length
+    return `${c.name} ${count} 条`
+  }).join('、')
+  return { total: list.length, pending: pending.length, byType, pendingList: pending.slice(0, 5) }
+}
+
+function getXiaoyuParkReply(text) {
   const d = pd()
-  if (/能耗|用电|用水|能源/.test(text)) {
-    return `当前项目「${state.currentProject.name}」今日用电 ${d.homeOverview.todayElectric}，用水 ${d.homeOverview.todayWater}，${d.energy.compareYesterday}。需要查看详细趋势吗？`
+  const proj = state.currentProject.name
+  if (/工单|报修|维保|巡检|派单|关单/.test(text)) {
+    return xiaoyuRedirectHint('智能工单')
   }
-  if (/工单|报修|维保|巡检/.test(text)) {
-    return `您有 ${activeWorkOrders()} 条进行中的工单。最近一条：${MOCK.workOrders[0]?.title || '暂无工单'}，状态为「${MOCK.workOrders[0]?.status || '—'}」。`
+  if (/数据|统计|总览|报表|能耗|用电|用水|能源|趋势|资产/.test(text)) {
+    return xiaoyuRedirectHint('智能报表')
   }
-  if (/食堂|菜单|菜谱|吃饭/.test(text)) {
+  if (/介绍|概况|基本|是什么|地址|位置|园区/.test(text)) {
+    return `「${proj}」是智慧园区数字化管理平台的在管项目之一，建筑面积 ${d.homeOverview.buildingArea}，在册设备 ${d.homeOverview.equipmentTotal} 台，入驻成员 ${state.currentProject.members} 人。\n园区提供物业报修、访客通行、智慧食堂、能源监测等基础服务，如需了解具体事项可以继续问我。`
+  }
+  if (/食堂|菜单|菜谱|吃饭|餐饮|预定/.test(text)) {
     const bf = MOCK.dailyMenus.breakfast.slice(0, 2).map(x => x.name).join('、')
     const ln = (MOCK.dailyMenus.lunch || MOCK.dailyMenus.breakfast).slice(0, 2).map(x => x.name).join('、')
-    return `今日食堂推荐：${bf}（早餐），${ln}（午餐）。线上预定 ${d.canteen.onlineReserve} 份，客饭预定 ${d.canteen.guestReserve} 份。`
+    return `今日食堂推荐：${bf}（早餐），${ln}（午餐）。\n线上预定 ${d.canteen.onlineReserve} 份，客饭预定 ${d.canteen.guestReserve} 份，就餐人员约 ${d.canteen.personnel} 人。`
   }
-  if (/公告|通知/.test(text)) {
+  if (/公告|通知|消息/.test(text)) {
     const n = state.notifications.filter(x => !x.read)[0] || state.notifications[0]
-    return n ? `最新公告：${n.title} — ${n.content}` : '暂无新公告，一切正常。'
+    return n ? `最新公告：${n.title}\n${n.content}\n发布时间：${n.time}` : '暂无新公告，园区运行一切正常。'
   }
-  if (/数据|统计|总览/.test(text)) {
-    return `「${state.currentProject.name}」建筑面积 ${d.homeOverview.buildingArea}，设备 ${d.homeOverview.equipmentTotal} 台；待处理工单 ${d.homeOverview.pendingOrders} 条，已处理 ${d.homeOverview.processedOrders} 条。`
+  if (/设施|服务|通行|停车|办公|物业|访客|门禁|帮助|你能/.test(text)) {
+    return `「${proj}」基础服务包括：\n· 物业报修与工单协同\n· 访客预约与门禁通行\n· 智慧食堂与就餐预定\n· 能源监测与异常提醒\n· 园区公告与消息通知\n有具体问题可以直接描述，我来帮您解答。`
   }
-  return `我是小禹，您的智慧园区助手。可以帮您查询能耗、工单、食堂、公告和园区数据，请随时提问。`
+  return `我是小禹·智慧问答，专注解答「${proj}」的园区概况、设施服务、食堂餐饮与公告通知等基础问题，请随时提问。`
+}
+
+function getXiaoyuOrderReply(text) {
+  const stats = xiaoyuWorkOrderStats()
+  const mine = MOCK.myWorkOrders.filter(w => w.tab !== 'done')
+  if (/数据|统计|总览|报表|能耗|用电|用水|能源|趋势|资产|解读/.test(text)) {
+    return xiaoyuRedirectHint('智能报表')
+  }
+  if (/食堂|菜单|公告|园区介绍|设施|服务/.test(text)) {
+    return xiaoyuRedirectHint('智慧问答')
+  }
+  if (/我的|我发起|我提交/.test(text)) {
+    if (!mine.length) return '您当前没有进行中的工单，最近一条已完结工单已完成处理。'
+    const lines = mine.slice(0, 4).map(w => {
+      const desc = w.problemDesc || w.plan || w.inspectType || '—'
+      return `· [${w.type}] ${desc}（${w.status}，${w.time.slice(0, 16)}）`
+    }).join('\n')
+    return `您有 ${mine.length} 条进行中的工单：\n${lines}`
+  }
+  if (/报修/.test(text)) {
+    const repairs = MOCK.workOrderList.filter(w => w.category === 'repair' || w.type === '报修')
+    const lines = repairs.slice(0, 4).map(w => `· ${w.problemDesc}（${w.status}）`).join('\n')
+    return `系统内报修工单共 ${repairs.length} 条，近期包括：\n${lines}`
+  }
+  if (/维保|巡检/.test(text)) {
+    const tasks = MOCK.workOrderList.filter(w => w.type === '维保' || w.type === '巡检')
+    const lines = tasks.map(w => `· [${w.type}] ${w.problemDesc || w.problemType}（${w.status}）`).join('\n')
+    return `维保与巡检工单情况：\n${lines || '暂无相关工单'}`
+  }
+  if (/进度|状态|待处理|待派单|列表|有哪些|全部|系统/.test(text)) {
+    const lines = stats.pendingList.map(w => `· [${w.type}] ${w.problemDesc}（${w.status}，${w.time.slice(0, 10)}）`).join('\n')
+    return `「${state.currentProject.name}」系统内共 ${stats.total} 条工单，待处理 ${stats.pending} 条。\n分类：${stats.byType}\n待处理明细：\n${lines}`
+  }
+  if (/工单/.test(text)) {
+    const recent = MOCK.workOrders[0]
+    return `系统内工单概览：共 ${stats.total} 条，待处理 ${stats.pending} 条。\n最近更新：${recent?.title || '—'}（${recent?.type}，${recent?.status}，${recent?.createTime || ''}）`
+  }
+  return `我是小禹·智能工单，可查询系统内报修、维保、巡检等全部工单的状态与进度。您可以问「有哪些待处理工单」或「我的工单进度」。`
+}
+
+function getXiaoyuReportReply(text) {
+  const d = pd()
+  const proj = state.currentProject.name
+  const stats = xiaoyuWorkOrderStats()
+  if (/进度|派单|关单|我的工单/.test(text) && !/统计|汇总|报表/.test(text)) {
+    return xiaoyuRedirectHint('智能工单')
+  }
+  if (/食堂有什么|菜单|公告|园区介绍|设施|服务/.test(text)) {
+    return xiaoyuRedirectHint('智慧问答')
+  }
+  if (/能耗|用电|用水|能源/.test(text)) {
+    return `「${proj}」能源数据汇总：\n· 今日用电 ${d.homeOverview.todayElectric}，较昨日 ${d.energy.compareYesterday}\n· 今日用水 ${d.homeOverview.todayWater}\n· 累计用电 ${d.energy.electricTotal}，累计用水 ${d.energy.waterTotal}\n· 今日分项用电 ${d.dataOverview.energyToday}`
+  }
+  if (/资产|设备|空间|面积/.test(text)) {
+    return `「${proj}」资产数据汇总：\n· 资产总量 ${d.dataOverview.assetTotal} 项\n· 建筑面积 ${d.homeOverview.buildingArea}\n· 管理空间 ${d.assetManagement.spaceTotal}，设备 ${d.assetManagement.equipmentCount} 台`
+  }
+  if (/食堂|就餐|采购|留样/.test(text)) {
+    return `「${proj}」食堂运营数据：\n· 今日就餐 ${d.homeOverview.todayDining} 人次，合格率 ${d.dataOverview.canteenPassRate}\n· 采购总额 ${d.canteen.purchaseTotal} 元，库存 ${d.canteen.inventory}\n· 线上预定 ${d.canteen.onlineReserve} 份，客饭 ${d.canteen.guestReserve} 份`
+  }
+  if (/物业|工单/.test(text)) {
+    const rates = MOCK.propertyCompletionRates.map(r => `${r.type}完成率 ${r.rate}%`).join('，')
+    return `「${proj}」物业运营汇总：\n· 待处理工单 ${d.homeOverview.pendingOrders} 条，已处理 ${d.homeOverview.processedOrders} 条\n· 系统工单总计 ${stats.total} 条，待处理 ${stats.pending} 条\n· ${rates}`
+  }
+  if (/趋势|变化|近期/.test(text)) {
+    const trend = MOCK.workOrderTrend.slice(-3).join(' → ')
+    const summary = MOCK.dataSummary.map(s => `${s.label} ${s.total}（${s.trend}）`).join('\n· ')
+    return `「${proj}」近期运营趋势：\n· 近7日工单量走势：${trend}\n· 各模块汇总：\n· ${summary}`
+  }
+  if (/数据|统计|总览|报表|解读|汇总/.test(text)) {
+    return `「${proj}」数据总览：\n· 建筑面积 ${d.homeOverview.buildingArea}，设备 ${d.homeOverview.equipmentTotal} 台\n· 待处理工单 ${d.homeOverview.pendingOrders} 条，已处理 ${d.homeOverview.processedOrders} 条\n· 今日用电 ${d.homeOverview.todayElectric}，用水 ${d.homeOverview.todayWater}\n· 今日就餐 ${d.homeOverview.todayDining} 人次，智慧卡消费 ${d.homeOverview.cardPayTotal}`
+  }
+  return `我是小禹·智能报表，可解读「${proj}」在资产、能源、物业、食堂等模块的数据汇总与运营趋势，请描述您想查看的报表维度。`
+}
+
+function getXiaoyuReply(text, agentId) {
+  const id = agentId || state.xiaoyuActiveAgentId || 'park'
+  if (id === 'repair') return getXiaoyuOrderReply(text)
+  if (id === 'workorder') return getXiaoyuReportReply(text)
+  return getXiaoyuParkReply(text)
 }
 
 function getXiaoyuAgent(id) {
@@ -1239,7 +1363,7 @@ function renderXiaoyuAgentPicker() {
           <div class="xiaoyu-greeting">嗨 ${u.name}，今天需要小禹帮您做什么？</div>
           <div class="xiaoyu-quick-actions">
             ${XIAOYU_QUICK_ACTIONS.map(a => `
-              <button class="xiaoyu-quick-chip" onclick="App.xiaoyuQuickAsk('${a.prompt.replace(/'/g, "\\'")}')">${a.text}</button>`).join('')}
+              <button class="xiaoyu-quick-chip" onclick="App.xiaoyuQuickAsk('${a.prompt.replace(/'/g, "\\'")}', '${a.agentId}')">${a.text}</button>`).join('')}
           </div>
         </div>
         <div class="xiaoyu-smart-cards">
@@ -1266,10 +1390,17 @@ function renderXiaoyuChatBody(agent) {
           </div>`).join('')}
       </div>`
   }
-  return `<div class="xiaoyu-chat-empty"><p>请输入您的问题，${agent.name}随时为您服务</p></div>`
+  const chips = (XIAOYU_AGENT_QUICK_ACTIONS[agent.id] || []).map(a => `
+    <button class="xiaoyu-quick-chip" onclick="App.xiaoyuSend('${a.prompt.replace(/'/g, "\\'")}')">${a.text}</button>`).join('')
+  return `
+    <div class="xiaoyu-chat-empty">
+      <p>${agent.desc}</p>
+      ${chips ? `<div class="xiaoyu-quick-actions">${chips}</div>` : ''}
+    </div>`
 }
 
 function renderXiaoyuChatFooter() {
+  const placeholder = XIAOYU_AGENT_PLACEHOLDERS[state.xiaoyuActiveAgentId] || '请输入内容'
   return `
     <div class="xiaoyu-footer${state.xiaoyuAttachOpen ? ' attach-open' : ''}">
       ${state.xiaoyuAttachOpen ? `
@@ -1301,7 +1432,7 @@ function renderXiaoyuChatFooter() {
           ${Icons.icon('plus', { size: 20, color: state.xiaoyuAttachOpen ? '#4A90E2' : '#666' })}
         </button>
         <div class="xiaoyu-input-wrap">
-          <input type="text" class="xiaoyu-input" placeholder="请输入内容"
+          <input type="text" class="xiaoyu-input" placeholder="${placeholder}"
             value="${state.xiaoyuInput.replace(/"/g, '&quot;')}"
             oninput="App.updateXiaoyuInput(this.value)"
             onkeydown="if(event.key==='Enter')App.xiaoyuSend()" />
@@ -2335,8 +2466,8 @@ const App = {
     render()
   },
 
-  xiaoyuQuickAsk(prompt) {
-    state.xiaoyuActiveAgentId = 'park'
+  xiaoyuQuickAsk(prompt, agentId) {
+    state.xiaoyuActiveAgentId = agentId || 'park'
     state.xiaoyuPhase = 'chat'
     state.xiaoyuMessages = []
     state.xiaoyuInput = ''
@@ -2451,7 +2582,7 @@ const App = {
     state.xiaoyuInput = ''
     render()
     setTimeout(() => {
-      state.xiaoyuMessages.push({ role: 'assistant', content: getXiaoyuReply(msg) })
+      state.xiaoyuMessages.push({ role: 'assistant', content: getXiaoyuReply(msg, state.xiaoyuActiveAgentId) })
       render()
     }, 600)
   },
@@ -2459,13 +2590,16 @@ const App = {
   xiaoyuUseFunction(id) {
     const prompts = {
       park: '介绍一下当前园区的基本情况',
-      repair: '我想了解报修流程',
-      energy: '帮我看看今天的能耗情况',
-      canteen: '今天食堂有什么推荐？',
-      workorder: '查询我最近的工单进度',
-      data: '帮我解读一下首页的数据总览'
+      repair: '系统里有哪些待处理的工单？',
+      workorder: '帮我解读一下园区数据总览'
     }
-    App.xiaoyuSend(prompts[id] || '你好')
+    const prompt = prompts[id] || '你好'
+    if (state.xiaoyuActiveAgentId !== id) {
+      App.xiaoyuSelectAgent(id)
+      setTimeout(() => App.xiaoyuSend(prompt), 100)
+    } else {
+      App.xiaoyuSend(prompt)
+    }
   },
 
   xiaoyuNewChat() {

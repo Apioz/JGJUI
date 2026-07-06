@@ -203,6 +203,7 @@
   font-size: 14px;
   line-height: 1.6;
   word-break: break-word;
+  white-space: pre-line;
 }
 
 .xiaoyu-msg.assistant .xiaoyu-msg-bubble {
@@ -661,6 +662,7 @@
 }
 
 .xiaoyu-chat-empty { padding: 24px 12px; text-align: center; color: #999; font-size: 14px; }
+.xiaoyu-chat-empty .xiaoyu-quick-actions { justify-content: center; margin-top: 16px; }
 
 .xiaoyu-input-bar.v2 {
   flex-direction: row;
