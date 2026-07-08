@@ -540,6 +540,12 @@
             <div class="mp-card">
               <div class="mp-card-header">
                 <span class="mp-card-title">入库历史</span>
+                <button
+                  v-if="gwInboundHistoryHasMore || gwInboundHistoryExpanded"
+                  type="button"
+                  class="gw-history-more"
+                  @click="toggleGwInboundHistoryExpand"
+                >{{ gwInboundHistoryExpanded ? '收起' : '查看更多' }}</button>
               </div>
               <div class="mp-table-wrap gw-table-scroll">
                 <table class="mp-table gw-table">
@@ -604,6 +610,12 @@
             <div class="mp-card">
               <div class="mp-card-header">
                 <span class="mp-card-title">出库历史</span>
+                <button
+                  v-if="gwOutboundHistoryHasMore || gwOutboundHistoryExpanded"
+                  type="button"
+                  class="gw-history-more"
+                  @click="toggleGwOutboundHistoryExpand"
+                >{{ gwOutboundHistoryExpanded ? '收起' : '查看更多' }}</button>
               </div>
               <div class="mp-table-wrap gw-table-scroll">
                 <table class="mp-table gw-table">

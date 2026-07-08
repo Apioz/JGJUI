@@ -486,6 +486,18 @@ createApp({
     const fireSafetySystemIdx = ref(0);
     const fireDeviceSearch = ref('');
     const fireSelectedDevice = ref(null);
+    const securitySubModule = ref('monitor');
+    const securityFloorMode = ref(false);
+    const securityGateMode = ref(false);
+    const securitySelectedFloor = ref('2F');
+    const securityBuildingPopupId = ref(null);
+    const securityDeviceSearch = ref('');
+    const securitySelectedDevice = ref(null);
+    const securityGateDeviceId = ref(null);
+    const securityDevicePopupCode = ref(null);
+    const securityLedgerOpen = ref(false);
+    const securityIaExpanded = ref(true);
+    const securityFmExpanded = ref(true);
     const overviewViewMode = ref('map');
     const mapPopupProjectId = ref(null);
     const mapPopupPos = ref({ x: 0, y: 0 });
@@ -507,8 +519,8 @@ createApp({
     let parkOrbitStart = null;
 
     const charts = {};
-    const MODULE_TABS = ['资产管理', '物业管理', '能源管理', '环境管理', '食堂管理', '消防管理'];
-    const MODULE_PARK_TABS = ['资产管理', '物业管理', '能源管理', '环境管理', '食堂管理', '消防管理'];
+    const MODULE_TABS = ['资产管理', '物业管理', '能源管理', '环境管理', '食堂管理', '安全管理', '消防管理'];
+    const MODULE_PARK_TABS = ['资产管理', '物业管理', '能源管理', '环境管理', '食堂管理', '安全管理', '消防管理'];
 
     const isOverviewTab = computed(() => activeTab.value === '综合态势');
     const isModuleSandboxTab = computed(() => MODULE_PARK_TABS.includes(activeTab.value));
@@ -518,8 +530,22 @@ createApp({
     const isModuleParkMode = computed(() => isModuleSandboxTab.value && overviewViewMode.value === 'park');
     const isSandboxMapMode = computed(() => isOverviewMapMode.value || isModuleMapMode.value);
     const isSandboxParkMode = computed(() => isOverviewParkMode.value || isModuleParkMode.value);
-    const isParkSceneVisible = computed(() => isSandboxParkMode.value && !isFireFloorMode.value);
-    const isParkInteractiveVisible = computed(() => isSandboxParkMode.value && !isFireFloorMode.value);
+    const isSecurityMgmtTab = computed(() => activeTab.value === '安全管理');
+    const isSecurityFloorMode = computed(() => isSecurityMgmtTab.value && securityFloorMode.value);
+    const isSecurityGateMode = computed(() => isSecurityMgmtTab.value && securityGateMode.value);
+    const isSecurityParkMode = computed(() => (
+      isSecurityMgmtTab.value && isModuleParkMode.value && !securityFloorMode.value && !securityGateMode.value
+    ));
+    const isSecurityMapMode = computed(() => isSecurityMgmtTab.value && isModuleMapMode.value);
+    const showSecurityDevicePanel = computed(() => (
+      isSecurityMgmtTab.value && (isModuleParkMode.value || isSecurityFloorMode.value || isSecurityGateMode.value)
+    ));
+    const isParkSceneVisible = computed(() => (
+      isSandboxParkMode.value && !isFireFloorMode.value && !isSecurityFloorMode.value && !isSecurityGateMode.value
+    ));
+    const isParkInteractiveVisible = computed(() => (
+      isSandboxParkMode.value && !isFireFloorMode.value && !isSecurityFloorMode.value && !isSecurityGateMode.value
+    ));
     const isAssetTab = computed(() => activeTab.value === '资产管理');
     const isFireTab = computed(() => activeTab.value === '消防管理');
     const isFireFloorMode = computed(() => isFireTab.value && fireFloorMode.value);
@@ -610,6 +636,7 @@ createApp({
     const activeParkBuildings = computed(() => {
       const tab = activeTab.value;
       if (tab === '消防管理') return FIRE_DATA.parkBuildings;
+      if (tab === '安全管理') return SECURITY_DATA.parkBuildings;
       if (tab === '食堂管理') {
         return DASHBOARD_DATA.parkBuildings.filter((b) => b.id === 'c3');
       }
@@ -620,6 +647,12 @@ createApp({
       const tab = activeTab.value;
       if (tab === '消防管理') {
         const markers = FIRE_DATA.sceneMarkers[fireSubSystem.value];
+        if (!markers) return null;
+        const hit = markers.find((m) => m.buildingId === buildingId);
+        return hit ? { line1: hit.line1, line2: hit.line2 } : null;
+      }
+      if (tab === '安全管理') {
+        const markers = SECURITY_DATA.sceneMarkers[securitySubModule.value];
         if (!markers) return null;
         const hit = markers.find((m) => m.buildingId === buildingId);
         return hit ? { line1: hit.line1, line2: hit.line2 } : null;
@@ -663,8 +696,88 @@ createApp({
     const leftSidebarTitle = computed(() => {
       if (activeTab.value === '物业管理') return '办公用房列表';
       if (activeTab.value === '消防管理' && showFireDevicePanel.value) return '设备列表';
+      if (isSecurityFloorMode.value) return '项目筛选';
       return '项目筛选';
     });
+
+    const securityDeviceListTitle = computed(() => {
+      const map = { monitor: '监控列表', access: '门禁列表', parking: '车闸列表' };
+      return map[securitySubModule.value] || '设备列表';
+    });
+
+    const securityDeviceSearchPlaceholder = computed(() => {
+      const map = { monitor: '搜索监控名称', access: '搜索门禁名称', parking: '搜索车闸名称' };
+      return map[securitySubModule.value] || '搜索设备名称';
+    });
+
+    const currentSecurityKpi = computed(() => {
+      if (isSecurityMapMode.value) return SECURITY_DATA.mapKpi;
+      if (isModuleParkMode.value && isSecurityMgmtTab.value) {
+        return SECURITY_DATA.moduleKpis[securitySubModule.value] || SECURITY_DATA.mapKpi;
+      }
+      return SECURITY_DATA.mapKpi;
+    });
+
+    const currentSecurityDeviceList = computed(() => {
+      const list = SECURITY_DATA.deviceLists[securitySubModule.value];
+      if (!list) return { online: 0, offline: 0, items: [] };
+      const q = securityDeviceSearch.value.trim().toLowerCase();
+      if (!q) return list;
+      return { ...list, items: list.items.filter((n) => n.toLowerCase().includes(q)) };
+    });
+
+    const currentSecurityFloorDevices = computed(() => {
+      const moduleDevices = SECURITY_DATA.floorDevices[securitySubModule.value];
+      if (!moduleDevices) return [];
+      return moduleDevices[securitySelectedFloor.value] || [];
+    });
+
+    const securityBuildingPopup = computed(() => {
+      if (!securityBuildingPopupId.value) return null;
+      const building = SECURITY_DATA.parkBuildings.find((b) => b.id === securityBuildingPopupId.value);
+      const detail = SECURITY_DATA.buildingDetails[securitySubModule.value]?.[securityBuildingPopupId.value];
+      if (!building || !detail) return null;
+      return { ...building, ...detail };
+    });
+
+    const securityActiveGateDevice = computed(() => {
+      if (!securityGateDeviceId.value) return null;
+      return SECURITY_DATA.gateDevices[securityGateDeviceId.value] || null;
+    });
+
+    const securityDevicePopup = computed(() => {
+      if (!securityDevicePopupCode.value && !securityActiveGateDevice.value) return null;
+      if (isSecurityGateMode.value && securityActiveGateDevice.value) {
+        return { code: securityActiveGateDevice.value.code, gate: true };
+      }
+      if (!securityDevicePopupCode.value) return null;
+      const popups = SECURITY_DATA.devicePopups[securitySubModule.value];
+      if (popups?.[securityDevicePopupCode.value]) return popups[securityDevicePopupCode.value];
+      if (securitySubModule.value === 'access') {
+        return {
+          code: securityDevicePopupCode.value,
+          online: true,
+          stats: SECURITY_DATA.devicePopups.access.MJ002.stats,
+        };
+      }
+      if (securitySubModule.value === 'monitor') {
+        return {
+          code: securityDevicePopupCode.value,
+          location: '延安东路300号1号楼',
+          online: true,
+          preview: true,
+        };
+      }
+      return null;
+    });
+
+    const securityLedgerData = computed(() => (
+      SECURITY_DATA.ledgerTemplates[securitySubModule.value] || SECURITY_DATA.ledgerTemplates.monitor
+    ));
+
+    const parkingVehicleTotal = computed(() => SECURITY_DATA.parkingVehicleType.total);
+
+    const showSecurityBuildingTree = computed(() => securitySubModule.value !== 'parking');
 
     function parkBuildingStyle(b) {
       return {
@@ -745,6 +858,9 @@ createApp({
           return FIRE_DATA.systemKpis[fireSubSystem.value] || FIRE_DATA.eventKpi;
         }
         return FIRE_DATA.eventKpi;
+      }
+      if (isSecurityMgmtTab.value) {
+        return currentSecurityKpi.value;
       }
       if (isModuleParkMode.value && moduleParkKpiData.value) {
         return moduleParkKpiData.value;
@@ -971,6 +1087,129 @@ createApp({
       resetParkView();
     }
 
+    function resetSecurityView() {
+      securitySubModule.value = 'monitor';
+      securityFloorMode.value = false;
+      securityGateMode.value = false;
+      securitySelectedFloor.value = '2F';
+      securityBuildingPopupId.value = null;
+      securityDeviceSearch.value = '';
+      securitySelectedDevice.value = null;
+      securityGateDeviceId.value = null;
+      securityDevicePopupCode.value = null;
+      securityLedgerOpen.value = false;
+    }
+
+    function resolveSecurityBuildingId(id) {
+      return SECURITY_DATA.buildingIdMap[id] || id;
+    }
+
+    function selectSecurityBuilding(building, e) {
+      if (securitySubModule.value === 'parking') {
+        selectParkBuilding(building, e);
+        return;
+      }
+      securityBuildingPopupId.value = building.id;
+    }
+
+    function closeSecurityBuildingPopup() {
+      securityBuildingPopupId.value = null;
+    }
+
+    function enterSecurityBuilding() {
+      if (!securityBuildingPopupId.value || securitySubModule.value === 'parking') return;
+      const childId = Object.entries(SECURITY_DATA.buildingIdMap).find(([, v]) => v === securityBuildingPopupId.value)?.[0];
+      if (childId) selectedProject.value = childId;
+      securityFloorMode.value = true;
+      securityBuildingPopupId.value = null;
+      securityDevicePopupCode.value = null;
+      securityLedgerOpen.value = false;
+      securitySelectedFloor.value = securitySubModule.value === 'monitor' ? '2F' : '1F';
+      resetParkView();
+      nextTick(() => initChartsForTab());
+    }
+
+    function exitSecurityFloor() {
+      securityFloorMode.value = false;
+      securityDevicePopupCode.value = null;
+      securityLedgerOpen.value = false;
+      nextTick(() => initChartsForTab());
+    }
+
+    function exitSecurityGateMode() {
+      securityGateMode.value = false;
+      securityGateDeviceId.value = null;
+      securityDevicePopupCode.value = null;
+      securityLedgerOpen.value = false;
+      nextTick(() => initChartsForTab());
+    }
+
+    function switchSecuritySubModule(id) {
+      securitySubModule.value = id;
+      securityFloorMode.value = false;
+      securityGateMode.value = false;
+      securityBuildingPopupId.value = null;
+      securitySelectedDevice.value = null;
+      securityGateDeviceId.value = null;
+      securityDevicePopupCode.value = null;
+      securityLedgerOpen.value = false;
+      resetParkView();
+      nextTick(() => initChartsForTab());
+    }
+
+    function selectSecurityFloor(floor) {
+      securitySelectedFloor.value = floor;
+      securityDevicePopupCode.value = null;
+      securityLedgerOpen.value = false;
+    }
+
+    function selectSecurityFloorDevice(device) {
+      securitySelectedDevice.value = device.name;
+      securityDevicePopupCode.value = device.code;
+      securityLedgerOpen.value = false;
+    }
+
+    function selectSecurityGateMarker(gateId) {
+      securityGateDeviceId.value = gateId;
+      securityGateMode.value = true;
+      securityDevicePopupCode.value = null;
+      securityLedgerOpen.value = false;
+      const gate = SECURITY_DATA.gateDevices[gateId];
+      if (gate) securitySelectedDevice.value = gate.name;
+      nextTick(() => initChartsForTab());
+    }
+
+    function selectSecurityGateFromScene(marker) {
+      selectSecurityGateMarker(marker.id);
+    }
+
+    function openSecurityLedger() {
+      securityLedgerOpen.value = true;
+    }
+
+    function closeSecurityLedger() {
+      securityLedgerOpen.value = false;
+    }
+
+    function selectSecurityProjectChild(id) {
+      selectedProject.value = id;
+      if (securitySubModule.value === 'parking') {
+        resetParkView();
+        return;
+      }
+      const buildingId = resolveSecurityBuildingId(id);
+      if (buildingId.startsWith('sb') && isSecurityParkMode.value) {
+        if (id.includes('-')) {
+          securityFloorMode.value = true;
+          securityBuildingPopupId.value = null;
+          securitySelectedFloor.value = securitySubModule.value === 'monitor' ? '2F' : '1F';
+        } else {
+          securityBuildingPopupId.value = buildingId;
+        }
+      }
+      resetParkView();
+    }
+
     function getChart(id) {
       const el = document.getElementById(id);
       if (!el) return null;
@@ -1020,6 +1259,112 @@ createApp({
       }
     }
 
+    function flyToProjectOnMap(projectId, then) {
+      MapManager.flyToProject(projectId, () => {
+        updateMapPopupPosition();
+        then?.();
+      });
+    }
+
+    function openProjectIntroOnMap(projectId) {
+      selectedProject.value = projectId;
+      MapManager.setActive(projectId);
+      openMapPopup(projectId);
+      flyToProjectOnMap(projectId);
+    }
+
+    function toggleProjectExpand(project) {
+      project.expanded = !project.expanded;
+    }
+
+    function findProjectInList(projectId) {
+      const pid = resolveProjectRootId(projectId);
+      return currentProjects.value.find((p) => p.id === pid || resolveProjectRootId(p.id) === pid) || null;
+    }
+
+    function focusGeneralParkBuilding(childId, projectId) {
+      const project = findProjectInList(projectId);
+      if (!project?.children?.length) return;
+      const child = project.children.find((c) => c.id === childId);
+      if (!child) return;
+      const buildings = activeParkBuildings.value;
+      let building = buildings.find((b) => b.name === child.name);
+      if (!building) {
+        const idx = project.children.findIndex((c) => c.id === childId);
+        if (idx >= 0 && buildings[idx]) building = buildings[idx];
+      }
+      if (!building) return;
+      selectedParkBuilding.value = building.id;
+      parkRotateX.value = building.focusRotateX;
+      parkRotateY.value = building.focusRotateY;
+    }
+
+    function applyProjectChildFocus(childId, projectId) {
+      if (isFireTab.value) {
+        selectFireProjectChild(childId);
+        return;
+      }
+      if (isSecurityMgmtTab.value) {
+        selectSecurityProjectChild(childId);
+        return;
+      }
+      focusGeneralParkBuilding(childId, projectId);
+    }
+
+    function enterProjectPark(projectId, childId = null) {
+      activeParkProjectId.value = projectId;
+      selectedProject.value = childId || projectId;
+      resetParkView();
+      fireFloorMode.value = false;
+      fireSubSystem.value = 'event';
+      fireBuildingPopupId.value = null;
+      if (isSecurityMgmtTab.value) {
+        resetSecurityView();
+      }
+      overviewViewMode.value = 'park';
+      mapPopupProjectId.value = null;
+      syncMapVisibility();
+      nextTick(() => {
+        if (childId) applyProjectChildFocus(childId, projectId);
+        initChartsForTab();
+      });
+    }
+
+    function handleProjectSelect(project) {
+      if (!project || project.id === 'all') return;
+      const projectId = resolveProjectRootId(project.id);
+      project.expanded = true;
+      selectedProject.value = projectId;
+
+      if (isSandboxMapMode.value) {
+        openProjectIntroOnMap(projectId);
+        return;
+      }
+
+      if (isSandboxParkMode.value || isFireFloorMode.value || isSecurityFloorMode.value || isSecurityGateMode.value) {
+        enterProjectPark(projectId);
+      }
+    }
+
+    function handleProjectChildSelect(child, project) {
+      if (!child || !project || project.id === 'all') return;
+      const projectId = resolveProjectRootId(project.id);
+      project.expanded = true;
+
+      if (isSandboxMapMode.value) {
+        enterProjectPark(projectId, child.id);
+        return;
+      }
+
+      if (activeParkProjectId.value !== projectId) {
+        enterProjectPark(projectId, child.id);
+        return;
+      }
+
+      selectedProject.value = child.id;
+      applyProjectChildFocus(child.id, projectId);
+    }
+
     function closeMapPopup() {
       mapPopupProjectId.value = null;
     }
@@ -1030,24 +1375,13 @@ createApp({
     }
 
     function selectMapProject(project) {
-      selectedProject.value = project.id;
-      MapManager.setActive(project.id);
-      openMapPopup(project.id);
+      handleProjectSelect(project);
     }
 
     function enterPark() {
       if (mapPopupProjectId.value) {
-        activeParkProjectId.value = mapPopupProjectId.value;
-        selectedProject.value = mapPopupProjectId.value;
+        enterProjectPark(mapPopupProjectId.value);
       }
-      resetParkView();
-      fireFloorMode.value = false;
-      fireSubSystem.value = 'event';
-      fireBuildingPopupId.value = null;
-      overviewViewMode.value = 'park';
-      mapPopupProjectId.value = null;
-      syncMapVisibility();
-      nextTick(() => initChartsForTab());
     }
 
     function exitPark() {
@@ -1056,6 +1390,9 @@ createApp({
       fireFloorMode.value = false;
       fireBuildingPopupId.value = null;
       fireSubSystem.value = 'event';
+      if (isSecurityMgmtTab.value) {
+        resetSecurityView();
+      }
       overviewViewMode.value = 'map';
       syncMapVisibility();
       nextTick(() => {
@@ -1144,9 +1481,26 @@ createApp({
     }
 
     function initSecurityCharts() {
-      getChart('publicVehicleChart')?.setOption(buildPublicVehicleOption());
-      getChart('vehicleTrafficChart')?.setOption(buildVehicleTrafficOption());
-      getChart('visitorTrendChart')?.setOption(buildVisitorTrendOption());
+      if (securityLedgerOpen.value) return;
+      if (isSecurityMapMode.value || !isModuleParkMode.value) {
+        getChart('publicVehicleChart')?.setOption(buildPublicVehicleOption());
+        getChart('vehicleTrafficChart')?.setOption(buildVehicleTrafficOption());
+        getChart('visitorTrendChart')?.setOption(buildVisitorTrendOption());
+        return;
+      }
+      if (securitySubModule.value === 'monitor') {
+        getChart('publicVehicleChart')?.setOption(buildPublicVehicleOption());
+        getChart('secMonitorSpaceChart')?.setOption(buildSecMonitorSpaceOption());
+        getChart('secMonitorFaultChart')?.setOption(buildSecMonitorFaultOption());
+      } else if (securitySubModule.value === 'access') {
+        getChart('secAccessPersonChart')?.setOption(buildSecAccessPersonOption());
+        getChart('secAccessPassChart')?.setOption(buildSecAccessPassOption());
+        getChart('visitorTrendChart')?.setOption(buildVisitorTrendOption());
+      } else if (securitySubModule.value === 'parking') {
+        getChart('secParkingVehicleChart')?.setOption(buildSecParkingVehicleOption());
+        getChart('vehicleTrafficChart')?.setOption(buildVehicleTrafficOption());
+        getChart('visitorTrendChart')?.setOption(buildVisitorTrendOption());
+      }
     }
 
     function initFireCharts() {
@@ -1217,40 +1571,23 @@ createApp({
     }
 
     function toggleProject(project) {
-      project.expanded = !project.expanded;
-      selectedProject.value = project.id;
-      if (isFireTab.value && isModuleParkMode.value && project.id.includes('-')) {
-        selectFireProjectChild(project.id);
-        return;
-      }
-      if (isSandboxMapMode.value) {
-        MapManager.setActive(project.id);
-        openMapPopup(project.id);
-      } else if (isSandboxParkMode.value) {
-        resetParkView();
-      }
+      handleProjectSelect(project);
     }
 
     function selectProject(id) {
-      selectedProject.value = id;
-      if (isFireTab.value && (isModuleParkMode.value || isFireFloorMode.value) && id.includes('-')) {
-        selectFireProjectChild(id);
+      const project = findProjectInList(id);
+      const child = project?.children?.find((c) => c.id === id);
+      if (child) {
+        handleProjectChildSelect(child, project);
         return;
       }
-      const projectId = resolveProjectRootId(id);
-      if (isSandboxMapMode.value) {
-        MapManager.setActive(projectId);
-        openMapPopup(projectId);
-      } else if (isSandboxParkMode.value) {
-        resetParkView();
-      }
+      if (project) handleProjectSelect(project);
     }
 
     function onMapSelect(projectId) {
       selectedProject.value = projectId;
       if (isSandboxMapMode.value) {
-        openMapPopup(projectId);
-        MapManager.setActive(projectId);
+        openProjectIntroOnMap(projectId);
       }
     }
 
@@ -1285,6 +1622,7 @@ createApp({
         fireFloorMode.value = false;
         fireSubSystem.value = 'event';
         fireBuildingPopupId.value = null;
+        resetSecurityView();
         overviewViewMode.value = 'map';
         mapPopupProjectId.value = null;
       }
@@ -1304,6 +1642,7 @@ createApp({
       fireFloorMode.value = false;
       fireSubSystem.value = 'event';
       fireBuildingPopupId.value = null;
+      resetSecurityView();
       overviewViewMode.value = 'map';
       mapPopupProjectId.value = null;
       activeTab.value = tab;
@@ -1347,6 +1686,15 @@ createApp({
 
     watch([fireSubSystem, fireFloorMode, fireSelectedFloor, mapPopupProjectId], () => {
       if (activeTab.value === '消防管理') {
+        nextTick(() => initChartsForTab());
+      }
+    });
+
+    watch([
+      securitySubModule, securityFloorMode, securityGateMode,
+      securitySelectedFloor, securityLedgerOpen, mapPopupProjectId,
+    ], () => {
+      if (activeTab.value === '安全管理') {
         nextTick(() => initChartsForTab());
       }
     });
@@ -1400,6 +1748,19 @@ createApp({
       syncTrafficDate, syncOverviewEnergyDate, syncWorkOrderDate, syncFireDate, syncPropertyDate,
       selectOverviewEnergyProject, clearOverviewEnergyProject,
       securityKpiData, fireKpiData, publicVehicle,
+      isSecurityMgmtTab, isSecurityParkMode, isSecurityMapMode, isSecurityFloorMode, isSecurityGateMode,
+      securitySubModule, securitySubModules: SECURITY_DATA.subModules, switchSecuritySubModule,
+      securityFloors: SECURITY_DATA.floors, securitySelectedFloor, selectSecurityFloor,
+      currentSecurityFloorDevices, currentSecurityDeviceList, showSecurityDevicePanel,
+      securityDeviceListTitle, securityDeviceSearchPlaceholder, securityDeviceSearch,
+      securitySelectedDevice, showSecurityBuildingTree,
+      securityBuildingPopup, closeSecurityBuildingPopup, enterSecurityBuilding,
+      exitSecurityFloor, exitSecurityGateMode, selectSecurityBuilding, selectSecurityProjectChild,
+      securityParkGateMarkers: SECURITY_DATA.parkGateMarkers, selectSecurityGateFromScene,
+      securityActiveGateDevice, securityDevicePopup, securityDevicePopupCode,
+      securityLedgerOpen, securityLedgerData, securityIaExpanded, securityFmExpanded,
+      openSecurityLedger, closeSecurityLedger, selectSecurityFloorDevice,
+      currentSecurityKpi, parkingVehicleTotal,
       fireRankTab, firePeriod, fireDate, fireCompletionGauges, fireRankList,
       isFireTab, isFireFloorMode, isFireParkMode, isFireMapMode, isFireMapWithPopup,
       isFireEventMode, isFireSystemMode, showFireSafetyPanel, showFireDevicePanel,
@@ -1410,7 +1771,9 @@ createApp({
       fireDeviceSearch, fireSelectedDevice, currentFireDeviceList, currentFireSystemPanel,
       fireBuildingPopup, closeFireBuildingPopup, enterFireBuilding, exitFireFloor,
       selectFireBuilding, selectFireProjectChild,
-      toggleProject, selectProject, toggleFullscreen, switchTab,
+      toggleProject, selectProject, toggleProjectExpand,
+      handleProjectSelect, handleProjectChildSelect,
+      toggleFullscreen, switchTab,
       toggleSecurityMenu, selectSecuritySub,
       closeMapPopup, enterPark, exitPark, switchOverviewEnergy, selectMapProject,
       updateAssetTypeChart, updateAirQualityChart, switchEnergyType, switchEnergyPeriod,

@@ -132,14 +132,20 @@
                 <div
                   class="tree-node"
                   :class="{ expanded: project.expanded, selected: selectedProject === project.id }"
-                  @click="selectMapProject(project)"
+                  @click="handleProjectSelect(project)"
                 >
-                  <span class="tree-arrow" :class="{ open: project.expanded }" @click.stop="project.expanded = !project.expanded">▶</span>
+                  <span class="tree-arrow" :class="{ open: project.expanded }" @click.stop="toggleProjectExpand(project)">▶</span>
                   <span class="tree-label">{{ project.name }}</span>
                   <span class="tree-count">{{ project.units }}个</span>
                 </div>
                 <div v-if="project.expanded" class="tree-children">
-                  <div v-for="child in project.children" :key="child.id" class="tree-child">
+                  <div
+                    v-for="child in project.children"
+                    :key="child.id"
+                    class="tree-child"
+                    :class="{ selected: selectedProject === child.id }"
+                    @click.stop="handleProjectChildSelect(child, project)"
+                  >
                     <span>{{ child.name }}</span>
                   </div>
                 </div>
@@ -198,9 +204,9 @@
               <div
                 class="tree-node"
                 :class="{ expanded: project.expanded, selected: selectedProject === project.id }"
-                @click="toggleProject(project)"
+                @click="handleProjectSelect(project)"
               >
-                <span class="tree-arrow" :class="{ open: project.expanded }">▶</span>
+                <span class="tree-arrow" :class="{ open: project.expanded }" @click.stop="toggleProjectExpand(project)">▶</span>
                 <span class="tree-label">{{ project.name }}</span>
                 <span class="tree-count">{{ project.units }}{{ unitSuffix }}</span>
               </div>
@@ -210,7 +216,7 @@
                   :key="child.id"
                   class="tree-child"
                   :class="{ selected: selectedProject === child.id }"
-                  @click.stop="selectProject(child.id)"
+                  @click.stop="handleProjectChildSelect(child, project)"
                 >
                   <span>{{ child.name }}</span>
                 </div>
@@ -233,14 +239,20 @@
                 <div
                   class="tree-node"
                   :class="{ expanded: project.expanded, selected: selectedProject === project.id }"
-                  @click="selectMapProject(project)"
+                  @click="handleProjectSelect(project)"
                 >
-                  <span class="tree-arrow" :class="{ open: project.expanded }" @click.stop="project.expanded = !project.expanded">▶</span>
+                  <span class="tree-arrow" :class="{ open: project.expanded }" @click.stop="toggleProjectExpand(project)">▶</span>
                   <span class="tree-label">{{ project.name }}</span>
                   <span class="tree-count">{{ project.units }}{{ unitSuffix }}</span>
                 </div>
                 <div v-if="project.expanded" class="tree-children">
-                  <div v-for="child in project.children" :key="child.id" class="tree-child">
+                  <div
+                    v-for="child in project.children"
+                    :key="child.id"
+                    class="tree-child"
+                    :class="{ selected: selectedProject === child.id }"
+                    @click.stop="handleProjectChildSelect(child, project)"
+                  >
                     <span>{{ child.name }}</span>
                   </div>
                 </div>
@@ -297,6 +309,8 @@
             <div class="panel-header">
               <span class="panel-title">{{ leftSidebarTitle }}</span>
               <button v-if="isFireFloorMode" class="park-back-link" @click="exitFireFloor">返回园区</button>
+              <button v-else-if="isSecurityFloorMode" class="park-back-link" @click="exitSecurityFloor">返回园区</button>
+              <button v-else-if="isSecurityGateMode" class="park-back-link" @click="exitSecurityGateMode">返回园区</button>
               <button v-else class="park-back-link" @click="exitPark">返回地图</button>
             </div>
             <div class="search-box">
@@ -308,19 +322,19 @@
                 <div
                   class="tree-node"
                   :class="{ expanded: project.expanded, selected: selectedProject === project.id }"
-                  @click="toggleProject(project)"
+                  @click="handleProjectSelect(project)"
                 >
-                  <span class="tree-arrow" :class="{ open: project.expanded }">▶</span>
+                  <span class="tree-arrow" :class="{ open: project.expanded }" @click.stop="toggleProjectExpand(project)">▶</span>
                   <span class="tree-label">{{ project.name }}</span>
                   <span class="tree-count">{{ project.units }}{{ unitSuffix }}</span>
                 </div>
-                <div v-if="project.expanded" class="tree-children">
+                <div v-if="project.expanded && (activeTab !== '安全管理' || showSecurityBuildingTree)" class="tree-children">
                   <div
                     v-for="child in project.children"
                     :key="child.id"
                     class="tree-child"
                     :class="{ selected: selectedProject === child.id }"
-                    @click.stop="selectProject(child.id)"
+                    @click.stop="handleProjectChildSelect(child, project)"
                   >
                     <span>{{ child.name }}</span>
                   </div>
@@ -470,6 +484,29 @@
               </div>
             </div>
           </template>
+
+          <template v-if="activeTab === '安全管理' && showSecurityDevicePanel">
+            <div class="panel glass-panel transparent-panel overview-left-panel">
+              <div class="panel-header"><span class="panel-title">{{ securityDeviceListTitle }}</span></div>
+              <div class="search-box env-search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input v-model="securityDeviceSearch" type="text" :placeholder="securityDeviceSearchPlaceholder" />
+              </div>
+              <div class="env-device-status">
+                <span class="env-online">在线 {{ currentSecurityDeviceList.online }}</span>
+                <span class="env-offline">离线 {{ currentSecurityDeviceList.offline }}</span>
+              </div>
+              <div class="env-device-list">
+                <div
+                  v-for="name in currentSecurityDeviceList.items"
+                  :key="name"
+                  class="env-device-item"
+                  :class="{ selected: securitySelectedDevice === name }"
+                  @click="securitySelectedDevice = name"
+                >{{ name }}</div>
+              </div>
+            </div>
+          </template>
         </template>
         <!-- 其他模块（地图模式） -->
         <div v-else class="panel glass-panel transparent-panel">
@@ -485,9 +522,9 @@
               <div
                 class="tree-node"
                 :class="{ expanded: project.expanded, selected: selectedProject === project.id }"
-                @click="toggleProject(project)"
+                @click="handleProjectSelect(project)"
               >
-                <span class="tree-arrow" :class="{ open: project.expanded }">▶</span>
+                <span class="tree-arrow" :class="{ open: project.expanded }" @click.stop="toggleProjectExpand(project)">▶</span>
                 <span class="tree-label">{{ project.name }}</span>
                 <span class="tree-count">{{ project.units }}{{ unitSuffix }}</span>
               </div>
@@ -497,7 +534,7 @@
                   :key="child.id"
                   class="tree-child"
                   :class="{ selected: selectedProject === child.id }"
-                  @click.stop="selectProject(child.id)"
+                  @click.stop="handleProjectChildSelect(child, project)"
                 >
                   <span>{{ child.name }}</span>
                 </div>
@@ -759,36 +796,286 @@
 
       <!-- 安全管理 -->
       <template v-else-if="activeTab === '安全管理'">
-        <section class="center-area">
-          <div class="kpi-row kpi-row-3">
-            <div v-for="kpi in securityKpiData" :key="kpi.label" class="kpi-card glass-panel">
-              <div class="kpi-icon" :style="{ color: kpi.color }"><span v-html="kpi.icon"></span></div>
+        <section class="center-area" :class="{ 'center-area-security': isSecurityParkMode || isSecurityFloorMode || isSecurityGateMode }">
+          <div class="kpi-row" :class="{ 'kpi-row-3': isSecurityMapMode }">
+            <div v-for="kpi in currentKpiData" :key="kpi.label" class="kpi-card glass-panel">
+              <div class="kpi-icon" v-if="kpi.icon" :style="{ color: kpi.color }"><span v-html="kpi.icon"></span></div>
               <div class="kpi-info">
-                <div class="kpi-value">{{ kpi.value }}<span class="kpi-unit">{{ kpi.unit }}</span></div>
+                <div class="kpi-value" :style="kpi.icon ? {} : { color: kpi.color }">{{ kpi.value }}<span class="kpi-unit">{{ kpi.unit }}</span></div>
                 <div class="kpi-label">{{ kpi.label }}</div>
               </div>
             </div>
           </div>
-          <div class="map-spacer"></div>
-        </section>
-        <aside class="sidebar right-sidebar">
-          <div class="panel glass-panel transparent-panel">
-            <div class="panel-header"><span class="panel-title">公车分析</span></div>
-            <div class="stat-summary stat-summary-inline">车辆总数 <strong>{{ publicVehicle.total }}</strong></div>
-            <div id="publicVehicleChart" class="chart-box asset-donut-chart"></div>
-          </div>
-          <div class="panel glass-panel transparent-panel rank-panel">
-            <div class="panel-header"><span class="panel-title">车辆进出统计</span></div>
-            <div class="vehicle-stat-row">
-              <div class="vehicle-stat"><strong>1,234</strong>辆<span>当月累计通行车辆</span></div>
-              <div class="vehicle-stat"><strong>1,000</strong>辆<span>上月累计通行车辆</span></div>
+
+          <!-- 监控/通行 楼层平面图 -->
+          <div v-if="isSecurityFloorMode" class="map-spacer fire-floor-spacer">
+            <div class="fire-floor-layout glass-panel security-floor-layout">
+              <div class="fire-floor-sidebar">
+                <label v-for="f in securityFloors" :key="f" class="fire-floor-check">
+                  <input type="checkbox" :checked="securitySelectedFloor === f" @change="selectSecurityFloor(f)" />
+                  <span>{{ f }}</span>
+                </label>
+              </div>
+              <div class="fire-floor-map security-floor-map">
+                <div class="fire-floor-grid"></div>
+                <div
+                  v-for="d in currentSecurityFloorDevices"
+                  :key="d.id"
+                  class="fire-floor-device security-floor-device"
+                  :class="{ active: securityDevicePopupCode === d.code }"
+                  :style="{ left: d.x + '%', top: d.y + '%' }"
+                  @click.stop="selectSecurityFloorDevice(d)"
+                >
+                  <span class="sec-device-icon" :style="{ background: d.color }">{{ securitySubModule === 'monitor' ? '📷' : '🚪' }}</span>
+                  <span class="sec-device-code">{{ d.code }}</span>
+                </div>
+              </div>
             </div>
-            <div id="vehicleTrafficChart" class="chart-box"></div>
           </div>
-          <div class="panel glass-panel transparent-panel">
-            <div class="panel-header"><span class="panel-title">访客月度环比变化趋势</span></div>
-            <div id="visitorTrendChart" class="chart-box"></div>
+
+          <!-- 停车 车闸点位页 -->
+          <div v-else-if="isSecurityGateMode" class="map-spacer security-gate-spacer">
+            <div class="security-gate-scene glass-panel">
+              <div class="security-gate-road"></div>
+              <div
+                v-for="g in securityParkGateMarkers"
+                :key="g.id"
+                class="security-gate-marker"
+                :class="{ active: securityGateDeviceId === g.id }"
+                :style="{ left: g.x + '%', top: g.y + '%' }"
+                @click="selectSecurityGateFromScene(g)"
+              >
+                <span class="sec-gate-icon">🚗</span>
+              </div>
+            </div>
           </div>
+
+          <!-- 3D 园区 -->
+          <div v-else class="map-spacer">
+            <div
+              v-if="isParkInteractiveVisible"
+              class="park-scene-interactive"
+              :class="{ orbiting: parkOrbiting, 'has-building': selectedParkBuilding }"
+              @mousedown="startParkOrbit"
+            >
+              <div
+                v-for="b in activeParkBuildings"
+                :key="b.id"
+                class="park-building-hit"
+                :class="{ active: selectedParkBuilding === b.id || securityBuildingPopupId === b.id }"
+                :style="parkBuildingStyle(b)"
+                @mousedown.stop="selectSecurityBuilding(b, $event)"
+              >
+                <span class="park-building-label">{{ b.name }}</span>
+              </div>
+              <div
+                v-for="b in activeParkBuildings"
+                :key="'mk-' + b.id"
+                v-show="getParkBuildingMarker(b.id)"
+                class="park-scene-marker"
+                :style="parkMarkerStyle(b)"
+              >
+                <div class="park-marker-card">
+                  <strong>{{ getParkBuildingMarker(b.id)?.line1 }}</strong>
+                  <span>{{ getParkBuildingMarker(b.id)?.line2 }}</span>
+                </div>
+              </div>
+              <template v-if="isSecurityParkMode && securitySubModule === 'parking'">
+                <div
+                  v-for="g in securityParkGateMarkers"
+                  :key="'gate-' + g.id"
+                  class="security-park-gate-marker"
+                  :style="{ left: g.x + '%', top: g.y + '%' }"
+                  @click.stop="selectSecurityGateFromScene(g)"
+                >
+                  <span class="sec-gate-icon">🚗</span>
+                </div>
+              </template>
+              <div class="park-orbit-hint">{{ securitySubModule === 'parking' ? '点击车闸图标进入设备点位' : (selectedParkBuilding ? '拖动查看不同角度' : '点击楼栋查看基本信息') }}</div>
+            </div>
+          </div>
+
+          <!-- 楼栋弹窗（监控/通行） -->
+          <div v-if="securityBuildingPopup && securitySubModule !== 'parking'" class="fire-building-popup glass-panel security-building-popup">
+            <button class="popup-close" @click="closeSecurityBuildingPopup" aria-label="关闭">×</button>
+            <div class="fire-building-popup-head">
+              <strong>{{ securityBuildingPopup.name }}</strong>
+            </div>
+            <div class="fire-building-popup-stats security-building-stats">
+              <div><span>{{ securityBuildingPopup.label }}</span><strong>{{ securityBuildingPopup.totalDevices }}个</strong></div>
+            </div>
+            <button class="popup-enter-btn" @click="enterSecurityBuilding">进入单体</button>
+          </div>
+
+          <!-- 楼层设备弹窗 -->
+          <div v-if="securityDevicePopup && isSecurityFloorMode" class="security-device-popup glass-panel" :class="'sec-popup-' + securitySubModule">
+            <div class="security-device-popup-head">
+              <strong>{{ securityDevicePopup.code }}</strong>
+              <button type="button" class="sec-detail-link" @click.stop="openSecurityLedger">☰ 设备详情</button>
+            </div>
+            <div v-if="securitySubModule === 'monitor'" class="security-device-popup-body">
+              <div class="sec-monitor-preview">
+                <span class="sec-live-badge">实时</span>
+                <div class="sec-preview-placeholder">{{ securityDevicePopup.location }}</div>
+              </div>
+            </div>
+            <div v-else-if="securitySubModule === 'access'" class="security-device-popup-body">
+              <div class="sec-access-stat" v-for="row in securityDevicePopup.stats" :key="row.label">
+                <span>{{ row.label }}</span>
+                <strong>{{ row.value }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- 车闸设备弹窗 -->
+          <div v-if="securityActiveGateDevice && isSecurityGateMode" class="security-device-popup glass-panel sec-popup-parking">
+            <div class="security-device-popup-head">
+              <strong>{{ securityActiveGateDevice.code }}</strong>
+              <button type="button" class="sec-detail-link" @click.stop="openSecurityLedger">☰ 设备详情</button>
+            </div>
+            <div class="security-device-popup-body">
+              <div class="sec-gate-summary">
+                <div><span>车闸状态</span><strong class="online">在线</strong></div>
+                <div><span>今日累计车辆</span><strong>{{ securityActiveGateDevice.todayCount }}辆</strong></div>
+              </div>
+              <div class="sec-gate-records-title">车闸最近5条进出记录</div>
+              <table class="sec-gate-records">
+                <thead><tr><th>车牌号</th><th>进出口名称</th><th>进出时间</th></tr></thead>
+                <tbody>
+                  <tr v-for="(row, i) in securityActiveGateDevice.records" :key="i">
+                    <td>{{ row.plate }}</td>
+                    <td>{{ row.gate }}</td>
+                    <td>{{ row.time }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 底部子模块切换 -->
+          <div v-if="isSecurityParkMode || isSecurityFloorMode || isSecurityGateMode" class="fire-sub-nav glass-panel security-sub-nav">
+            <button
+              v-for="mod in securitySubModules"
+              :key="mod.id"
+              class="fire-sub-nav-btn"
+              :class="{ active: securitySubModule === mod.id }"
+              @click="switchSecuritySubModule(mod.id)"
+            >
+              <span class="fire-sub-icon">{{ mod.icon }}</span>
+              <span>{{ mod.label }}({{ mod.count }})</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- 右侧：设备台账 -->
+        <aside v-if="securityLedgerOpen" class="sidebar right-sidebar security-ledger-sidebar">
+          <div class="panel glass-panel transparent-panel security-ledger-panel">
+            <div class="panel-header">
+              <span class="panel-title">设备详情</span>
+              <button class="park-back-link" @click="closeSecurityLedger">←</button>
+            </div>
+            <div class="security-ledger-section">
+              <button type="button" class="security-ledger-toggle" @click="securityIaExpanded = !securityIaExpanded">
+                <span>IA_物联网属性</span>
+                <span>{{ securityIaExpanded ? '▾' : '▸' }}</span>
+              </button>
+              <div v-show="securityIaExpanded" class="security-ledger-fields">
+                <div v-for="row in securityLedgerData.ia" :key="row.label" class="security-ledger-row">
+                  <span>{{ row.label }}</span>
+                  <strong>{{ row.value }}</strong>
+                </div>
+              </div>
+            </div>
+            <div class="security-ledger-section">
+              <button type="button" class="security-ledger-toggle" @click="securityFmExpanded = !securityFmExpanded">
+                <span>FM_运维属性</span>
+                <span>{{ securityFmExpanded ? '▾' : '▸' }}</span>
+              </button>
+              <div v-show="securityFmExpanded" class="security-ledger-fields">
+                <div v-for="row in securityLedgerData.fm" :key="row.label" class="security-ledger-row">
+                  <span>{{ row.label }}</span>
+                  <strong>{{ row.value }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- 右侧：地图模式 / 默认图表 -->
+        <aside v-else class="sidebar right-sidebar">
+          <template v-if="isSecurityMapMode || !isModuleParkMode">
+            <div class="panel glass-panel transparent-panel">
+              <div class="panel-header"><span class="panel-title">公车分析</span></div>
+              <div class="stat-summary stat-summary-inline">车辆总数 <strong>{{ publicVehicle.total }}</strong></div>
+              <div id="publicVehicleChart" class="chart-box asset-donut-chart"></div>
+            </div>
+            <div class="panel glass-panel transparent-panel rank-panel">
+              <div class="panel-header"><span class="panel-title">车辆进出统计</span></div>
+              <div class="vehicle-stat-row">
+                <div class="vehicle-stat"><strong>1,234</strong>辆<span>当月累计通行车辆</span></div>
+                <div class="vehicle-stat"><strong>1,000</strong>辆<span>上月累计通行车辆</span></div>
+              </div>
+              <div id="vehicleTrafficChart" class="chart-box"></div>
+            </div>
+            <div class="panel glass-panel transparent-panel">
+              <div class="panel-header"><span class="panel-title">访客月度环比变化趋势</span></div>
+              <div id="visitorTrendChart" class="chart-box"></div>
+            </div>
+          </template>
+
+          <template v-else-if="securitySubModule === 'monitor'">
+            <div class="panel glass-panel transparent-panel">
+              <div class="panel-header"><span class="panel-title">进出车辆类型占比</span></div>
+              <div id="publicVehicleChart" class="chart-box asset-donut-chart"></div>
+            </div>
+            <div class="panel glass-panel transparent-panel">
+              <div class="panel-header"><span class="panel-title">按照空间类型统计监控分布</span></div>
+              <div id="secMonitorSpaceChart" class="chart-box"></div>
+            </div>
+            <div class="panel glass-panel transparent-panel rank-panel">
+              <div class="panel-header"><span class="panel-title">Top10 高故障监控设备盘点</span></div>
+              <div id="secMonitorFaultChart" class="chart-box"></div>
+            </div>
+          </template>
+
+          <template v-else-if="securitySubModule === 'access'">
+            <div class="panel glass-panel transparent-panel">
+              <div class="panel-header"><span class="panel-title">通行人员占比分析</span></div>
+              <div id="secAccessPersonChart" class="chart-box asset-donut-chart"></div>
+            </div>
+            <div class="panel glass-panel transparent-panel rank-panel">
+              <div class="panel-header"><span class="panel-title">人员通行统计</span></div>
+              <div class="vehicle-stat-row">
+                <div class="vehicle-stat"><strong>1,234</strong>人<span>今日累计通行</span></div>
+                <div class="vehicle-stat"><strong>98.4%</strong><span>通行成功率</span></div>
+              </div>
+              <div id="secAccessPassChart" class="chart-box"></div>
+            </div>
+            <div class="panel glass-panel transparent-panel">
+              <div class="panel-header"><span class="panel-title">访客月度环比变化趋势</span></div>
+              <div id="visitorTrendChart" class="chart-box"></div>
+            </div>
+          </template>
+
+          <template v-else-if="securitySubModule === 'parking'">
+            <div class="panel glass-panel transparent-panel">
+              <div class="panel-header"><span class="panel-title">车辆类型统计</span></div>
+              <div class="stat-summary stat-summary-inline">车辆总数 <strong>{{ parkingVehicleTotal }}</strong></div>
+              <div id="secParkingVehicleChart" class="chart-box asset-donut-chart"></div>
+            </div>
+            <div class="panel glass-panel transparent-panel rank-panel">
+              <div class="panel-header"><span class="panel-title">车辆进出统计</span></div>
+              <div class="vehicle-stat-row">
+                <div class="vehicle-stat"><strong>1,234</strong>辆<span>当月累计通行车辆</span></div>
+                <div class="vehicle-stat"><strong>1,000</strong>辆<span>上月累计通行车辆</span></div>
+              </div>
+              <div id="vehicleTrafficChart" class="chart-box"></div>
+            </div>
+            <div class="panel glass-panel transparent-panel">
+              <div class="panel-header"><span class="panel-title">车辆进出总数统计</span></div>
+              <div id="visitorTrendChart" class="chart-box"></div>
+            </div>
+          </template>
         </aside>
       </template>
 
@@ -1335,10 +1622,12 @@
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="js/data.js"></script>
   <script src="js/fire-data.js"></script>
+  <script src="js/security-data.js"></script>
   <script src="js/public-warehouse-data.js"></script>
   <script src="js/middle-platform-data.js"></script>
   <script src="js/module-charts.js"></script>
   <script src="js/fire-charts.js"></script>
+  <script src="js/security-charts.js"></script>
   <script src="js/map.js"></script>
   <script src="js/dashboard.js"></script>
 </body>

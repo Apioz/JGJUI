@@ -69,11 +69,12 @@ def build_body():
     parts = []
 
     parts.append(h1("智慧园区数字化管理平台 — 小程序产品需求说明（PRD）"))
-    parts.append(p("文档版本：V1.1"))
+    parts.append(p("文档版本：V1.2"))
     parts.append(p("编写依据：prototype/ 交互原型源码（index.html、js/app.js、css/*）及 dp/js/public-warehouse-data.js"))
     parts.append(p("产品名称：BLM Digital 小程序"))
     parts.append(p("适用范围：智慧园区数字化管理平台移动端小程序"))
     parts.append(p("说明：本文档严格依据当前原型代码梳理，未在代码中实现的能力标注为「原型占位」或「未接入」。"))
+    parts.append(p("V1.2 变更：公物仓入库/出库区块明确无趋势图，仅 KPI + 历史表，与中台 V1.1 一致。"))
 
     parts.append(h2("1. 文档概述"))
     parts.append(h3("1.1 产品定位"))
@@ -262,8 +263,8 @@ def build_body():
     parts.append(bullet("办公用房：5 项横向卡片（楼栋总数 4、房间总数 1373、楼层数量 51、建筑面积 74620.44㎡、总使用面积 52739.42㎡）"))
     parts.append(bullet("公物仓：renderPublicWarehouseSection()，数据来自 PUBLIC_WAREHOUSE_DATA，与中台公物仓统计口径一致，分三大区块："))
     parts.append(bullet("  ① 库存物资数：在仓 822 件（黄浦 484 / 闵行 338）、累计存放 1320 件（环比 ↑5.6%）、分仓 pie、堆叠条、累计历史表"))
-    parts.append(bullet("  ② 入库：指标 Tab（次数/物资数量/固定资产价值，state.gwInboundMetric）+ 本季 KPI + 年度历史表（最近 4 年）"))
-    parts.append(bullet("  ③ 出库：指标 Tab（次数/物资数量/节约资金，state.gwOutboundMetric）+ 本季 KPI + 年度历史表；出库次数指标含周转率列"))
+    parts.append(bullet("  ② 入库：指标 Tab（次数/物资数量/固定资产价值，state.gwInboundMetric）+ 本季 KPI + 年度历史表（无趋势图）"))
+    parts.append(bullet("  ③ 出库：指标 Tab（次数/物资数量/节约资金，state.gwOutboundMetric）+ 本季 KPI + 年度历史表（无趋势图）；出库次数指标含周转率列"))
 
     parts.append(h3("7.1.1 公物仓模块交互细节"))
     parts.append(p("函数 renderPublicWarehouseSection() 在数据 Tab 与资产数据总览子页复用。"))
@@ -276,10 +277,10 @@ def build_body():
             ["库存物资数", "累计存放历史表", "列：周期/合计/黄浦/闵行/环比"],
             ["入库", "指标 Tab ×3", "setGwInboundMetric → re-render"],
             ["入库", "本季 KPI 卡片", "合计 + 环比 + 分仓明细"],
-            ["入库", "入库历史表", "年度数据最近 4 行，含环比"],
+            ["入库", "入库历史表", "年度数据最近 4 行，含环比；无趋势折线图"],
             ["出库", "指标 Tab ×3", "setGwOutboundMetric → re-render"],
             ["出库", "本季 KPI 卡片", "合计 + 环比 + 分仓明细"],
-            ["出库", "出库历史表", "count 指标显示周转率列；quantity/savedFunds 显示「—」"],
+            ["出库", "出库历史表", "count 指标显示周转率列；quantity/savedFunds 显示「—」；无趋势折线图"],
         ]
     ))
 
@@ -682,7 +683,7 @@ def build_body():
             ["密码/登录", "无真实校验"],
             ["能源时间筛选", "部分数值未联动项目数据"],
             ["公物仓数据", "与中台共享，不随项目切换变化（原型阶段）"],
-            ["公物仓趋势图", "小程序仅展示 KPI + 历史表，无中台折线趋势图"],
+            ["公物仓入库/出库趋势图", "小程序与中台均无；仅 KPI + 历史表。库存区块保留累计历史表与分仓 pie"],
             ["MOCK 未展示", "spaceRanking、propertyChart 未渲染"],
         ]
     ))

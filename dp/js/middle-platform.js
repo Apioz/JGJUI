@@ -486,6 +486,9 @@ createApp({
     const gwCumulativeHistoryQuarter = ref('all');
     const gwInboundMetric = ref('count');
     const gwOutboundMetric = ref('count');
+    const gwInboundHistoryExpanded = ref(false);
+    const gwOutboundHistoryExpanded = ref(false);
+    const GW_HISTORY_DEFAULT_YEARS = 5;
 
     let clockTimer = null;
 
@@ -903,6 +906,26 @@ createApp({
       })).reverse();
     }
 
+    function parseGwHistoryYear(period) {
+      return parseInt(String(period).replace('年', ''), 10);
+    }
+
+    function sliceGwHistoryByYearRange(rows, expanded) {
+      if (expanded || !rows.length) return rows;
+      const years = rows.map((r) => parseGwHistoryYear(r.period)).filter((y) => !Number.isNaN(y));
+      if (!years.length) return rows;
+      const maxYear = Math.max(...years);
+      const minYear = maxYear - GW_HISTORY_DEFAULT_YEARS + 1;
+      return rows.filter((r) => {
+        const y = parseGwHistoryYear(r.period);
+        return !Number.isNaN(y) && y >= minYear;
+      });
+    }
+
+    function gwHistoryHasMoreRows(rows) {
+      return sliceGwHistoryByYearRange(rows, false).length < rows.length;
+    }
+
     function enrichGwOutboundHistoryWithTurnover(rows) {
       const inv = gwData.yearlyInventory;
       const outCount = gwData.outbound.yearlyTotal.count;
@@ -921,22 +944,48 @@ createApp({
       });
     }
 
-    const gwInboundHistory = computed(() =>
+    const gwInboundHistoryFull = computed(() =>
       buildGwYearlyFlowHistory(gwData.inbound, gwInboundMetric.value)
     );
 
-    const gwOutboundHistory = computed(() =>
+    const gwOutboundHistoryFull = computed(() =>
       enrichGwOutboundHistoryWithTurnover(
         buildGwYearlyFlowHistory(gwData.outbound, gwOutboundMetric.value)
       )
     );
 
+    const gwInboundHistory = computed(() =>
+      sliceGwHistoryByYearRange(gwInboundHistoryFull.value, gwInboundHistoryExpanded.value)
+    );
+
+    const gwOutboundHistory = computed(() =>
+      sliceGwHistoryByYearRange(gwOutboundHistoryFull.value, gwOutboundHistoryExpanded.value)
+    );
+
+    const gwInboundHistoryHasMore = computed(() =>
+      gwHistoryHasMoreRows(gwInboundHistoryFull.value)
+    );
+
+    const gwOutboundHistoryHasMore = computed(() =>
+      gwHistoryHasMoreRows(gwOutboundHistoryFull.value)
+    );
+
+    function toggleGwInboundHistoryExpand() {
+      gwInboundHistoryExpanded.value = !gwInboundHistoryExpanded.value;
+    }
+
+    function toggleGwOutboundHistoryExpand() {
+      gwOutboundHistoryExpanded.value = !gwOutboundHistoryExpanded.value;
+    }
+
     function switchGwInboundMetric(key) {
       gwInboundMetric.value = key;
+      gwInboundHistoryExpanded.value = false;
     }
 
     function switchGwOutboundMetric(key) {
       gwOutboundMetric.value = key;
+      gwOutboundHistoryExpanded.value = false;
     }
 
     function gwStockRatio(wid) {
@@ -1925,6 +1974,9 @@ createApp({
       gwCumulativeHistory, gwInboundDisplay, gwOutboundDisplay,
       gwInboundMetricLabel, gwOutboundMetricLabel,
       gwInboundHistory, gwOutboundHistory,
+      gwInboundHistoryExpanded, gwOutboundHistoryExpanded,
+      gwInboundHistoryHasMore, gwOutboundHistoryHasMore,
+      toggleGwInboundHistoryExpand, toggleGwOutboundHistoryExpand,
       getMenuIcon, getSummaryIcon,
       toggleSidebar, toggleMenu, toggleNavGroup, selectSubMenu, selectMenuLeaf, navigateToView, navigateToFunction,
       isMenuActive, isSubActive,

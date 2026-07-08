@@ -1771,6 +1771,21 @@ html, body {
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.12);
 }
 
+.gw-history-more {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--mp-accent);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+
+.gw-history-more:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 1200px) {
   .gw-kpi-row,
   .gw-kpi-row.cols-3 { grid-template-columns: 1fr; }

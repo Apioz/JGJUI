@@ -815,11 +815,13 @@ const DASHBOARD_DATA = {
   securityProjects: [
     { id: 'all', name: '全部项目', units: 10, expanded: true, children: [] },
     {
-      id: 'p1', name: '延安东路300号', units: 3, expanded: true,
+      id: 'p1', name: '延安东路300号', units: 5, expanded: true,
       children: [
         { id: 'p1-1', name: '1号楼', checked: true },
         { id: 'p1-2', name: '2号楼', checked: true },
         { id: 'p1-3', name: '3号楼', checked: false },
+        { id: 'p1-4', name: '4号楼', checked: false },
+        { id: 'p1-5', name: '5号楼', checked: false },
       ],
     },
     {

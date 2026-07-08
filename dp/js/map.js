@@ -121,6 +121,22 @@ const MapManager = {
     if (this.markerLayer) this.markerLayer.style.visibility = visible ? 'visible' : 'hidden';
   },
 
+  flyToProject(projectId, onComplete) {
+    const item = DASHBOARD_DATA.mapMarkers.find((m) => m.projectId === projectId);
+    if (!item || !this.map) {
+      onComplete?.();
+      return;
+    }
+    this.setActive(projectId);
+    const onDone = () => {
+      this.updateMarkerPositions();
+      if (this.onViewChange) this.onViewChange();
+      onComplete?.();
+    };
+    this.map.once('moveend', onDone);
+    this.map.flyTo([item.lat, item.lng], 16, { animate: true, duration: 0.75 });
+  },
+
   getProjectScreenPoint(projectId) {
     const item = DASHBOARD_DATA.mapMarkers.find((m) => m.projectId === projectId);
     if (!item || !this.map) return null;

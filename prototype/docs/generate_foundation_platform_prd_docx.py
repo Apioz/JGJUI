@@ -58,10 +58,12 @@ def build_body():
     parts = []
 
     parts.append(h1("政数数字管理平台 — 底座平台产品需求说明（PRD）"))
-    parts.append(p("文档版本：V1.0（项目中心 + 模型中心）"))
+    parts.append(p("文档版本：V1.2（项目中心 + 模型中心 + 设备/空间/文档/编码中心）"))
     parts.append(p("编写依据：dp/foundation-platform.html、foundation-platform-data.js、foundation-platform-views.js、foundation-platform.js"))
-    parts.append(p("适用范围：底座平台各中心模块；本文档首期覆盖项目中心、模型中心。"))
-    parts.append(p("说明：字段与 Mock 数据以 foundation-platform-data.js 为准；弹窗表单字段以产品设计稿为准。"))
+    parts.append(p("适用范围：底座平台各中心模块；本文档覆盖项目中心、模型中心、设备中心、空间中心、文档中心、编码中心。"))
+    parts.append(p("说明：筛选条件严格按产品设计稿列示，不得增减字段；弹窗表单字段以例图为准。"))
+    parts.append(p("V1.1：项目中心/模型中心行操作弹窗与全景子页。"))
+    parts.append(p("V1.2：补充设备中心、空间中心、文档中心、编码中心模块数据与交互。"))
 
     # 1
     parts.append(h2("1. 平台概述"))
@@ -82,8 +84,10 @@ def build_body():
         [
             ["project-center", "list", "projectCenter"],
             ["model-center", "dual-list", "modelCenter"],
-            ["device-center", "kpi-list", "deviceCenter（后续文档）"],
-            ["space-center", "kpi-tree-list", "spaceCenter（后续文档）"],
+            ["device-center", "kpi-list", "deviceCenter"],
+            ["space-center", "kpi-tree-list", "spaceCenter"],
+            ["document-center", "document", "documentCenter"],
+            ["coding-center", "coding-list", "codingCenter"],
         ]
     ))
     parts.append(h3("1.3 通用列表交互"))
@@ -284,9 +288,274 @@ def build_body():
     parts.append(h3("3.11 模型处理流程"))
     parts.append(p("1. 项目中心创建项目 → 2. 模型中心新增单体 → 3. 上传 .rvt → 4. 配置转换 → 5. 转换完成（已转换）→ 6. 上传 db 包 → 7. 上传台账 Excel → 8. 设备/空间中心可引用模型数据。"))
 
-    # 4 Data appendix
-    parts.append(h2("4. 附录 — Mock 数据"))
-    parts.append(h3("4.1 项目中心 rows（节选）"))
+    # 6 Device Center
+    parts.append(h2("6. 设备中心"))
+    parts.append(h3("6.1 入口与页面结构"))
+    parts.append(p("菜单：设备中心（path=device-center）；页面类型 kpi-list；数据 FP_PAGE_DATA.deviceCenter。"))
+
+    parts.append(h3("6.2 顶部 KPI"))
+    parts.append(table(
+        ["标签", "Mock 值"],
+        [
+            ["单体总数 (个)", "4"],
+            ["设备总数 (个)", "2550"],
+            ["设备类型总数 (个)", "15"],
+        ]
+    ))
+
+    parts.append(h3("6.3 筛选条件（严格按例图，共 3 项）"))
+    parts.append(p("操作按钮：搜索（primary）、清空、展开 ▾。不得增减下列字段。"))
+    parts.append(table(
+        ["序号", "字段 key", "标签", "类型", "占位符"],
+        [
+            ["1", "unit", "所属单体", "select", "请选择 所属单体"],
+            ["2", "category", "设备分类", "select", "请选择 设备分类"],
+            ["3", "model", "关联模型", "select", "请选择 关联模型"],
+        ]
+    ))
+
+    parts.append(h3("6.4 工具栏"))
+    parts.append(table(
+        ["按钮", "样式", "交互"],
+        [
+            ["+ 新增", "primary", "打开「新增」弹窗"],
+            ["删除", "danger", "批量/行删除（确认弹窗）"],
+            ["导出", "warn", "导出设备列表"],
+        ]
+    ))
+
+    parts.append(h3("6.5 列表字段"))
+    parts.append(table(
+        ["列 key", "列名"],
+        [
+            ["unitName", "单体名称"], ["unitCode", "单体编码"], ["location", "安装位置"],
+            ["spaceCode", "空间编码"], ["spaceCategory", "空间大类"], ["linkedModel", "关联模型"],
+            ["elementId", "ElementID"], ["deviceName", "设备名称"], ["status", "设备状态"],
+        ]
+    ))
+    parts.append(p("分页：共 2550 条；10 条/页。"))
+
+    parts.append(h3("6.6 行操作"))
+    parts.append(table(
+        ["操作", "交互"],
+        [
+            ["删除", "确认弹窗「此操作将永久删除, 是否继续?」"],
+            ["查看", "打开「设备属性」只读弹窗（ID_/LC_/FM_ 分组）"],
+            ["编辑", "打开编辑弹窗（设备资产分类、LC_位置属性、ID_身份属性等）"],
+            ["链接关系", "打开「链接文档」双栏弹窗（关联文档 / 文件列表树）"],
+        ]
+    ))
+
+    parts.append(h3("6.7 弹窗 — 新增"))
+    parts.append(table(
+        ["字段", "必填", "说明"],
+        [
+            ["项目名称", "—", "只读，如 浦东学校项目"],
+            ["设备资产分类", "是", "下拉，如 绿化带"],
+            ["elementId", "否", "文本"],
+        ]
+    ))
+
+    parts.append(h3("6.8 弹窗 — 设备属性（查看）"))
+    parts.append(p("elementId 顶栏；分组：ID_身份属性（设备名称/类型/设计编号/设备编码）、LC_位置属性（单体/楼层/安装位置/房间编码/服务区域）、FM_运维属性（产地/出厂日期/安装日期）；底部「关闭」。"))
+
+    parts.append(h3("6.9 弹窗 — 编辑"))
+    parts.append(p("项目名称（只读）；设备资产分类 *；折叠面板 LC_位置属性（空间位置 *、LC_单体/楼层/安装位置/房间编码只读、LC_服务区域可编辑）；ID_身份属性（折叠）；确定/取消。"))
+
+    parts.append(h3("6.10 弹窗 — 链接文档"))
+    parts.append(p("左栏「关联文档」；右栏「文件列表」树形多选（帮助中心/操作手册/视频指南/常见问题）；取消关联 / 确认关联。"))
+
+    # 7 Space Center
+    parts.append(h2("7. 空间中心"))
+    parts.append(h3("7.1 入口与页面结构"))
+    parts.append(p("菜单：空间中心（path=space-center）；页面类型 kpi-tree-list；树形列表展示空间层级。"))
+
+    parts.append(h3("7.2 顶部 KPI"))
+    parts.append(table(
+        ["标签", "Mock 值"],
+        [
+            ["单体总数 (个)", "4"],
+            ["空间总数 (个)", "1286"],
+            ["总建筑面积 (m²)", "32140.000"],
+            ["总出租面积 (m²)", "18500.000"],
+            ["空间总费用 (元)", "0"],
+        ]
+    ))
+
+    parts.append(h3("7.3 筛选条件（严格按例图，共 5 项）"))
+    parts.append(p("操作按钮：搜索、清空、展开 ▾。不得增减下列字段。"))
+    parts.append(table(
+        ["序号", "字段 key", "标签", "类型", "占位符"],
+        [
+            ["1", "unit", "所属单体", "select", "请选择 所属单体"],
+            ["2", "name", "空间名称", "input", "请输入 空间名称"],
+            ["3", "code", "空间编码", "input", "请输入 空间编码"],
+            ["4", "category", "空间分类", "select", "请选择 空间分类"],
+            ["5", "model", "关联模型", "select", "请选择 关联模型"],
+        ]
+    ))
+
+    parts.append(h3("7.4 工具栏"))
+    parts.append(table(
+        ["按钮", "交互"],
+        [["+ 新增", "打开「新增」弹窗"], ["导出", "导出空间列表"]]
+    ))
+
+    parts.append(h3("7.5 列表字段"))
+    parts.append(table(
+        ["列 key", "列名"],
+        [
+            ["name", "空间名称（树形）"], ["code", "空间编码"], ["category", "空间大类"],
+            ["elementId", "ElementId"], ["linkedModel", "关联模型"], ["usage", "空间用途"],
+            ["status", "空间状态"], ["area", "建筑面积"],
+        ]
+    ))
+    parts.append(p("分页：共 1286 条。"))
+
+    parts.append(h3("7.6 行操作"))
+    parts.append(p("编辑：打开「编辑面积」弹窗（建筑面积 *，单位 m²，默认 0.000）；确定/取消。"))
+
+    parts.append(h3("7.7 弹窗 — 新增空间"))
+    parts.append(p("两列布局；必填 * 字段："))
+    parts.append(table(
+        ["字段", "必填", "控件"],
+        [
+            ["项目名称", "—", "只读 浦东学校项目"],
+            ["elementId", "否", "文本"],
+            ["楼宇编码", "否", "文本"],
+            ["LC_楼层编码", "是", "文本"],
+            ["使用单位", "否", "下拉 请选择使用单位"],
+            ["空间状态", "否", "下拉 请选择"],
+            ["建筑面积", "否", "数字 m²，默认 0"],
+            ["空间类型", "是", "下拉，如 办公室"],
+            ["楼宇名称", "是", "下拉 请选择"],
+            ["LC_楼层", "是", "下拉 请选择"],
+            ["空间名称", "是", "文本"],
+            ["空间用途", "否", "下拉 请选择"],
+            ["空间大类", "是", "只读 办公空间"],
+        ]
+    ))
+
+    # 8 Document Center
+    parts.append(h2("8. 文档中心"))
+    parts.append(h3("8.1 入口与页面结构"))
+    parts.append(p("菜单：文档中心（path=document-center）；页面类型 document；左右分栏布局。"))
+
+    parts.append(h3("8.2 筛选条件（严格按例图）"))
+    parts.append(p("文档中心无传统多字段筛选区；仅下列 2 处筛选控件，不得增减："))
+    parts.append(table(
+        ["位置", "类型", "占位符", "说明"],
+        [
+            ["左侧项目栏顶部", "input", "请输入内容", "搜索/过滤项目列表"],
+            ["右侧工具栏", "select", "请选择", "文档类型/状态筛选下拉"],
+        ]
+    ))
+
+    parts.append(h3("8.3 左侧 — 项目列表"))
+    parts.append(p("Mock 项目：浦东惠南养护院项目；点击切换右侧文档列表上下文。"))
+
+    parts.append(h3("8.4 右侧 — 工具栏"))
+    parts.append(table(
+        ["按钮", "交互"],
+        [
+            ["上传文件 ▾", "下拉：上传文件 / 上传文件夹"],
+            ["新建文件夹", "打开「新建文件夹」弹窗"],
+            ["新建在线文档", "打开富文本「新建在线文档」弹窗"],
+        ]
+    ))
+    parts.append(p("视图切换：网格 / 列表（列表为默认）。"))
+
+    parts.append(h3("8.5 文档列表"))
+    parts.append(table(
+        ["列", "说明"],
+        [["名称", "文件/文件夹名"], ["类型", "文件类型"], ["上传日期", "上传时间"]]
+    ))
+    parts.append(p("分页：共 N 条；20 条/页。"))
+
+    parts.append(h3("8.6 弹窗 — 上传文件夹"))
+    parts.append(p("附件上传 *（上传文件按钮）；说明：video/bim/image/office/document/压缩/备份，单次最大 500MB；上传到文件夹 *（下拉）；提交/取消。"))
+
+    parts.append(h3("8.7 弹窗 — 新建文件夹"))
+    parts.append(p("文件夹名称 *；上传到文件夹 *（下拉 请选择上传到文件夹）；确定/取消。"))
+
+    parts.append(h3("8.8 弹窗 — 新建在线文档"))
+    parts.append(p("名称 *；文件夹 *（请选择上传到的文件夹）；富文本编辑器（正文/引用/列表/链接/图片/表格等工具栏）；确定/取消。"))
+
+    # 9 Coding Center
+    parts.append(h2("9. 编码中心"))
+    parts.append(h3("9.1 入口与页面结构"))
+    parts.append(p("菜单：编码中心（path=coding-center）；页面类型 coding-list。"))
+
+    parts.append(h3("9.2 筛选条件（严格按例图，共 7 项）"))
+    parts.append(p("操作按钮：搜索、清空。不得增减下列字段。"))
+    parts.append(table(
+        ["序号", "字段 key", "标签", "类型", "占位符"],
+        [
+            ["1", "category", "类别", "select", "请选择 类别"],
+            ["2", "code", "CODE", "input", "请输入 CODE"],
+            ["3", "codeEn", "CODE_EN", "input", "请输入 CODE_EN"],
+            ["4", "lv1", "LV1", "input", "请输入 LV1"],
+            ["5", "lv2", "LV2", "input", "请输入 LV2"],
+            ["6", "lv3", "LV3_CN", "input", "请输入 LV3_CN"],
+            ["7", "lv4", "LV4", "input", "请输入 LV4"],
+        ]
+    ))
+
+    parts.append(h3("9.3 工具栏"))
+    parts.append(table(
+        ["按钮", "交互"],
+        [
+            ["+ 新增", "打开「新增」弹窗"],
+            ["更新编码", "打开「上传编码」Excel 弹窗"],
+            ["+ 定义编码及映射列", "打开字段映射弹窗（左侧勾选/右侧拖拽排序）"],
+            ["资产分类设置", "打开资产分类树（设备/空间 Tab）"],
+            ["下载编码模板", "预览/下载 编码模板.xlsx"],
+            ["导出", "导出编码列表"],
+        ]
+    ))
+
+    parts.append(h3("9.4 列表字段"))
+    parts.append(table(
+        ["列 key", "列名"],
+        [
+            ["id", "ID"], ["code", "CODE"], ["codeEn", "CODE_EN"],
+            ["lv1", "LV1"], ["lv2", "LV2"], ["lv3", "LV3_CN"], ["lv4", "LV4"],
+            ["desc", "Description"], ["note", "备注"], ["color", "颜色"],
+        ]
+    ))
+    parts.append(p("分页：共 243 条；显示 10 条。"))
+
+    parts.append(h3("9.5 行操作"))
+    parts.append(table(
+        ["操作", "交互"],
+        [
+            ["查看", "只读弹窗展示全部编码字段"],
+            ["编辑", "编辑弹窗（类别*、ID、父级编码、CODE 等）"],
+            ["删除", "确认后删除"],
+            ["设置颜色", "颜色选择弹窗"],
+        ]
+    ))
+
+    parts.append(h3("9.6 弹窗 — 新增/编辑编码"))
+    parts.append(table(
+        ["字段", "必填"],
+        [
+            ["类别", "是"], ["ID", "否"], ["父级编码", "否"], ["CODE", "否"],
+            ["CODE_EN", "否"], ["LV1", "否"], ["LV2", "否"], ["LV3_CN", "否"],
+            ["LV4", "否"], ["Description", "否"], ["备注", "否"],
+        ]
+    ))
+    parts.append(p("编辑模式底部：修改 / 取消。"))
+
+    parts.append(h3("9.7 其他弹窗"))
+    parts.append(bullet("定义编码及映射列：左侧编码数据复选框；右侧拖拽排序区"))
+    parts.append(bullet("资产分类设置：Tab 设备/空间；分类树多选"))
+    parts.append(bullet("上传编码：仅 Excel，拖动或点击上传"))
+    parts.append(bullet("设置颜色：颜色选择器；确定/取消"))
+
+    # 10 Appendix
+    parts.append(h2("10. 附录 — Mock 数据"))
+    parts.append(h3("10.1 项目中心 rows（节选）"))
     parts.append(table(
         ["项目名称", "类型", "面积", "编码", "全景"],
         [
@@ -295,9 +564,9 @@ def build_body():
             ["上海生物芯片智慧园区", "园区", "85600", "SWXP", "3201/是"],
         ]
     ))
-    parts.append(h3("4.2 模型中心 left.rows"))
+    parts.append(h3("10.2 模型中心 left.rows"))
     parts.append(p("东楼、西楼、地下室、场地 — 均属浦东惠南养护院项目，园区设施设备=否。"))
-    parts.append(h3("4.3 模型中心 right.rows"))
+    parts.append(h3("10.3 模型中心 right.rows"))
     parts.append(table(
         ["模型名称", "类型", "converted"],
         [
@@ -307,19 +576,37 @@ def build_body():
         ]
     ))
 
-    parts.append(h2("5. 原型实现说明"))
+    parts.append(h3("10.4 设备中心 rows（节选）"))
+    parts.append(p("东楼/地下室设备：1080P智能人脸抓拍枪式摄像机、感烟火灾探测器、排烟风机等；关联模型=是。"))
+
+    parts.append(h3("10.5 空间中心 rows"))
+    parts.append(p("树形：东楼、地下室、场地；关联模型是/否。"))
+
+    parts.append(h3("10.6 编码中心 rows（节选）"))
+    parts.append(table(
+        ["ID", "CODE", "LV1", "LV3_CN"],
+        [
+            ["1001", "YC-10.00.00", "建筑", "道路"],
+            ["1002", "YC-10.01.00", "建筑", "湖泊"],
+            ["1005", "YC-10.04.00", "建筑", "停车场"],
+        ]
+    ))
+
+    parts.append(h2("11. 原型实现说明"))
     parts.append(table(
         ["项", "状态"],
         [
             ["列表/筛选/分页 UI", "已实现（foundation-platform-views.js）"],
-            ["行操作弹窗", "已实现交互占位（点击打开对应弹窗/确认框）"],
+            ["项目/模型中心行操作弹窗", "已实现交互占位"],
+            ["设备/空间/文档/编码中心弹窗", "列表 UI 已实现；弹窗待后续迭代"],
+            ["编码中心工具栏", "按钮文案与例图一致（含「+ 定义编码及映射列」）"],
             ["真实 API / 文件上传", "未接入，原型 Mock"],
             ["全景子页", "Tab 切换占位"],
             ["地图坐标拾取", "Toast 占位"],
         ]
     ))
 
-    parts.append(p("— 文档结束（后续版本补充：设备中心、空间中心、文档中心、编码中心、系统配置）—"))
+    parts.append(p("— 文档结束（后续版本补充：系统配置子模块）—"))
     return "".join(parts)
 
 

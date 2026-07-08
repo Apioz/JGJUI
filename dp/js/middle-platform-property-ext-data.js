@@ -295,7 +295,7 @@ const MP_PROPERTY_EXT_DATA = {
     searchLabel: '搜索', resetLabel: '清空',
     filters: [
       { label: '空间位置', placeholder: '请选择空间位置', type: 'select' },
-      { label: '关键词', placeholder: '模糊匹配参与方企业名称、企业编号、联系人、注册地址', type: 'input', wide: true },
+      { label: '关键词', placeholder: '模糊匹配供应商企业名称、企业编号、联系人、注册地址', type: 'input', wide: true },
       { label: '创建时间', placeholder: '开始日期 - 结束日期', type: 'daterange' },
     ],
     toolbar: [
@@ -303,7 +303,7 @@ const MP_PROPERTY_EXT_DATA = {
       { label: '下载模板', class: 'success outline' }, { label: '导出', class: 'warn outline' }, { label: '导入', class: 'success outline' },
     ],
     columns: [
-      { key: 'index', label: '#' }, { key: 'companyName', label: '参与方企业名称' }, { key: 'companyNo', label: '参与方企业编号' },
+      { key: 'index', label: '#' }, { key: 'companyName', label: '供应商企业名称' }, { key: 'companyNo', label: '供应商企业编号' },
       { key: 'contact', label: '联系人' }, { key: 'creditCode', label: '社会信用代码' }, { key: 'note', label: '备注' },
     ],
     rowActions: ['编辑', '删除', '查看'],

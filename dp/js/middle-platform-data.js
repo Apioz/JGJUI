@@ -54,6 +54,7 @@ const MIDDLE_PLATFORM_DATA = {
             { id: 'access-device', label: '通行设备管理', path: 'access-device' },
           ],
         },
+        { id: 'personnel', label: '人员管理', path: 'personnel-mgmt' },
         {
           id: 'sec-fire',
           label: '消防管理',
@@ -125,12 +126,6 @@ const MIDDLE_PLATFORM_DATA = {
           ],
         },
       ],
-    },
-    {
-      id: 'personnel',
-      label: '人员管理',
-      icon: 'personnel',
-      path: 'personnel-mgmt',
     },
     {
       id: 'energy',
