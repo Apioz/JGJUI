@@ -631,15 +631,9 @@ const FP_PAGE_DATA = {
       { key: 'platform', label: '用户平台', tag: true },
     ],
     rowActions: ['查看', '编辑', '删除'],
-    rows: [
-      { index: 1, account: 'admin', tenantTag: '管理组', realName: '管理员', roles: ['超级管理员'], dept: '上海生物芯片有限公司', platform: 'WEB', tenant: '上海禹创数维技术有限公司', nickname: '管理员', phone: '155****2859', email: 'admin@bladex.vip', gender: '男', birthday: '2018-08-08 00:00:00', userCode: '', position: '信息部' },
-      { index: 2, account: 'swxp', tenantTag: '管理组', realName: '生物芯片', roles: ['生物芯片'], dept: '生物芯片园区', platform: 'WEB', tenant: '上海禹创数维技术有限公司', nickname: '生物芯片', phone: '13800138001', email: '', gender: '男', birthday: '', userCode: '', position: '信息部' },
-      { index: 3, account: '白诚', tenantTag: '管理组', realName: '白诚', roles: ['物业经理助理'], dept: '物业科', platform: 'WEB', tenant: '上海禹创数维技术有限公司', nickname: '白诚', phone: '13700137001', email: '', gender: '男', birthday: '', userCode: '', position: '基层员工' },
-      { index: 4, account: 'hr001', tenantTag: '管理组', realName: '郝佳丽', roles: ['人事'], dept: 'MERU', platform: 'WEB', tenant: '上海禹创数维技术有限公司', nickname: '郝佳丽', phone: '13600136001', email: '', gender: '女', birthday: '', userCode: 'HR001', position: '信息部' },
-      { index: 5, account: 'manager01', tenantTag: '管理组', realName: '经理', roles: ['经理'], dept: '上海鼎创科技有限公司', platform: 'WEB', tenant: '上海禹创数维技术有限公司', nickname: '经理', phone: '13500135001', email: '', gender: '男', birthday: '', userCode: '', position: '中层管理' },
-    ],
+    rows: typeof FOUNDATION_USER_MGMT !== 'undefined' ? FOUNDATION_USER_MGMT.rows : [],
     auditRows: [],
-    total: 10,
+    total: typeof FOUNDATION_USER_MGMT !== 'undefined' ? FOUNDATION_USER_MGMT.rows.length : 0,
     pageSize: 10,
   },
 

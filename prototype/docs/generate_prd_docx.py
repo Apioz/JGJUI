@@ -81,9 +81,10 @@ def build_body():
     parts.append(p("BLM Digital 小程序是智慧园区数字化管理平台的移动端入口，面向园区运营管理人员，提供多项目切换、首页运营总览、物业工单协作、数据统计看板、个人中心及小禹 AI 智能助手等能力。原型为纯前端 Mock 实现，数据按项目维度隔离展示。"))
 
     parts.append(h3("1.2 技术实现说明（原型阶段）"))
-    parts.append(bullet("纯前端 HTML/CSS/JavaScript 单页应用，无后端 API 与持久化存储（页面刷新后除运行时通讯录修改外均重置）。"))
+    parts.append(bullet("纯前端 HTML/CSS/JavaScript 单页应用，无后端 API 与持久化存储（页面刷新后数据均重置）。"))
     parts.append(bullet("核心逻辑集中在 prototype/js/app.js；图标库为 prototype/js/icons.js。"))
     parts.append(bullet("公物仓统计数据引用 dp/js/public-warehouse-data.js（PUBLIC_WAREHOUSE_DATA），与中台、大屏共享同一数据源。"))
+    parts.append(bullet("通讯录数据引用 dp/js/foundation-user-data.js（FOUNDATION_USER_CONTACTS），与底座用户管理共享同一数据源，只读展示。"))
     parts.append(bullet("样式文件：style.css（主布局）、auth.css（认证及数据子页，含公物仓 gw-* 样式）、xiaoyu.css（小禹模块）、icons.css。"))
     parts.append(bullet("原型外壳 index.html 含侧边栏调试快捷入口及跨系统链接（大屏、中台、小程序、底座）。"))
 
@@ -119,9 +120,8 @@ def build_body():
         ["组件", "触发", "交互逻辑"],
         [
             ["项目切换 Picker", "#project-mask", "首页点击项目名 → toggleProjectPicker；点击遮罩关闭；选中项显示 ✓；selectProject 切换 currentProject 并 Toast"],
-            ["通讯录 Modal", "#contact-modal", "添加/编辑联系人；遮罩关闭；保存校验姓名+手机号"],
             ["Toast", "#toast", "全局提示，2 秒自动消失"],
-            ["确认框 confirm", "退出登录/删除联系人/清空小禹对话", "浏览器原生 confirm"],
+            ["确认框 confirm", "退出登录/清空小禹对话", "浏览器原生 confirm"],
         ]
     ))
 
@@ -301,14 +301,14 @@ def build_body():
     parts.append(table(
         ["菜单", "子页", "说明"],
         [
-            ["编辑资料", "profile", "只读展示个人信息"],
+            ["查看资料", "profile", "只读展示个人信息（中台同步）"],
             ["修改密码", "changePassword", "表单提交 Toast 成功"],
-            ["通讯录", "contacts", "联系人 CRUD"],
+            ["通讯录", "contacts", "只读展示底座用户管理联系人"],
         ]
     ))
 
-    parts.append(h3("8.3 编辑资料（profile）"))
-    parts.append(p("只读字段：姓名、工号、手机号、所属项目园区、所属部门、岗位角色。"))
+    parts.append(h3("8.3 查看资料（profile）"))
+    parts.append(p("只读字段：姓名、工号、手机号、所属项目园区、所属部门、岗位角色。资料由中台同步，小程序不可编辑。"))
 
     parts.append(h3("8.4 修改密码（changePassword）"))
     parts.append(p("字段：原密码、新密码、确认新密码。"))
@@ -316,11 +316,10 @@ def build_body():
     parts.append(p("确认 → Toast「密码修改成功」+ closeSubPage（原型无真实校验）。"))
 
     parts.append(h3("8.5 通讯录（contacts）"))
+    parts.append(p("数据来源：dp/js/foundation-user-data.js（FOUNDATION_USER_CONTACTS），与底座「用户管理」模块同步，只读展示。"))
     parts.append(p("搜索：按姓名或部门实时过滤（contactSearch）。"))
-    parts.append(p("列表：头像（姓名首字）、姓名、部门·手机号；编辑/删除按钮。"))
-    parts.append(p("添加：+ 添加 → Modal（姓名、部门、手机号）→ saveContact；校验姓名+手机号必填。"))
-    parts.append(p("编辑：回填 Modal → 更新；删除：confirm 后移除。"))
-    parts.append(p("初始 Mock 4 条联系人：李主管、王工程师、赵会计、陈经理。"))
+    parts.append(p("列表：头像（姓名首字）、姓名、部门·岗位·手机号；无添加/编辑/删除操作。"))
+    parts.append(p("初始数据：底座用户管理 10 条用户（管理员、生物芯片、白诚、郝佳丽、经理、李主管、王工程师、赵会计、陈经理、外部协作等）。"))
 
     parts.append(h2("9. 子页面 — 消息通知（notifications）"))
     parts.append(p("入口：首页 Header 铃铛。"))
@@ -697,7 +696,7 @@ def build_body():
             ["workOrderList", "工单列表", "首页物业-报修/维保/巡检"],
             ["messages", "消息", "协作-我的消息"],
             ["contacts", "通讯录", "我的-通讯录"],
-            ["profile", "编辑资料", "我的-编辑资料"],
+            ["profile", "查看资料", "我的-查看资料"],
             ["changePassword", "修改密码", "我的-修改密码"],
             ["energyData", "数据总览", "首页能源"],
             ["assetData", "数据总览", "首页资产"],

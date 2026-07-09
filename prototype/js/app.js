@@ -315,7 +315,7 @@ const TYPE_TAG_CLASS = { '报修': 'tag-blue', '维保': 'tag-orange', '巡检':
 
 const SUB_TITLES = {
   notifications: '消息通知', todo: '协作', workorder: '协作', workOrderList: '工单列表', messages: '消息',
-  contacts: '通讯录', profile: '编辑资料', changePassword: '修改密码',
+  contacts: '通讯录', profile: '查看资料', changePassword: '修改密码',
   canteenData: '数据总览', energyData: '数据总览', assetData: '数据总览',
   smartCardData: '智慧卡数据总览', canteenOpsData: '食堂运营数据总览', canteenSupervisionData: '食堂监管数据总览',
   forgotPassword: '忘记密码', register: '注册',
@@ -431,14 +431,10 @@ const state = {
   carouselIndex: 0,
   notifications: JSON.parse(JSON.stringify(MOCK.notifications)),
   messages: JSON.parse(JSON.stringify(MOCK.messages)),
-  contacts: [
-    { id: 1, name: '李主管', department: '物业管理部', phone: '13800001111' },
-    { id: 2, name: '王工程师', department: '设备维护部', phone: '13800002222' },
-    { id: 3, name: '赵会计', department: '财务部', phone: '13800003333' },
-    { id: 4, name: '陈经理', department: '园区运营部', phone: '13800004444' }
-  ],
+  contacts: JSON.parse(JSON.stringify(
+    typeof FOUNDATION_USER_CONTACTS !== 'undefined' ? FOUNDATION_USER_CONTACTS : []
+  )),
   contactSearch: '',
-  editingContactId: null,
   canteenTab: 'dashboard',
   canteenPersonnelType: 'dept',
   canteenMarketingType: 'people',
@@ -485,7 +481,6 @@ const state = {
 }
 
 let carouselTimer = null
-let nextContactId = 5
 
 function pd() { return PROJECT_DATA[state.currentProject.id] || PROJECT_DATA.p1 }
 
@@ -1892,7 +1887,7 @@ function renderMine() {
     </div>
     <div class="page-body">
       <div class="mine-menu-group">
-        <div class="mine-menu-item" onclick="App.openSubPage('profile')"><span class="mine-menu-icon">${Icons.icon('edit', { size: 20, color: '#666' })}</span><span class="mine-menu-name">编辑资料</span><span class="chevron">›</span></div>
+        <div class="mine-menu-item" onclick="App.openSubPage('profile')"><span class="mine-menu-icon">${Icons.icon('user', { size: 20, color: '#666' })}</span><span class="mine-menu-name">查看资料</span><span class="chevron">›</span></div>
         <div class="mine-menu-item" onclick="App.openSubPage('changePassword')"><span class="mine-menu-icon">${Icons.icon('lock', { size: 20, color: '#666' })}</span><span class="mine-menu-name">修改密码</span><span class="chevron">›</span></div>
         <div class="mine-menu-item" onclick="App.openSubPage('contacts')"><span class="mine-menu-icon">${Icons.icon('contacts', { size: 20, color: '#666' })}</span><span class="mine-menu-name">通讯录</span><span class="chevron">›</span></div>
       </div>
@@ -2191,15 +2186,11 @@ function renderContacts() {
   const list = state.contacts.filter(c => !state.contactSearch || c.name.includes(state.contactSearch) || c.department.includes(state.contactSearch))
   return `
     <div class="search-box"><input placeholder="搜索姓名或部门" value="${state.contactSearch}" oninput="App.onContactSearch(this.value)" /></div>
-    <div class="contacts-header"><span style="font-size:14px;color:#666">共 ${list.length} 人</span><button class="btn-add-contact" onclick="App.openContactModal()">+ 添加</button></div>
+    <div class="contacts-header"><span style="font-size:14px;color:#666">共 ${list.length} 人</span><span style="font-size:12px;color:#999">数据来自底座用户管理</span></div>
     <div class="page-body">${list.length ? list.map(c => `
       <div class="contact-row">
         <div class="contact-avatar">${c.name[0]}</div>
-        <div class="contact-info"><div class="contact-name">${c.name}</div><div class="contact-dept">${c.department} · ${c.phone}</div></div>
-        <div class="contact-actions">
-          <button class="contact-action-btn edit" onclick="event.stopPropagation();App.openContactModal(${c.id})">编辑</button>
-          <button class="contact-action-btn delete" onclick="event.stopPropagation();App.deleteContact(${c.id})">删除</button>
-        </div>
+        <div class="contact-info"><div class="contact-name">${c.name}</div><div class="contact-dept">${c.department}${c.position ? ' · ' + c.position : ''} · ${c.phone}</div></div>
       </div>`).join('') : '<div class="empty">未找到联系人</div>'}
     </div>`
 }
@@ -2813,42 +2804,6 @@ const App = {
     stopCarousel()
     render()
     showToast('已退出登录')
-  },
-
-  openContactModal(id) {
-    state.editingContactId = id || null
-    const c = id ? state.contacts.find(x => x.id === id) : null
-    document.getElementById('contact-modal-title').textContent = c ? '编辑联系人' : '添加联系人'
-    document.getElementById('cf-name').value = c ? c.name : ''
-    document.getElementById('cf-dept').value = c ? c.department : ''
-    document.getElementById('cf-phone').value = c ? c.phone : ''
-    document.getElementById('contact-modal').classList.add('show')
-  },
-
-  closeContactModal() { document.getElementById('contact-modal').classList.remove('show'); state.editingContactId = null },
-
-  saveContact() {
-    const name = document.getElementById('cf-name').value.trim()
-    const department = document.getElementById('cf-dept').value.trim()
-    const phone = document.getElementById('cf-phone').value.trim()
-    if (!name || !phone) return showToast('请填写姓名和手机号')
-    if (state.editingContactId) {
-      const c = state.contacts.find(x => x.id === state.editingContactId)
-      if (c) Object.assign(c, { name, department, phone })
-      showToast('联系人已更新')
-    } else {
-      state.contacts.push({ id: nextContactId++, name, department, phone })
-      showToast('联系人已添加')
-    }
-    App.closeContactModal()
-    render()
-  },
-
-  deleteContact(id) {
-    if (!confirm('确定删除该联系人？')) return
-    state.contacts = state.contacts.filter(c => c.id !== id)
-    showToast('联系人已删除')
-    render()
   },
 
   showToast,

@@ -103,14 +103,9 @@ const userProfile = {
   employeeId: 'EMP2024001'
 }
 
-const contacts = [
-  { id: 1, name: '李主管', department: '物业管理部', phone: '13800001111', avatar: '' },
-  { id: 2, name: '王工程师', department: '设备维护部', phone: '13800002222', avatar: '' },
-  { id: 3, name: '赵会计', department: '财务部', phone: '13800003333', avatar: '' },
-  { id: 4, name: '陈经理', department: '园区运营部', phone: '13800004444', avatar: '' },
-  { id: 5, name: '刘保安', department: '安保部', phone: '13800005555', avatar: '' },
-  { id: 6, name: '孙厨师长', department: '食堂管理部', phone: '13800006666', avatar: '' }
-]
+const { FOUNDATION_USER_CONTACTS } = require('./foundation-user-data')
+
+const contacts = FOUNDATION_USER_CONTACTS.map(c => ({ ...c, avatar: '' }))
 
 module.exports = {
   projects,
