@@ -318,7 +318,7 @@ const SUB_TITLES = {
   contacts: '通讯录', profile: '查看资料', changePassword: '修改密码',
   canteenData: '数据总览', energyData: '数据总览', assetData: '数据总览',
   smartCardData: '智慧卡数据总览', canteenOpsData: '食堂运营数据总览', canteenSupervisionData: '食堂监管数据总览',
-  forgotPassword: '忘记密码', register: '注册',
+  forgotPassword: '忘记密码',
   xiaoyu: '小禹'
 }
 
@@ -421,7 +421,6 @@ const state = {
   authPhase: 'login',
   loginMode: 'account',
   loginForm: { account: '', password: '', phone: '', code: '' },
-  registerForm: { account: '', password: '', confirm: '' },
   forgotForm: { account: '', phone: '', code: '', password: '', confirm: '' },
   selectedProjectId: 'p1',
   currentProject: PROJECTS[0],
@@ -1102,7 +1101,6 @@ function renderLogin() {
         `}
         <div class="auth-links">
           <a onclick="App.openAuthPage('forgotPassword')">忘记密码</a>
-          <a class="primary" onclick="App.openAuthPage('register')">注册账号</a>
         </div>
         <button class="btn-block btn-primary" onclick="App.doLogin()">登录</button>
         <button class="btn-block btn-outline" onclick="App.toggleLoginMode()">${isPhone ? '切换为账号密码登录' : '切换为手机号登录'}</button>
@@ -1134,25 +1132,6 @@ function renderForgotPassword() {
         <div class="form-hint">请再次输入你设置的登录密码，两次输入请保持一致</div>
       </div>
       <button class="btn-block btn-primary" onclick="App.doForgotPassword()">确认</button>
-    </div>`
-}
-
-function renderRegister() {
-  const f = state.registerForm
-  return `
-    <div class="form-page">
-      <div class="form-group"><label>登录账号</label><input placeholder="请输入" value="${f.account}" oninput="App.updateRegisterField('account',this.value)" /></div>
-      <div class="form-group">
-        <label>登录密码</label>
-        <input type="password" placeholder="请输入" value="${f.password}" oninput="App.updateRegisterField('password',this.value)" />
-        <div class="form-hint">密码需由6-20位数字+字母+特殊字符组成</div>
-      </div>
-      <div class="form-group">
-        <label>确认密码</label>
-        <input type="password" placeholder="请输入" value="${f.confirm}" oninput="App.updateRegisterField('confirm',this.value)" />
-        <div class="form-hint">请再次输入你设置的登录密码，两次输入请保持一致</div>
-      </div>
-      <button class="btn-block btn-primary" style="margin-top:24px" onclick="App.doRegister()">注册</button>
     </div>`
 }
 
@@ -2323,7 +2302,7 @@ const SUB_RENDERERS = {
   contacts: renderContacts, profile: renderProfile, changePassword: renderChangePassword,
   canteenData: renderCanteenData, energyData: renderEnergyData, assetData: renderAssetData,
   smartCardData: renderSmartCardData, canteenOpsData: renderCanteenOpsData, canteenSupervisionData: renderCanteenSupervisionData,
-  forgotPassword: renderForgotPassword, register: renderRegister,
+  forgotPassword: renderForgotPassword,
   xiaoyu: renderXiaoyu
 }
 
@@ -2339,7 +2318,7 @@ function render() {
   if (state.authPhase === 'login') {
     statusBar.classList.add('hidden')
     tabBar.classList.add('hidden')
-    if (state.currentSubPage === 'forgotPassword' || state.currentSubPage === 'register') {
+    if (state.currentSubPage === 'forgotPassword') {
       navBar.classList.remove('hidden')
       navTitle.textContent = SUB_TITLES[state.currentSubPage]
       screen.innerHTML = SUB_RENDERERS[state.currentSubPage]()
@@ -2444,7 +2423,6 @@ const App = {
   goLogin() { state.authPhase = 'login'; state.currentSubPage = null; render(); stopCarousel() },
   toggleLoginMode() { state.loginMode = state.loginMode === 'account' ? 'phone' : 'account'; render() },
   updateLoginField(k, v) { state.loginForm[k] = v },
-  updateRegisterField(k, v) { state.registerForm[k] = v },
   updateForgotField(k, v) { state.forgotForm[k] = v },
   togglePwd(k) { state.showPwd[k] = !state.showPwd[k]; render() },
 
@@ -2453,15 +2431,6 @@ const App = {
   doLogin() {
     showToast('登录成功')
     state.authPhase = 'selectProject'
-    state.currentSubPage = null
-    render()
-  },
-
-  doRegister() {
-    const f = state.registerForm
-    if (!f.account || !f.password) return showToast('请填写完整信息')
-    if (f.password !== f.confirm) return showToast('两次密码不一致')
-    showToast('注册成功，请登录')
     state.currentSubPage = null
     render()
   },
@@ -2497,7 +2466,7 @@ const App = {
   },
 
   openSubPage(page) {
-    if (state.authPhase !== 'app' && page !== 'forgotPassword' && page !== 'register') {
+    if (state.authPhase !== 'app' && page !== 'forgotPassword') {
       return showToast('请先登录')
     }
     if (page === 'xiaoyu') {
@@ -2559,7 +2528,7 @@ const App = {
   },
 
   closeSubPage() {
-    if (state.authPhase === 'login' && (state.currentSubPage === 'forgotPassword' || state.currentSubPage === 'register')) {
+    if (state.authPhase === 'login' && state.currentSubPage === 'forgotPassword') {
       state.currentSubPage = null
       render()
       return

@@ -134,27 +134,22 @@ def build_body():
     parts.append(p("两种登录模式（state.loginMode）："))
     parts.append(bullet("账号密码登录（account）：账号 + 密码输入框"))
     parts.append(bullet("手机号登录（phone）：手机号 + 验证码 +「获取验证码」按钮（Toast：验证码已发送）"))
-    parts.append(p("底部链接：忘记密码 → 子页 forgotPassword；注册账号 → 子页 register。"))
+    parts.append(p("底部链接：忘记密码 → 子页 forgotPassword。"))
     parts.append(p("操作：登录 → doLogin() → Toast「登录成功」→ authPhase=selectProject；切换登录方式 → toggleLoginMode()。"))
     parts.append(p("原型说明：不做真实账号校验。"))
 
-    parts.append(h3("3.2 注册页（子页 register）"))
-    parts.append(p("字段：登录账号、登录密码、确认密码。"))
-    parts.append(p("校验：必填；两次密码一致。"))
-    parts.append(p("成功：Toast「注册成功，请登录」→ 返回登录页。"))
-
-    parts.append(h3("3.3 忘记密码（子页 forgotPassword）"))
+    parts.append(h3("3.2 忘记密码（子页 forgotPassword）"))
     parts.append(p("字段：登录账号、手机号（含获取验证码）、手机验证码、新密码、确认新密码。"))
     parts.append(p("密码可见性切换 togglePwd('new1'/'new2')。"))
     parts.append(p("提示：6–20 位数字+字母+特殊字符；不可与上次密码一致。"))
     parts.append(p("成功：Toast「密码重置成功」→ 返回登录页。"))
 
-    parts.append(h3("3.4 选项目页（authPhase=selectProject）"))
+    parts.append(h3("3.3 选项目页（authPhase=selectProject）"))
     parts.append(p("文案：「检测到有多个项目，请选择一个项目进入」。"))
     parts.append(p("展示 PROJECTS 列表为卡片，含项目名、编码、成员数；选中高亮 selectProjectCard。"))
     parts.append(p("点击「进入」→ enterApp()：设置 currentProject，authPhase=app，默认 Tab=home，Toast「已进入 {项目名}」，启动轮播。"))
 
-    parts.append(h3("3.5 退出登录"))
+    parts.append(h3("3.4 退出登录"))
     parts.append(p("入口：我的 Tab → 退出登录；小禹个人中心 → 退出登录。"))
     parts.append(p("流程：confirm 确认 → authPhase=login，清空子页，Tab=home，停止轮播，Toast「已退出登录」。"))
 
@@ -706,7 +701,6 @@ def build_body():
             ["canteenData", "数据总览", "原型侧边栏"],
             ["xiaoyu", "小禹", "首页 FAB"],
             ["forgotPassword", "忘记密码", "登录页"],
-            ["register", "注册", "登录页"],
             ["todo", "协作", "无入口"],
         ]
     ))

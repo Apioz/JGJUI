@@ -36,9 +36,18 @@ function fpExpandPath(items, targetId, ancestors = []) {
   return false;
 }
 
+function fpStripHiddenMenu(items) {
+  return items
+    .filter((item) => !item.hidden)
+    .map((item) => {
+      if (!item.children) return item;
+      return { ...item, children: fpStripHiddenMenu(item.children) };
+    });
+}
+
 createApp({
   setup() {
-    const menuItems = ref(JSON.parse(JSON.stringify(FOUNDATION_PLATFORM_DATA.menuItems)));
+    const menuItems = ref(fpStripHiddenMenu(JSON.parse(JSON.stringify(FOUNDATION_PLATFORM_DATA.menuItems))));
     const sidebarCollapsed = ref(false);
     const activeSubId = ref('foundation-home-tab');
     const currentView = ref('foundation-home');
