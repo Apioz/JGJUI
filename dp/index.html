@@ -92,7 +92,30 @@
             <a href="../prototype/index.html" class="platform-dropdown-item" @click="navigateToPlatform('../prototype/index.html')">小程序</a>
             <a href="foundation-platform.html" class="platform-dropdown-item" @click="navigateToPlatform('foundation-platform.html')">底座</a>
             <button class="platform-dropdown-item disabled" disabled>资产</button>
-            <button class="platform-dropdown-item disabled" disabled>其他业务系统 <span class="platform-sub-arrow">›</span></button>
+            <div
+              class="platform-dropdown-submenu-wrap"
+              @mouseenter="platformBizMenuOpen = true"
+              @mouseleave="platformBizMenuOpen = false"
+            >
+              <button
+                type="button"
+                class="platform-dropdown-item platform-dropdown-parent"
+                :class="{ open: platformBizMenuOpen }"
+                @click.stop="platformBizMenuOpen = !platformBizMenuOpen"
+              >
+                其他业务系统
+                <span class="platform-sub-arrow">›</span>
+              </button>
+              <div v-show="platformBizMenuOpen" class="platform-biz-submenu">
+                <button
+                  v-for="sys in otherBusinessSystems"
+                  :key="sys"
+                  type="button"
+                  class="platform-dropdown-item"
+                  @click="selectBusinessSystem(sys)"
+                >{{ sys }}</button>
+              </div>
+            </div>
           </div>
         </div>
         <button class="action-btn" title="全屏" @click="toggleFullscreen">
@@ -249,11 +272,35 @@
                   <div
                     v-for="child in project.children"
                     :key="child.id"
-                    class="tree-child"
-                    :class="{ selected: selectedProject === child.id }"
-                    @click.stop="handleProjectChildSelect(child, project)"
+                    class="tree-child-block"
                   >
-                    <span>{{ child.name }}</span>
+                    <div
+                      class="tree-child"
+                      :class="{ selected: selectedProject === child.id, expanded: child.expanded }"
+                      @click.stop="handleProjectChildSelect(child, project)"
+                    >
+                      <span
+                        v-if="activeTab === '食堂管理' && child.children && child.children.length"
+                        class="tree-arrow nested"
+                        :class="{ open: child.expanded }"
+                        @click.stop="child.expanded = !child.expanded"
+                      >▶</span>
+                      <span>{{ child.name }}</span>
+                    </div>
+                    <div
+                      v-if="activeTab === '食堂管理' && child.expanded && child.children && child.children.length"
+                      class="tree-grandchildren"
+                    >
+                      <div
+                        v-for="floor in child.children"
+                        :key="floor.id"
+                        class="tree-child tree-floor"
+                        :class="{ selected: canteenSelectedFloor === floor.name && selectedProject === child.id }"
+                        @click.stop="handleProjectChildSelect(floor, project)"
+                      >
+                        <span>{{ floor.name }}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -302,6 +349,29 @@
               <div class="fire-sys-page">{{ fireSafetySystemIdx + 1 }}/{{ fireSafetyLevel.systems.length }}</div>
             </div>
           </template>
+          <template v-if="isEnergyMapWithPopup">
+            <div class="panel glass-panel transparent-panel overview-left-panel">
+              <div class="panel-header"><span class="panel-title">{{ energyTypeDonutTitle }}</span></div>
+              <div id="energyTypeDonutChart" class="chart-box asset-donut-chart"></div>
+            </div>
+            <div class="panel glass-panel transparent-panel rank-panel overview-left-panel">
+              <div class="panel-header"><span class="panel-title">{{ energyRankTitle }}</span></div>
+              <div class="rank-list energy-building-rank">
+                <div v-for="(item, index) in energyBuildingRankList" :key="item.name" class="rank-item">
+                  <div class="rank-badge" :class="{ first: index === 0 }">{{ index + 1 }}</div>
+                  <div class="rank-body">
+                    <div class="rank-row">
+                      <span class="rank-name">{{ item.name }}</span>
+                      <span class="rank-value">{{ item.value }}{{ item.unit }}</span>
+                    </div>
+                    <div class="rank-bar-track">
+                      <div class="rank-bar-fill" :class="{ first: index === 0 }" :style="{ width: (100 - index * 18) + '%' }"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
         </template>
         <!-- 五模块园区 3D 模式 -->
         <template v-else-if="isModuleParkMode">
@@ -311,6 +381,8 @@
               <button v-if="isFireFloorMode" class="park-back-link" @click="exitFireFloor">返回园区</button>
               <button v-else-if="isSecurityFloorMode" class="park-back-link" @click="exitSecurityFloor">返回园区</button>
               <button v-else-if="isSecurityGateMode" class="park-back-link" @click="exitSecurityGateMode">返回园区</button>
+              <button v-else-if="isEnergyFloorMode" class="park-back-link" @click="exitEnergyFloor">返回园区</button>
+              <button v-else-if="isCanteenFloorMode" class="park-back-link" @click="exitCanteenFloor">返回园区</button>
               <button v-else class="park-back-link" @click="exitPark">返回地图</button>
             </div>
             <div class="search-box">
@@ -332,11 +404,32 @@
                   <div
                     v-for="child in project.children"
                     :key="child.id"
-                    class="tree-child"
-                    :class="{ selected: selectedProject === child.id }"
-                    @click.stop="handleProjectChildSelect(child, project)"
+                    class="tree-child-block"
                   >
-                    <span>{{ child.name }}</span>
+                    <div
+                      class="tree-child"
+                      :class="{ selected: selectedProject === child.id, expanded: child.expanded }"
+                      @click.stop="handleProjectChildSelect(child, project)"
+                    >
+                      <span
+                        v-if="child.children && child.children.length"
+                        class="tree-arrow nested"
+                        :class="{ open: child.expanded }"
+                        @click.stop="child.expanded = !child.expanded"
+                      >▶</span>
+                      <span>{{ child.name }}</span>
+                    </div>
+                    <div v-if="child.expanded && child.children && child.children.length" class="tree-grandchildren">
+                      <div
+                        v-for="floor in child.children"
+                        :key="floor.id"
+                        class="tree-child tree-floor"
+                        :class="{ selected: canteenSelectedFloor === floor.name && selectedProject === child.id }"
+                        @click.stop="handleProjectChildSelect(floor, project)"
+                      >
+                        <span>{{ floor.name }}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -386,7 +479,7 @@
               <div id="energyTypeDonutChart" class="chart-box asset-donut-chart"></div>
             </div>
             <div class="panel glass-panel transparent-panel rank-panel overview-left-panel">
-              <div class="panel-header"><span class="panel-title">当月能耗排名Top5</span></div>
+              <div class="panel-header"><span class="panel-title">{{ energyRankTitle }}</span></div>
               <div class="rank-list energy-building-rank">
                 <div v-for="(item, index) in energyBuildingRankList" :key="item.name" class="rank-item">
                   <div class="rank-badge" :class="{ first: index === 0 }">{{ index + 1 }}</div>
@@ -1434,28 +1527,163 @@
               </div>
             </div>
           </div>
-          <div class="map-spacer">
+
+          <!-- 楼层平面图 -->
+          <div v-if="isEnergyFloorMode" class="map-spacer fire-floor-spacer">
+            <button class="park-back-link fire-floor-back" @click="exitEnergyFloor">返回园区</button>
+            <div class="fire-floor-layout glass-panel energy-floor-layout">
+              <div class="fire-floor-sidebar">
+                <label v-for="f in energyFloors" :key="f" class="fire-floor-check">
+                  <input type="checkbox" :checked="energySelectedFloor === f" @change="selectEnergyFloor(f)" />
+                  <span>{{ f }}</span>
+                </label>
+              </div>
+              <div class="fire-floor-map energy-floor-map">
+                <div class="fire-floor-grid"></div>
+                <div
+                  v-for="d in currentEnergyFloorDevices"
+                  :key="d.id"
+                  class="fire-floor-device energy-floor-device"
+                  :class="{ active: energyDevicePopup && energyDevicePopup.code === d.code }"
+                  :style="{ left: d.x + '%', top: d.y + '%', color: d.color }"
+                  :title="d.name"
+                  @click.stop="selectEnergyFloorDevice(d)"
+                >
+                  <span class="energy-device-icon" :style="{ background: d.color }">
+                    <svg v-if="energyTypeTab === 'electricity'" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    <svg v-else viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                  </span>
+                  <span class="energy-device-label">{{ d.name }}</span>
+                </div>
+              </div>
+              <div class="fire-floor-alert-badge">10+</div>
+            </div>
+          </div>
+
+          <!-- 园区 3D -->
+          <div v-else class="map-spacer">
             <div
               v-if="isParkInteractiveVisible"
               class="park-scene-interactive"
               :class="{ orbiting: parkOrbiting, 'has-building': selectedParkBuilding }"
               @mousedown="startParkOrbit"
             >
-              <div v-for="b in activeParkBuildings" :key="b.id" class="park-building-hit" :class="{ active: selectedParkBuilding === b.id }" :style="parkBuildingStyle(b)" @mousedown.stop="selectParkBuilding(b, $event)">
+              <div
+                v-for="b in activeParkBuildings"
+                :key="b.id"
+                class="park-building-hit"
+                :class="{ active: selectedParkBuilding === b.id || (energyBuildingPopup && energyBuildingPopup.id === b.id) }"
+                :style="parkBuildingStyle(b)"
+                @mousedown.stop="selectEnergyBuilding(b, $event)"
+              >
                 <span class="park-building-label">{{ b.name }}</span>
               </div>
-              <div v-for="b in activeParkBuildings" :key="'mk-' + b.id" v-show="getParkBuildingMarker(b.id)" class="park-scene-marker" :style="parkMarkerStyle(b)">
-                <div class="park-marker-card"><strong>{{ getParkBuildingMarker(b.id)?.line1 }}</strong><span>{{ getParkBuildingMarker(b.id)?.line2 }}</span></div>
+              <div
+                v-for="b in activeParkBuildings"
+                :key="'mk-' + b.id"
+                v-show="getParkBuildingMarker(b.id)"
+                class="park-scene-marker"
+                :style="parkMarkerStyle(b)"
+              >
+                <div class="park-marker-card">
+                  <strong>{{ getParkBuildingMarker(b.id)?.line1 }}</strong>
+                  <span>{{ getParkBuildingMarker(b.id)?.line2 }}</span>
+                </div>
               </div>
-              <div class="park-orbit-hint">{{ selectedParkBuilding ? '拖动查看不同角度' : '点击楼栋后可拖动查看不同角度' }}</div>
+              <div class="park-orbit-hint">{{ selectedParkBuilding ? '拖动查看不同角度' : '点击楼栋查看基本信息' }}</div>
             </div>
           </div>
+
+          <!-- 楼栋信息弹窗 -->
+          <div v-if="energyBuildingPopup && isEnergyParkMode" class="fire-building-popup glass-panel energy-building-popup">
+            <button class="popup-close" @click="closeEnergyBuildingPopup" aria-label="关闭">×</button>
+            <div class="fire-building-popup-head">
+              <strong>{{ energyBuildingPopup.name }}</strong>
+            </div>
+            <div class="fire-building-popup-stats security-building-stats">
+              <div><span>{{ energyBuildingPopup.label }}</span><strong>{{ energyBuildingPopup.meterCount }}个</strong></div>
+            </div>
+            <button class="popup-enter-btn" @click="enterEnergyBuilding">进入单体</button>
+          </div>
+
+          <!-- 设备读数弹窗 -->
+          <div v-if="energyDevicePopup && isEnergyFloorMode" class="energy-device-popup glass-panel">
+            <div class="energy-device-popup-head">
+              <strong>{{ energyDevicePopup.title }}</strong>
+              <button type="button" class="sec-detail-link" @click.stop="openEnergyLedger">详情</button>
+            </div>
+            <div class="energy-device-popup-body">
+              <div class="energy-meter-tabs">
+                <label v-for="m in energyDevicePopup.meters" :key="m" class="energy-meter-tab">
+                  <input type="radio" name="energyMeter" :value="m" :checked="energySelectedMeter === m" @change="selectEnergyMeter(m)" />
+                  <span>{{ m }}</span>
+                </label>
+              </div>
+              <div class="panel-sub-title">能耗统计</div>
+              <div class="energy-reading-stats">
+                <div v-for="row in energyDevicePopup.stats" :key="row.label" class="energy-reading-row">
+                  <span>{{ row.label }}</span>
+                  <strong>{{ row.value }}</strong>
+                </div>
+              </div>
+              <div id="energyDeviceTrendChart" class="chart-box energy-device-trend-chart"></div>
+            </div>
+          </div>
+
           <div class="energy-map-toggle glass-panel">
             <button :class="{ active: energyTypeTab === 'electricity' }" @click="switchEnergyType('electricity')">用电(12)</button>
             <button :class="{ active: energyTypeTab === 'water' }" @click="switchEnergyType('water')">用水(32)</button>
           </div>
         </section>
-        <aside class="sidebar right-sidebar">
+
+        <!-- 右侧：设备台账 -->
+        <aside v-if="energyLedgerOpen" class="sidebar right-sidebar security-ledger-sidebar">
+          <div class="panel glass-panel transparent-panel security-ledger-panel">
+            <div class="panel-header">
+              <span class="panel-title">设备详情</span>
+              <button class="park-back-link" @click="closeEnergyLedger">←</button>
+            </div>
+            <div class="security-ledger-section">
+              <button type="button" class="security-ledger-toggle" @click="energyIaExpanded = !energyIaExpanded">
+                <span>IA_物联网属性</span>
+                <span>{{ energyIaExpanded ? '▾' : '▸' }}</span>
+              </button>
+              <div v-show="energyIaExpanded" class="security-ledger-fields">
+                <div v-for="row in energyLedgerData.ia" :key="row.label" class="security-ledger-row">
+                  <span>{{ row.label }}</span>
+                  <strong>{{ row.value }}</strong>
+                </div>
+              </div>
+            </div>
+            <div class="security-ledger-section">
+              <button type="button" class="security-ledger-toggle" @click="energyFmExpanded = !energyFmExpanded">
+                <span>FM_运维属性</span>
+                <span>{{ energyFmExpanded ? '▾' : '▸' }}</span>
+              </button>
+              <div v-show="energyFmExpanded" class="security-ledger-fields">
+                <div v-for="row in energyLedgerData.fm" :key="row.label" class="security-ledger-row">
+                  <span>{{ row.label }}</span>
+                  <strong>{{ row.value }}</strong>
+                </div>
+              </div>
+            </div>
+            <div class="security-ledger-section">
+              <button type="button" class="security-ledger-toggle" @click="energyIdExpanded = !energyIdExpanded">
+                <span>ID_身份属性</span>
+                <span>{{ energyIdExpanded ? '▾' : '▸' }}</span>
+              </button>
+              <div v-show="energyIdExpanded" class="security-ledger-fields">
+                <div v-for="row in energyLedgerData.id" :key="row.label" class="security-ledger-row">
+                  <span>{{ row.label }}</span>
+                  <strong>{{ row.value }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- 右侧：环比分析 -->
+        <aside v-else class="sidebar right-sidebar">
           <div class="panel glass-panel transparent-panel rank-panel">
             <div class="panel-header"><span class="panel-title">{{ energyDailyTitle }}</span></div>
             <div class="stat-summary">
@@ -1548,7 +1776,7 @@
 
       <!-- 食堂管理 -->
       <template v-else-if="activeTab === '食堂管理'">
-        <section class="center-area">
+        <section class="center-area center-area-canteen">
           <div class="kpi-row">
             <div v-for="kpi in currentKpiData" :key="kpi.label" class="kpi-card glass-panel">
               <div class="kpi-icon" :style="{ color: kpi.color }"><span v-html="kpi.icon"></span></div>
@@ -1558,27 +1786,90 @@
               </div>
             </div>
           </div>
-          <div class="map-spacer">
+
+          <!-- 楼层平面图 -->
+          <div v-if="isCanteenFloorMode" class="map-spacer fire-floor-spacer">
+            <button class="park-back-link fire-floor-back" @click="exitCanteenFloor">返回园区</button>
+            <div class="fire-floor-layout glass-panel canteen-floor-layout">
+              <div class="fire-floor-sidebar">
+                <label v-for="f in canteenFloors" :key="f" class="fire-floor-check">
+                  <input type="checkbox" :checked="canteenSelectedFloor === f" @change="selectCanteenFloor(f)" />
+                  <span>{{ f }}</span>
+                </label>
+              </div>
+              <div class="fire-floor-map canteen-floor-map">
+                <div class="fire-floor-grid"></div>
+                <div
+                  v-for="d in currentCanteenFloorPoints"
+                  :key="d.id"
+                  class="fire-floor-device canteen-floor-point"
+                  :style="{ left: d.x + '%', top: d.y + '%', color: d.color }"
+                  :title="d.name"
+                >
+                  <span class="canteen-point-dot" :style="{ background: d.color }"></span>
+                  <span class="canteen-point-label">{{ d.name }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 园区 3D -->
+          <div v-else class="map-spacer">
             <div
               v-if="isParkInteractiveVisible"
               class="park-scene-interactive"
               :class="{ orbiting: parkOrbiting, 'has-building': selectedParkBuilding }"
               @mousedown="startParkOrbit"
             >
-              <div v-for="b in activeParkBuildings" :key="b.id" class="park-building-hit" :class="{ active: selectedParkBuilding === b.id }" :style="parkBuildingStyle(b)" @mousedown.stop="selectParkBuilding(b, $event)">
+              <div
+                v-for="b in activeParkBuildings"
+                :key="b.id"
+                class="park-building-hit"
+                :class="{ active: selectedParkBuilding === b.id || (canteenBuildingPopup && canteenBuildingPopup.id === b.id) }"
+                :style="parkBuildingStyle(b)"
+                @mousedown.stop="selectCanteenBuilding(b, $event)"
+              >
                 <span class="park-building-label">{{ b.name }}</span>
               </div>
-              <div v-for="b in activeParkBuildings" :key="'mk-' + b.id" v-show="getParkBuildingMarker(b.id)" class="park-scene-marker" :style="parkMarkerStyle(b)">
-                <div class="park-marker-card"><strong>{{ getParkBuildingMarker(b.id)?.line1 }}</strong><span>{{ getParkBuildingMarker(b.id)?.line2 }}</span></div>
+              <div
+                v-for="b in activeParkBuildings"
+                :key="'mk-' + b.id"
+                v-show="getParkBuildingMarker(b.id)"
+                class="park-scene-marker"
+                :style="parkMarkerStyle(b)"
+              >
+                <div class="park-marker-card">
+                  <strong>{{ getParkBuildingMarker(b.id)?.line1 }}</strong>
+                  <span>{{ getParkBuildingMarker(b.id)?.line2 }}</span>
+                </div>
               </div>
-              <div class="park-orbit-hint">{{ selectedParkBuilding ? '拖动查看不同角度' : '点击楼栋后可拖动查看不同角度' }}</div>
+              <div class="park-orbit-hint">{{ selectedParkBuilding ? '拖动查看不同角度' : '点击楼栋/食堂进入详情' }}</div>
             </div>
           </div>
+
+          <div v-if="canteenBuildingPopup && isCanteenParkMode" class="fire-building-popup glass-panel energy-building-popup">
+            <button class="popup-close" @click="closeCanteenBuildingPopup" aria-label="关闭">×</button>
+            <div class="fire-building-popup-head">
+              <strong>{{ canteenBuildingPopup.name }}</strong>
+            </div>
+            <div class="fire-building-popup-stats security-building-stats">
+              <div><span>{{ canteenBuildingPopup.label }}</span><strong>{{ canteenBuildingPopup.canteenCount }}</strong></div>
+            </div>
+            <button class="popup-enter-btn" @click="enterCanteenBuilding">进入单体</button>
+          </div>
         </section>
-        <aside class="sidebar right-sidebar">
-          <div class="panel glass-panel transparent-panel">
-            <div class="panel-header"><span class="panel-title">食堂监管状态</span></div>
-            <div class="status-table-wrap">
+
+        <aside class="sidebar right-sidebar canteen-right-sidebar">
+          <div class="panel glass-panel transparent-panel canteen-status-panel">
+            <div class="panel-header"><span class="panel-title">{{ canteenStatusTitle }}</span></div>
+            <div v-if="canteenStatusMode === 'cards'" class="canteen-status-cards">
+              <div v-for="card in canteenStatusCards" :key="card.label" class="canteen-status-card">
+                <div class="canteen-status-label">{{ card.label }}</div>
+                <div class="canteen-status-result" :class="{ pass: card.pass, fail: !card.pass }">{{ card.status }}</div>
+                <div class="canteen-status-pedestal" :class="{ pass: card.pass, fail: !card.pass }"></div>
+              </div>
+            </div>
+            <div v-else class="status-table-wrap">
               <table class="status-table">
                 <thead><tr><th v-for="h in canteenStatus.headers" :key="h">{{ h }}</th></tr></thead>
                 <tbody>
@@ -1589,22 +1880,24 @@
               </table>
             </div>
           </div>
-          <div class="panel glass-panel transparent-panel rank-panel">
-            <div class="panel-header"><span class="panel-title">客饭预定数</span></div>
-            <div class="stat-summary stat-summary-inline">合计 <strong>{{ canteenGuest.total }}</strong></div>
-            <div id="canteenGuestChart" class="chart-box"></div>
+          <div class="panel glass-panel transparent-panel canteen-chart-panel">
+            <div class="panel-header">
+              <span class="panel-title">客饭预定数</span>
+              <span class="canteen-panel-metric">预定总数 <strong>{{ canteenGuest.total }}</strong></span>
+            </div>
+            <div id="canteenGuestChart" class="chart-box canteen-chart-box"></div>
           </div>
-          <div class="panel glass-panel transparent-panel">
+          <div class="panel glass-panel transparent-panel canteen-chart-panel">
             <div class="panel-header">
               <span class="panel-title">各食堂当周营销统计</span>
               <div class="panel-controls">
                 <div class="toggle-group">
-                  <button class="active">人数</button>
-                  <button disabled>金额</button>
+                  <button :class="{ active: canteenMarketingMode === 'people' }" @click="switchCanteenMarketingMode('people')">人数</button>
+                  <button :class="{ active: canteenMarketingMode === 'amount' }" @click="switchCanteenMarketingMode('amount')">金额</button>
                 </div>
               </div>
             </div>
-            <div id="canteenMarketingChart" class="chart-box"></div>
+            <div id="canteenMarketingChart" class="chart-box canteen-chart-box"></div>
           </div>
         </aside>
       </template>
@@ -1621,6 +1914,8 @@
   <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/energy-data.js"></script>
+  <script src="js/canteen-data.js"></script>
   <script src="js/fire-data.js"></script>
   <script src="js/security-data.js"></script>
   <script src="js/public-warehouse-data.js"></script>

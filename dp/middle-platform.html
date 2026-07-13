@@ -38,9 +38,30 @@
             <a href="../prototype/index.html" class="mp-platform-item" @click="navigateToPlatform('../prototype/index.html')">小程序</a>
             <a href="foundation-platform.html" class="mp-platform-item" @click="navigateToPlatform('foundation-platform.html')">底座</a>
             <button class="mp-platform-item" disabled style="opacity:0.5;cursor:not-allowed">资产</button>
-            <button class="mp-platform-item" disabled style="opacity:0.5;cursor:not-allowed">
-              其他业务系统 <span class="sub-arrow">›</span>
-            </button>
+            <div
+              class="mp-platform-submenu-wrap"
+              @mouseenter="platformBizOpen = true"
+              @mouseleave="platformBizOpen = false"
+            >
+              <button
+                type="button"
+                class="mp-platform-item mp-platform-parent"
+                :class="{ open: platformBizOpen }"
+                @click.stop="platformBizOpen = !platformBizOpen"
+              >
+                其他业务系统
+                <span class="sub-arrow">›</span>
+              </button>
+              <div v-show="platformBizOpen" class="mp-biz-submenu">
+                <button
+                  v-for="sys in otherBusinessSystems"
+                  :key="sys"
+                  type="button"
+                  class="mp-platform-item"
+                  @click="selectBusinessSystem(sys)"
+                >{{ sys }}</button>
+              </div>
+            </div>
           </div>
         </div>
         <button class="mp-header-btn" title="消息">

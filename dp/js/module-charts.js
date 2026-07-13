@@ -85,6 +85,36 @@ function buildEnergyHourlyOption(type) {
   };
 }
 
+function buildEnergyDeviceTrendOption(trend) {
+  const d = trend || { days: [], current: [], previous: [] };
+  return {
+    grid: { top: 24, right: 8, bottom: 20, left: 28 },
+    legend: {
+      top: 0, right: 4,
+      textStyle: { color: CHART_THEME.textColor, fontSize: 9 },
+      itemWidth: 8, itemHeight: 4,
+      data: ['当月', '上月'],
+    },
+    xAxis: {
+      type: 'category', data: d.days,
+      axisLine: { lineStyle: { color: CHART_THEME.axisLine } },
+      axisTick: { show: false },
+      axisLabel: { color: CHART_THEME.textColor, fontSize: 8, interval: 4 },
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { color: CHART_THEME.textColor, fontSize: 8 },
+      splitLine: { lineStyle: { color: CHART_THEME.splitLine } },
+    },
+    series: [
+      { name: '当月', type: 'line', smooth: true, symbol: 'none', data: d.current, lineStyle: { color: CHART_THEME.cyan, width: 2 }, itemStyle: { color: CHART_THEME.cyan } },
+      { name: '上月', type: 'line', smooth: true, symbol: 'none', data: d.previous, lineStyle: { color: '#ff9500', width: 2 }, itemStyle: { color: '#ff9500' } },
+    ],
+    tooltip: { trigger: 'axis', backgroundColor: 'rgba(10,30,60,0.88)', borderColor: 'rgba(0,191,255,0.3)', textStyle: { color: '#fff', fontSize: 11 } },
+  };
+}
+
 function buildEnergyPeriodOption(type, period) {
   let d;
   if (type === 'water') {
@@ -183,12 +213,12 @@ function buildAlarmOption() {
   };
 }
 
-function buildCanteenGuestOption() {
-  const d = DASHBOARD_DATA.canteenGuest;
+function buildCanteenGuestOption(guestData) {
+  const d = guestData || DASHBOARD_DATA.canteenGuest;
   return {
-    grid: { top: 28, right: 12, bottom: 22, left: 36 },
+    grid: { top: 30, right: 14, bottom: 28, left: 36 },
     legend: {
-      top: 0, right: 8,
+      top: 2, right: 8,
       textStyle: { color: CHART_THEME.textColor, fontSize: 10 },
       itemWidth: 10, itemHeight: 6,
       data: ['线上', '线下'],
@@ -197,7 +227,7 @@ function buildCanteenGuestOption() {
       type: 'category', data: d.days,
       axisLine: { lineStyle: { color: CHART_THEME.axisLine } },
       axisTick: { show: false },
-      axisLabel: { color: CHART_THEME.textColor, fontSize: 9 },
+      axisLabel: { color: CHART_THEME.textColor, fontSize: 10, margin: 8 },
     },
     yAxis: {
       type: 'value',
@@ -206,28 +236,31 @@ function buildCanteenGuestOption() {
       splitLine: { lineStyle: { color: CHART_THEME.splitLine } },
     },
     series: [
-      { name: '线上', type: 'bar', barWidth: 10, data: d.online, itemStyle: { color: '#1a6eb5', borderRadius: [2, 2, 0, 0] } },
+      { name: '线上', type: 'bar', barWidth: 10, barGap: '30%', data: d.online, itemStyle: { color: '#1a6eb5', borderRadius: [2, 2, 0, 0] } },
       { name: '线下', type: 'bar', barWidth: 10, data: d.offline, itemStyle: { color: CHART_THEME.cyan, borderRadius: [2, 2, 0, 0] } },
     ],
     tooltip: { trigger: 'axis', backgroundColor: 'rgba(10,30,60,0.88)', borderColor: 'rgba(0,191,255,0.3)', textStyle: { color: '#fff', fontSize: 12 } },
   };
 }
 
-function buildCanteenMarketingOption() {
-  const d = DASHBOARD_DATA.canteenMarketing;
+function buildCanteenMarketingOption(marketingData, mode) {
+  const d = marketingData || DASHBOARD_DATA.canteenMarketing;
+  const useAmount = mode === 'amount';
+  const seriesData = useAmount ? (d.amount || d.people) : d.people;
+  const seriesName = useAmount ? '刷卡金额' : '刷卡人数';
   return {
-    grid: { top: 28, right: 12, bottom: 22, left: 44 },
+    grid: { top: 30, right: 14, bottom: 28, left: 44 },
     legend: {
-      top: 0, right: 8,
+      top: 2, right: 8,
       textStyle: { color: CHART_THEME.textColor, fontSize: 10 },
       itemWidth: 10, itemHeight: 6,
-      data: ['刷卡人数'],
+      data: [seriesName],
     },
     xAxis: {
       type: 'category', data: d.days,
       axisLine: { lineStyle: { color: CHART_THEME.axisLine } },
       axisTick: { show: false },
-      axisLabel: { color: CHART_THEME.textColor, fontSize: 9 },
+      axisLabel: { color: CHART_THEME.textColor, fontSize: 10, margin: 8 },
     },
     yAxis: {
       type: 'value',
@@ -236,11 +269,14 @@ function buildCanteenMarketingOption() {
       splitLine: { lineStyle: { color: CHART_THEME.splitLine } },
     },
     series: [{
-      name: '刷卡人数', type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
-      data: d.people,
+      name: seriesName, type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+      data: seriesData,
       lineStyle: { color: CHART_THEME.cyan, width: 2 },
       itemStyle: { color: CHART_THEME.cyan },
-      label: { show: true, position: 'top', color: '#fff', fontSize: 10, formatter: '{c}人' },
+      label: {
+        show: true, position: 'top', color: '#fff', fontSize: 10,
+        formatter: useAmount ? '{c}元' : '{c}人',
+      },
     }],
     tooltip: { trigger: 'axis', backgroundColor: 'rgba(10,30,60,0.88)', borderColor: 'rgba(0,191,255,0.3)', textStyle: { color: '#fff', fontSize: 12 } },
   };

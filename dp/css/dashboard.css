@@ -420,6 +420,7 @@ html, body {
   z-index: 300;
   padding: 4px 0;
   backdrop-filter: blur(12px);
+  overflow: visible;
 }
 
 .platform-dropdown-item {
@@ -455,7 +456,37 @@ html, body {
   cursor: not-allowed;
 }
 
-.platform-sub-arrow { font-size: 10px; opacity: 0.7; }
+.platform-sub-arrow {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.platform-dropdown-submenu-wrap {
+  position: relative;
+}
+
+.platform-dropdown-parent.open,
+.platform-dropdown-submenu-wrap:hover > .platform-dropdown-parent {
+  color: var(--text-primary);
+  background: rgba(0, 229, 255, 0.12);
+}
+
+/* 图二：右侧级联，主菜单位置不动 */
+.platform-biz-submenu {
+  position: absolute;
+  top: 0;
+  left: calc(100% + 4px);
+  min-width: 168px;
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 302;
+  background: rgba(10, 30, 60, 0.95);
+  border: 1px solid rgba(0, 191, 255, 0.25);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  padding: 4px 0;
+  backdrop-filter: blur(12px);
+}
 
 .action-btn {
   width: 32px; height: 32px; border: none; background: transparent;
@@ -543,6 +574,10 @@ html, body {
   text-shadow: var(--text-glow);
 }
 .tree-child:hover, .tree-child.selected { background: rgba(var(--brand), 0.35); color: var(--text-primary); }
+.tree-child-block { margin-bottom: 2px; }
+.tree-arrow.nested { width: 10px; font-size: 7px; flex-shrink: 0; }
+.tree-grandchildren { padding-left: 18px; margin-top: 2px; }
+.tree-floor { font-size: 11px; color: rgba(255, 255, 255, 0.75); }
 .kpi-row { display: flex; gap: 12px; flex-shrink: 0; z-index: 5; }
 
 .kpi-card {
@@ -1844,4 +1879,281 @@ html, body {
   align-items: center;
   justify-content: space-between;
 }
+
+/* 能源管理楼层 / 设备读数 */
+.center-area-energy .fire-floor-layout,
+.center-area-energy .energy-device-popup,
+.center-area-energy .fire-building-popup {
+  pointer-events: auto;
+}
+
+.energy-building-popup { max-width: 280px; }
+
+.energy-floor-device {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 2;
+  width: auto !important;
+  height: auto !important;
+  transform: translate(-50%, -50%);
+}
+
+.energy-floor-device.active .energy-device-icon {
+  box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.45);
+  transform: scale(1.12);
+}
+
+.energy-device-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #041628;
+  box-shadow: 0 0 10px rgba(61, 220, 132, 0.45);
+}
+
+.energy-device-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.energy-device-label {
+  font-size: 10px;
+  color: #fff;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+  background: rgba(4, 22, 40, 0.55);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.energy-device-popup {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  transform: translate(-50%, -20%);
+  width: 360px;
+  z-index: 16;
+  padding: 0;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.energy-device-popup-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(0, 80, 120, 0.45);
+  border-bottom: 1px solid rgba(0, 191, 255, 0.2);
+}
+
+.energy-device-popup-head strong {
+  font-size: 14px;
+  color: #fff;
+}
+
+.energy-device-popup-body { padding: 12px 14px 14px; }
+
+.energy-meter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-bottom: 10px;
+}
+
+.energy-meter-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+}
+
+.energy-meter-tab input { accent-color: #00e5ff; }
+
+.energy-reading-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  margin-bottom: 8px;
+}
+
+.energy-reading-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(0, 191, 255, 0.1);
+}
+
+.energy-reading-row strong { color: #fff; font-weight: 600; }
+
+.energy-device-trend-chart {
+  height: 140px;
+  margin-top: 4px;
+}
+
+/* 食堂管理 */
+.center-area-canteen { position: relative; }
+.center-area-canteen .fire-floor-layout,
+.center-area-canteen .fire-building-popup {
+  pointer-events: auto;
+}
+
+.canteen-status-cards {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 6px;
+  padding: 10px 12px 14px;
+  flex: 1;
+  min-height: 0;
+}
+
+.canteen-status-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.canteen-status-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.88);
+  text-align: center;
+  line-height: 1.35;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canteen-status-result {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.canteen-status-result.pass { color: #3ddc84; }
+.canteen-status-result.fail { color: #ff6b6b; }
+
+.canteen-status-pedestal {
+  width: 52px;
+  height: 28px;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 50% 35%, rgba(120, 200, 255, 0.55), transparent 55%),
+    linear-gradient(180deg, #2a7fd4 0%, #0b3f78 70%, #07284d 100%);
+  box-shadow:
+    0 8px 14px rgba(0, 30, 70, 0.45),
+    inset 0 2px 4px rgba(255, 255, 255, 0.25),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(0, 191, 255, 0.35);
+  flex-shrink: 0;
+}
+
+.canteen-status-pedestal.pass {
+  background:
+    radial-gradient(ellipse at 50% 35%, rgba(140, 255, 200, 0.4), transparent 55%),
+    linear-gradient(180deg, #2a7fd4 0%, #0b3f78 70%, #07284d 100%);
+}
+
+.canteen-status-pedestal.fail {
+  background:
+    radial-gradient(ellipse at 50% 35%, rgba(255, 140, 140, 0.45), transparent 55%),
+    linear-gradient(180deg, #a84a4a 0%, #5a1c1c 70%, #3a1010 100%);
+  border-color: rgba(255, 71, 87, 0.4);
+}
+
+.canteen-right-sidebar {
+  gap: 8px;
+}
+
+.canteen-right-sidebar .panel {
+  min-height: 0;
+}
+
+.canteen-right-sidebar .canteen-status-panel {
+  flex: 0 0 22%;
+  max-height: 210px;
+}
+
+.canteen-right-sidebar .canteen-status-panel:has(.status-table-wrap) {
+  flex: 0 0 28%;
+  max-height: 260px;
+}
+
+.canteen-right-sidebar .canteen-chart-panel {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.canteen-right-sidebar .canteen-chart-box {
+  flex: 1;
+  min-height: 140px;
+  padding: 4px 8px 8px;
+}
+
+.canteen-panel-metric {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.canteen-panel-metric strong {
+  color: #fff;
+  font-size: 15px;
+  margin-left: 4px;
+}
+
+.canteen-right-sidebar .status-table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.canteen-floor-point {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: auto;
+  z-index: 2;
+  width: auto !important;
+  height: auto !important;
+  transform: translate(-50%, -50%);
+}
+
+.canteen-point-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.canteen-point-label {
+  font-size: 11px;
+  color: #fff;
+  white-space: nowrap;
+  background: rgba(4, 22, 40, 0.6);
+  padding: 2px 8px;
+  border-radius: 3px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+
 

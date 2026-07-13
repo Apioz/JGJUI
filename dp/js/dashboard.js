@@ -472,10 +472,34 @@ createApp({
     const propertyDate = ref(defaultDateForUnit('month'));
     const energyTypeTab = ref('electricity');
     const energyPeriodTab = ref('month');
+    const energyFloorMode = ref(false);
+    const energySelectedFloor = ref('2F');
+    const energyBuildingPopupId = ref(null);
+    const energyDevicePopupCode = ref(null);
+    const energySelectedMeter = ref('1#');
+    const energyLedgerOpen = ref(false);
+    const energyIaExpanded = ref(true);
+    const energyFmExpanded = ref(true);
+    const energyIdExpanded = ref(true);
+    const canteenFloorMode = ref(false);
+    const canteenSelectedFloor = ref('3F');
+    const canteenBuildingPopupId = ref(null);
+    const canteenMarketingMode = ref('people');
+    const canteenProjects = ref(JSON.parse(JSON.stringify(CANTEEN_DATA.projects)));
     const envTempTab = ref('max');
     const envAirTab = ref('max');
     const securityMenuOpen = ref(false);
     const platformMenuOpen = ref(false);
+    const platformBizMenuOpen = ref(false);
+    const otherBusinessSystems = [
+      '综合安防系统',
+      '智慧机关云系统',
+      '公车系统',
+      '内控系统',
+      '区采购平台',
+      '资产管理系统',
+      '环境监测系统',
+    ];
     const fireRankTab = ref('alarm');
     const firePeriod = ref('month');
     const fireDate = ref(defaultDateForUnit('month'));
@@ -540,11 +564,41 @@ createApp({
     const showSecurityDevicePanel = computed(() => (
       isSecurityMgmtTab.value && (isModuleParkMode.value || isSecurityFloorMode.value || isSecurityGateMode.value)
     ));
+    const isEnergyTab = computed(() => activeTab.value === '能源管理');
+    const isEnergyFloorMode = computed(() => isEnergyTab.value && energyFloorMode.value);
+    const isEnergyParkMode = computed(() => isEnergyTab.value && isModuleParkMode.value && !energyFloorMode.value);
+    const isEnergyMapMode = computed(() => isEnergyTab.value && isModuleMapMode.value);
+    const isEnergyMapWithPopup = computed(() => isEnergyMapMode.value && !!mapPopupProjectId.value);
+    const showEnergyLeftStats = computed(() => (
+      isEnergyTab.value && (isEnergyMapWithPopup.value || isModuleParkMode.value || isEnergyFloorMode.value)
+    ));
+    const isCanteenTab = computed(() => activeTab.value === '食堂管理');
+    const isCanteenFloorMode = computed(() => isCanteenTab.value && canteenFloorMode.value);
+    const isCanteenParkMode = computed(() => isCanteenTab.value && isModuleParkMode.value && !canteenFloorMode.value);
+    const isCanteenMapMode = computed(() => isCanteenTab.value && isModuleMapMode.value);
+    const isCanteenMapWithPopup = computed(() => isCanteenMapMode.value && !!mapPopupProjectId.value);
+    const isCanteenParkScoped = computed(() => (
+      isCanteenTab.value && (
+        isCanteenMapWithPopup.value
+        || isModuleParkMode.value
+        || isCanteenFloorMode.value
+      )
+    ));
     const isParkSceneVisible = computed(() => (
-      isSandboxParkMode.value && !isFireFloorMode.value && !isSecurityFloorMode.value && !isSecurityGateMode.value
+      isSandboxParkMode.value
+      && !isFireFloorMode.value
+      && !isSecurityFloorMode.value
+      && !isSecurityGateMode.value
+      && !isEnergyFloorMode.value
+      && !isCanteenFloorMode.value
     ));
     const isParkInteractiveVisible = computed(() => (
-      isSandboxParkMode.value && !isFireFloorMode.value && !isSecurityFloorMode.value && !isSecurityGateMode.value
+      isSandboxParkMode.value
+      && !isFireFloorMode.value
+      && !isSecurityFloorMode.value
+      && !isSecurityGateMode.value
+      && !isEnergyFloorMode.value
+      && !isCanteenFloorMode.value
     ));
     const isAssetTab = computed(() => activeTab.value === '资产管理');
     const isFireTab = computed(() => activeTab.value === '消防管理');
@@ -592,6 +646,7 @@ createApp({
       if (activeTab.value === '物业管理') return propertyProjects.value;
       if (activeTab.value === '安全管理') return securityProjects.value;
       if (activeTab.value === '消防管理') return fireProjects.value;
+      if (activeTab.value === '食堂管理') return canteenProjects.value;
       if (isModuleSidebarTab.value) return moduleProjects.value;
       return overviewProjects.value;
     });
@@ -628,6 +683,8 @@ createApp({
 
     function resolveProjectRootId(id) {
       if (!id || id === 'all') return 'p1';
+      const m = String(id).match(/^(p\d+)/i);
+      if (m) return m[1].toLowerCase();
       return id.includes('-') ? id.replace(/-\d+$/, '') : id;
     }
 
@@ -638,7 +695,7 @@ createApp({
       if (tab === '消防管理') return FIRE_DATA.parkBuildings;
       if (tab === '安全管理') return SECURITY_DATA.parkBuildings;
       if (tab === '食堂管理') {
-        return DASHBOARD_DATA.parkBuildings.filter((b) => b.id === 'c3');
+        return DASHBOARD_DATA.parkBuildings;
       }
       return DASHBOARD_DATA.parkBuildings.filter((b) => b.id !== 'c3');
     });
@@ -683,15 +740,57 @@ createApp({
       return data;
     });
 
-    const energyBuildingRankList = computed(() => (
-      energyTypeTab.value === 'water'
+    const energyBuildingRankList = computed(() => {
+      const type = energyTypeTab.value === 'water' ? 'water' : 'electricity';
+      if (isEnergyFloorMode.value) {
+        return ENERGY_DATA.floorRank[type] || [];
+      }
+      return type === 'water'
         ? DASHBOARD_DATA.waterBuildingRank
-        : DASHBOARD_DATA.energyBuildingRank
+        : DASHBOARD_DATA.energyBuildingRank;
+    });
+
+    const energyRankTitle = computed(() => (
+      isEnergyFloorMode.value ? '当月能耗排名Top5' : '当月能耗排名Top5'
     ));
 
     const energyTypeDonutTitle = computed(() => (
       energyTypeTab.value === 'water' ? '用水类型统计' : '用电类型统计'
     ));
+
+    const energyBuildingPopup = computed(() => {
+      if (!energyBuildingPopupId.value) return null;
+      const building = DASHBOARD_DATA.parkBuildings.find((b) => b.id === energyBuildingPopupId.value);
+      const type = energyTypeTab.value === 'water' ? 'water' : 'electricity';
+      const detail = ENERGY_DATA.buildingDetails[type]?.[energyBuildingPopupId.value];
+      if (!building || !detail) return null;
+      return { ...building, ...detail };
+    });
+
+    const currentEnergyFloorDevices = computed(() => {
+      const type = energyTypeTab.value === 'water' ? 'water' : 'electricity';
+      return ENERGY_DATA.floorDevices[type]?.[energySelectedFloor.value] || [];
+    });
+
+    const energyDevicePopup = computed(() => {
+      if (!energyDevicePopupCode.value || !isEnergyFloorMode.value) return null;
+      const type = energyTypeTab.value === 'water' ? 'water' : 'electricity';
+      const specific = ENERGY_DATA.deviceReadings[type]?.[energyDevicePopupCode.value];
+      const defaults = ENERGY_DATA.deviceReadingDefaults[type];
+      const device = currentEnergyFloorDevices.value.find((d) => d.code === energyDevicePopupCode.value);
+      const base = specific || defaults;
+      return {
+        ...base,
+        title: specific?.title || (device ? device.name : defaults.title),
+        code: energyDevicePopupCode.value,
+        trend: specific?.trend || defaults.trend,
+      };
+    });
+
+    const energyLedgerData = computed(() => {
+      const type = energyTypeTab.value === 'water' ? 'water' : 'electricity';
+      return ENERGY_DATA.ledgerTemplates[type] || ENERGY_DATA.ledgerTemplates.electricity;
+    });
 
     const leftSidebarTitle = computed(() => {
       if (activeTab.value === '物业管理') return '办公用房列表';
@@ -862,6 +961,9 @@ createApp({
       if (isSecurityMgmtTab.value) {
         return currentSecurityKpi.value;
       }
+      if (isCanteenTab.value && currentCanteenBundle.value?.kpi) {
+        return currentCanteenBundle.value.kpi;
+      }
       if (isModuleParkMode.value && moduleParkKpiData.value) {
         return moduleParkKpiData.value;
       }
@@ -959,7 +1061,7 @@ createApp({
     ));
 
     const energyCurrentKpi = computed(() => {
-      if (activeTab.value === '能源管理' && isModuleParkMode.value && moduleParkKpiData.value) {
+      if (activeTab.value === '能源管理' && (isModuleParkMode.value || isEnergyMapWithPopup.value) && moduleParkKpiData.value) {
         return moduleParkKpiData.value;
       }
       return energyTypeTab.value === 'water' ? DASHBOARD_DATA.waterKpiData : DASHBOARD_DATA.energyKpiData;
@@ -982,8 +1084,42 @@ createApp({
     const energyPeriodCompareLabel = computed(() => '较上月');
     const energyPeriodChartTitle = computed(() => '逐日' + energyTypeLabel.value + '趋势');
 
-    const canteenStatus = DASHBOARD_DATA.canteenStatus;
-    const canteenGuest = DASHBOARD_DATA.canteenGuest;
+    const canteenScopeParkId = computed(() => {
+      if (!isCanteenTab.value) return null;
+      if (isCanteenMapWithPopup.value) return resolveProjectRootId(mapPopupProjectId.value);
+      if (isModuleParkMode.value || isCanteenFloorMode.value) {
+        return resolveProjectRootId(activeParkProjectId.value || selectedProject.value);
+      }
+      return null;
+    });
+
+    const currentCanteenBundle = computed(() => {
+      const pid = canteenScopeParkId.value;
+      if (pid && CANTEEN_DATA.byPark[pid]) return CANTEEN_DATA.byPark[pid];
+      return CANTEEN_DATA.global;
+    });
+
+    const canteenStatusMode = computed(() => currentCanteenBundle.value.statusMode || 'table');
+    const canteenStatusTitle = computed(() => (
+      currentCanteenBundle.value.statusTitle || '食堂监管状态'
+    ));
+    const canteenStatus = computed(() => currentCanteenBundle.value.status || CANTEEN_DATA.global.status);
+    const canteenStatusCards = computed(() => currentCanteenBundle.value.statusCards || []);
+    const canteenGuest = computed(() => currentCanteenBundle.value.guest || CANTEEN_DATA.global.guest);
+    const canteenMarketing = computed(() => currentCanteenBundle.value.marketing || CANTEEN_DATA.global.marketing);
+
+    const canteenBuildingPopup = computed(() => {
+      if (!canteenBuildingPopupId.value) return null;
+      const building = DASHBOARD_DATA.parkBuildings.find((b) => b.id === canteenBuildingPopupId.value);
+      const detail = CANTEEN_DATA.buildingDetails[canteenBuildingPopupId.value];
+      if (!building || !detail) return null;
+      return { ...building, ...detail };
+    });
+
+    const currentCanteenFloorPoints = computed(() => (
+      CANTEEN_DATA.floorPoints[canteenSelectedFloor.value] || []
+    ));
+
     const securityKpiData = DASHBOARD_DATA.securityKpiData;
     const fireKpiData = DASHBOARD_DATA.fireKpiData;
     const publicVehicle = DASHBOARD_DATA.publicVehicle;
@@ -1098,6 +1234,202 @@ createApp({
       securityGateDeviceId.value = null;
       securityDevicePopupCode.value = null;
       securityLedgerOpen.value = false;
+    }
+
+    function resetEnergyView() {
+      energyFloorMode.value = false;
+      energySelectedFloor.value = '2F';
+      energyBuildingPopupId.value = null;
+      energyDevicePopupCode.value = null;
+      energySelectedMeter.value = '1#';
+      energyLedgerOpen.value = false;
+    }
+
+    function resetCanteenView() {
+      canteenFloorMode.value = false;
+      canteenSelectedFloor.value = '3F';
+      canteenBuildingPopupId.value = null;
+      canteenMarketingMode.value = 'people';
+    }
+
+    function resolveCanteenBuildingId(id) {
+      if (!id) return null;
+      if (CANTEEN_DATA.buildingIdMap[id]) return CANTEEN_DATA.buildingIdMap[id];
+      const floorMatch = String(id).match(/^(p\d+(?:-c?\d+)?)-(\d+F)$/i);
+      if (floorMatch && CANTEEN_DATA.buildingIdMap[floorMatch[1]]) {
+        return CANTEEN_DATA.buildingIdMap[floorMatch[1]];
+      }
+      return id;
+    }
+
+    function parseCanteenFloorId(id) {
+      const m = String(id || '').match(/-(\d+F)$/i);
+      return m ? m[1].toUpperCase() : null;
+    }
+
+    function selectCanteenBuilding(building, e) {
+      canteenBuildingPopupId.value = building.id;
+      selectParkBuilding(building, e);
+    }
+
+    function closeCanteenBuildingPopup() {
+      canteenBuildingPopupId.value = null;
+    }
+
+    function enterCanteenBuilding() {
+      if (!canteenBuildingPopupId.value) return;
+      const buildingId = canteenBuildingPopupId.value;
+      const project = findProjectInList(activeParkProjectId.value || selectedProject.value);
+      const matchedChild = project?.children?.find((c) => CANTEEN_DATA.buildingIdMap[c.id] === buildingId);
+      if (matchedChild) selectedProject.value = matchedChild.id;
+      canteenFloorMode.value = true;
+      canteenBuildingPopupId.value = null;
+      canteenSelectedFloor.value = buildingId === 'c3' ? '3F' : '1F';
+      resetParkView();
+      nextTick(() => initChartsForTab());
+    }
+
+    function exitCanteenFloor() {
+      canteenFloorMode.value = false;
+      nextTick(() => initChartsForTab());
+    }
+
+    function selectCanteenFloor(floor) {
+      canteenSelectedFloor.value = floor;
+    }
+
+    function selectCanteenProjectNode(node, project) {
+      if (!node || !project) return;
+      const floor = parseCanteenFloorId(node.id);
+      if (floor) {
+        const buildingKey = node.id.replace(/-\d+F$/i, '');
+        selectedProject.value = buildingKey;
+        const buildingId = resolveCanteenBuildingId(buildingKey);
+        canteenFloorMode.value = true;
+        canteenBuildingPopupId.value = null;
+        canteenSelectedFloor.value = floor;
+        if (buildingId) {
+          const building = DASHBOARD_DATA.parkBuildings.find((b) => b.id === buildingId);
+          if (building) selectedParkBuilding.value = building.id;
+        }
+        resetParkView();
+        nextTick(() => initChartsForTab());
+        return;
+      }
+
+      selectedProject.value = node.id;
+      const buildingId = resolveCanteenBuildingId(node.id);
+      if (buildingId && (isCanteenParkMode.value || isCanteenFloorMode.value)) {
+        canteenBuildingPopupId.value = buildingId;
+        const building = DASHBOARD_DATA.parkBuildings.find((b) => b.id === buildingId);
+        if (building && isCanteenParkMode.value) {
+          selectedParkBuilding.value = building.id;
+          parkRotateX.value = building.focusRotateX;
+          parkRotateY.value = building.focusRotateY;
+        }
+      }
+    }
+
+    function switchCanteenMarketingMode(mode) {
+      canteenMarketingMode.value = mode;
+      nextTick(() => initCanteenCharts());
+    }
+
+    function resolveEnergyBuildingId(id) {
+      return ENERGY_DATA.buildingIdMap[id] || id;
+    }
+
+    function selectEnergyBuilding(building, e) {
+      energyBuildingPopupId.value = building.id;
+      selectParkBuilding(building, e);
+    }
+
+    function closeEnergyBuildingPopup() {
+      energyBuildingPopupId.value = null;
+    }
+
+    function enterEnergyBuilding() {
+      if (!energyBuildingPopupId.value) return;
+      const buildingId = energyBuildingPopupId.value;
+      const project = findProjectInList(activeParkProjectId.value || selectedProject.value);
+      const matchedChild = project?.children?.find((c) => ENERGY_DATA.buildingIdMap[c.id] === buildingId);
+      if (matchedChild) {
+        selectedProject.value = matchedChild.id;
+      } else {
+        const childId = Object.entries(ENERGY_DATA.buildingIdMap).find(([, v]) => v === buildingId)?.[0];
+        if (childId) selectedProject.value = childId;
+      }
+      energyFloorMode.value = true;
+      energyBuildingPopupId.value = null;
+      energyDevicePopupCode.value = null;
+      energySelectedMeter.value = '1#';
+      energyLedgerOpen.value = false;
+      energySelectedFloor.value = '2F';
+      resetParkView();
+      nextTick(() => initChartsForTab());
+    }
+
+    function exitEnergyFloor() {
+      energyFloorMode.value = false;
+      energyDevicePopupCode.value = null;
+      energyLedgerOpen.value = false;
+      energySelectedMeter.value = '1#';
+      nextTick(() => initChartsForTab());
+    }
+
+    function selectEnergyFloor(floor) {
+      energySelectedFloor.value = floor;
+      energyDevicePopupCode.value = null;
+      energyLedgerOpen.value = false;
+      energySelectedMeter.value = '1#';
+    }
+
+    function selectEnergyFloorDevice(device) {
+      energyDevicePopupCode.value = device.code;
+      energySelectedMeter.value = '1#';
+      energyLedgerOpen.value = false;
+      nextTick(() => initEnergyDeviceTrendChart());
+    }
+
+    function openEnergyLedger() {
+      energyLedgerOpen.value = true;
+    }
+
+    function closeEnergyLedger() {
+      energyLedgerOpen.value = false;
+    }
+
+    function selectEnergyMeter(meter) {
+      energySelectedMeter.value = meter;
+      nextTick(() => initEnergyDeviceTrendChart());
+    }
+
+    function selectEnergyProjectChild(id) {
+      selectedProject.value = id;
+      const buildingId = resolveEnergyBuildingId(id);
+      if (buildingId.startsWith('b') && (isEnergyParkMode.value || isEnergyFloorMode.value)) {
+        if (id.includes('-')) {
+          if (isEnergyFloorMode.value) {
+            energyBuildingPopupId.value = null;
+          } else {
+            energyBuildingPopupId.value = buildingId;
+            const building = DASHBOARD_DATA.parkBuildings.find((b) => b.id === buildingId);
+            if (building) {
+              selectedParkBuilding.value = building.id;
+              parkRotateX.value = building.focusRotateX;
+              parkRotateY.value = building.focusRotateY;
+            }
+          }
+        }
+      }
+    }
+
+    function initEnergyDeviceTrendChart() {
+      if (!energyDevicePopup.value) return;
+      getChart('energyDeviceTrendChart')?.setOption(
+        buildEnergyDeviceTrendOption(energyDevicePopup.value.trend),
+        true
+      );
     }
 
     function resolveSecurityBuildingId(id) {
@@ -1308,6 +1640,17 @@ createApp({
         selectSecurityProjectChild(childId);
         return;
       }
+      if (isEnergyTab.value) {
+        selectEnergyProjectChild(childId);
+        return;
+      }
+      if (isCanteenTab.value) {
+        const project = findProjectInList(projectId);
+        const child = project?.children?.find((c) => c.id === childId)
+          || project?.children?.flatMap((c) => c.children || []).find((c) => c.id === childId);
+        selectCanteenProjectNode(child || { id: childId }, project || { id: projectId });
+        return;
+      }
       focusGeneralParkBuilding(childId, projectId);
     }
 
@@ -1320,6 +1663,12 @@ createApp({
       fireBuildingPopupId.value = null;
       if (isSecurityMgmtTab.value) {
         resetSecurityView();
+      }
+      if (isEnergyTab.value) {
+        resetEnergyView();
+      }
+      if (isCanteenTab.value) {
+        resetCanteenView();
       }
       overviewViewMode.value = 'park';
       mapPopupProjectId.value = null;
@@ -1341,7 +1690,7 @@ createApp({
         return;
       }
 
-      if (isSandboxParkMode.value || isFireFloorMode.value || isSecurityFloorMode.value || isSecurityGateMode.value) {
+      if (isSandboxParkMode.value || isFireFloorMode.value || isSecurityFloorMode.value || isSecurityGateMode.value || isEnergyFloorMode.value || isCanteenFloorMode.value) {
         enterProjectPark(projectId);
       }
     }
@@ -1350,6 +1699,15 @@ createApp({
       if (!child || !project || project.id === 'all') return;
       const projectId = resolveProjectRootId(project.id);
       project.expanded = true;
+
+      if (isCanteenTab.value && parseCanteenFloorId(child.id)) {
+        if (isSandboxMapMode.value || activeParkProjectId.value !== projectId) {
+          enterProjectPark(projectId, child.id);
+          return;
+        }
+        selectCanteenProjectNode(child, project);
+        return;
+      }
 
       if (isSandboxMapMode.value) {
         enterProjectPark(projectId, child.id);
@@ -1392,6 +1750,12 @@ createApp({
       fireSubSystem.value = 'event';
       if (isSecurityMgmtTab.value) {
         resetSecurityView();
+      }
+      if (isEnergyTab.value) {
+        resetEnergyView();
+      }
+      if (isCanteenTab.value) {
+        resetCanteenView();
       }
       overviewViewMode.value = 'map';
       syncMapVisibility();
@@ -1462,11 +1826,16 @@ createApp({
 
     function initEnergyCharts() {
       const type = energyTypeTab.value;
-      getChart('energyHourlyChart')?.setOption(buildEnergyHourlyOption(type));
-      getChart('energyPeriodChart')?.setOption(buildEnergyPeriodOption(type, 'month'));
-      if (isModuleParkMode.value) {
+      if (!energyLedgerOpen.value) {
+        getChart('energyHourlyChart')?.setOption(buildEnergyHourlyOption(type));
+        getChart('energyPeriodChart')?.setOption(buildEnergyPeriodOption(type, 'month'));
+      }
+      if (showEnergyLeftStats.value) {
         const donutData = DASHBOARD_DATA.energyTypeDonut[type];
         getChart('energyTypeDonutChart')?.setOption(buildSimpleDonutOption(donutData.items));
+      }
+      if (energyDevicePopup.value) {
+        initEnergyDeviceTrendChart();
       }
     }
 
@@ -1476,8 +1845,11 @@ createApp({
     }
 
     function initCanteenCharts() {
-      getChart('canteenGuestChart')?.setOption(buildCanteenGuestOption());
-      getChart('canteenMarketingChart')?.setOption(buildCanteenMarketingOption());
+      getChart('canteenGuestChart')?.setOption(buildCanteenGuestOption(canteenGuest.value), true);
+      getChart('canteenMarketingChart')?.setOption(
+        buildCanteenMarketingOption(canteenMarketing.value, canteenMarketingMode.value),
+        true
+      );
     }
 
     function initSecurityCharts() {
@@ -1560,6 +1932,10 @@ createApp({
 
     function switchEnergyType(type) {
       energyTypeTab.value = type;
+      energyDevicePopupCode.value = null;
+      energyLedgerOpen.value = false;
+      energySelectedMeter.value = '1#';
+      energyBuildingPopupId.value = null;
       nextTick(() => initEnergyCharts());
     }
 
@@ -1599,10 +1975,17 @@ createApp({
     function togglePlatformMenu() {
       platformMenuOpen.value = !platformMenuOpen.value;
       securityMenuOpen.value = false;
+      if (!platformMenuOpen.value) platformBizMenuOpen.value = false;
     }
 
     function navigateToPlatform(url) {
       window.location.href = url;
+    }
+
+    function selectBusinessSystem(name) {
+      platformBizMenuOpen.value = false;
+      platformMenuOpen.value = false;
+      window.alert(`${name}（外部业务系统入口，原型演示）`);
     }
 
     function onDocumentClick(e) {
@@ -1610,6 +1993,7 @@ createApp({
       const wrap = document.querySelector('.platform-switch-wrap');
       if (wrap && !wrap.contains(e.target)) {
         platformMenuOpen.value = false;
+        platformBizMenuOpen.value = false;
       }
     }
 
@@ -1623,6 +2007,8 @@ createApp({
         fireSubSystem.value = 'event';
         fireBuildingPopupId.value = null;
         resetSecurityView();
+        resetEnergyView();
+        resetCanteenView();
         overviewViewMode.value = 'map';
         mapPopupProjectId.value = null;
       }
@@ -1643,6 +2029,8 @@ createApp({
       fireSubSystem.value = 'event';
       fireBuildingPopupId.value = null;
       resetSecurityView();
+      resetEnergyView();
+      resetCanteenView();
       overviewViewMode.value = 'map';
       mapPopupProjectId.value = null;
       activeTab.value = tab;
@@ -1699,6 +2087,21 @@ createApp({
       }
     });
 
+    watch([
+      energyFloorMode, energySelectedFloor, energyLedgerOpen,
+      energyDevicePopupCode, mapPopupProjectId, energyTypeTab,
+    ], () => {
+      if (activeTab.value === '能源管理') {
+        nextTick(() => initChartsForTab());
+      }
+    });
+
+    watch([mapPopupProjectId, canteenFloorMode, canteenSelectedFloor, canteenMarketingMode, canteenScopeParkId], () => {
+      if (activeTab.value === '食堂管理') {
+        nextTick(() => initChartsForTab());
+      }
+    });
+
     onMounted(() => {
       MapManager.onViewChange = updateMapPopupPosition;
       MapManager.init(onMapSelect);
@@ -1728,10 +2131,24 @@ createApp({
       energyTypeTab, energyPeriodTab, energyCurrentKpi, energyTypeLabel,
       energyDailyTitle, energyDailyStat, energyPeriodTitle, energyPeriodStat,
       energyPeriodLabel, energyPeriodCompareLabel, energyPeriodChartTitle,
+      isEnergyTab, isEnergyFloorMode, isEnergyParkMode, isEnergyMapMode, isEnergyMapWithPopup,
+      showEnergyLeftStats, energyRankTitle,
+      energyFloors: ENERGY_DATA.floors, energySelectedFloor, selectEnergyFloor,
+      currentEnergyFloorDevices, energyBuildingPopup, closeEnergyBuildingPopup, enterEnergyBuilding,
+      selectEnergyBuilding, exitEnergyFloor, selectEnergyFloorDevice,
+      energyDevicePopup, energySelectedMeter, selectEnergyMeter,
+      energyLedgerOpen, energyLedgerData, energyIaExpanded, energyFmExpanded, energyIdExpanded,
+      openEnergyLedger, closeEnergyLedger,
       envTempTab, envAirTab, envTempList,
-      canteenStatus, canteenGuest,
+      canteenStatus, canteenGuest, canteenMarketing, canteenStatusMode, canteenStatusTitle, canteenStatusCards,
+      isCanteenTab, isCanteenFloorMode, isCanteenParkMode, isCanteenMapMode, isCanteenMapWithPopup, isCanteenParkScoped,
+      canteenFloors: CANTEEN_DATA.floors, canteenSelectedFloor, selectCanteenFloor,
+      currentCanteenFloorPoints, canteenBuildingPopup, closeCanteenBuildingPopup, enterCanteenBuilding,
+      selectCanteenBuilding, exitCanteenFloor, selectCanteenProjectNode,
+      canteenMarketingMode, switchCanteenMarketingMode,
       isSecurityTab, securityMenuOpen, securityNavLabel,
       platformMenuOpen, togglePlatformMenu, navigateToPlatform,
+      platformBizMenuOpen, otherBusinessSystems, selectBusinessSystem,
       isOverviewMapMode, isOverviewParkMode, isModuleSandboxTab, isModuleMapMode, isModuleParkMode,
       isSandboxMapMode, isSandboxParkMode, isParkSceneVisible, isParkInteractiveVisible,
       overviewKpiData, overviewTrendTitle,

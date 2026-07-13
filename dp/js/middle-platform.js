@@ -310,6 +310,16 @@ createApp({
     const selectedLocation = ref(MIDDLE_PLATFORM_DATA.locations[0]);
     const locationOpen = ref(false);
     const platformOpen = ref(false);
+    const platformBizOpen = ref(false);
+    const otherBusinessSystems = [
+      '综合安防系统',
+      '智慧机关云系统',
+      '公车系统',
+      '内控系统',
+      '区采购平台',
+      '资产管理系统',
+      '环境监测系统',
+    ];
     const areaChartLevel = ref('summary');
     const unitChangeStart = ref('');
     const unitChangeEnd = ref('');
@@ -1823,15 +1833,23 @@ createApp({
     function togglePlatform() {
       platformOpen.value = !platformOpen.value;
       locationOpen.value = false;
+      if (!platformOpen.value) platformBizOpen.value = false;
     }
 
     function navigateToPlatform(url) {
       window.location.href = url;
     }
 
+    function selectBusinessSystem(name) {
+      platformBizOpen.value = false;
+      platformOpen.value = false;
+      window.alert(`${name}（外部业务系统入口，原型演示）`);
+    }
+
     function closeDropdowns() {
       locationOpen.value = false;
       platformOpen.value = false;
+      platformBizOpen.value = false;
     }
 
     function getMetricIcon(icon) {
@@ -1944,7 +1962,7 @@ createApp({
     return {
       menuItems, sidebarCollapsed, activeMenuId, activeSubId,
       currentView, pageTitle, showOffice, showWarehouse,
-      selectedLocation, locationOpen, platformOpen,
+      selectedLocation, locationOpen, platformOpen, platformBizOpen, otherBusinessSystems,
       areaChartLevel, unitChangeStart, unitChangeEnd, unitChangeModal, filteredUnitList, currentTime,
       summaryCards, unitList, locations,
       mod, dash, dashTodoTab, dashRepairTrend, dashMaintPeriod, dashInspectPeriod, dashMsgTab,
@@ -1981,7 +1999,7 @@ createApp({
       toggleSidebar, toggleMenu, toggleNavGroup, selectSubMenu, selectMenuLeaf, navigateToView, navigateToFunction,
       isMenuActive, isSubActive,
       toggleLocation, selectLocation, togglePlatform, closeDropdowns,
-      toggleFullscreen, navigateToPlatform,
+      toggleFullscreen, navigateToPlatform, selectBusinessSystem,
       backAreaChart,
       resetUnitChangeFilter, formatChangeDate, formatChangeDelta, changeDeltaClass,
       openUnitChangeModal, closeUnitChangeModal,
