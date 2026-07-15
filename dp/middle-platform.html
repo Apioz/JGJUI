@@ -646,7 +646,7 @@
                       <th>合计</th>
                       <th>{{ gwWarehouses[0].shortName }}</th>
                       <th>{{ gwWarehouses[1].shortName }}</th>
-                      <th title="出库次数 ÷ 年初年末在库数平均值">周转率</th>
+                      <th v-if="gwOutboundMetric === 'count'" title="出库次数 ÷ 年初年末库存数平均值">周转率</th>
                       <th>环比</th>
                     </tr>
                   </thead>
@@ -656,7 +656,7 @@
                       <td><strong>{{ row.total }}</strong></td>
                       <td>{{ row.w1 }}</td>
                       <td>{{ row.w2 }}</td>
-                      <td>{{ formatGwTurnoverRate(row.turnoverRate) }}</td>
+                      <td v-if="gwOutboundMetric === 'count'">{{ formatGwTurnoverRate(row.turnoverRate) }}</td>
                       <td :class="row.change >= 0 ? 'gw-change-up' : 'gw-change-down'">{{ row.change >= 0 ? '+' : '' }}{{ row.change }}%</td>
                     </tr>
                   </tbody>
